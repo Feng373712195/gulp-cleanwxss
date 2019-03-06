@@ -27,9 +27,12 @@ const PAGES_PATH = path.join(__dirname,'wx/wcjs_wx_miniprogram/pages')
 // 对已经查找过的节点位置缓存 下次可以直接在这里获取
 const selectNodeCache = {}
 // 样式选择器对应的Wxml片段 用于完成后生成HTML使用
+
 const selectMap = {};
 // 伪元素伪类匹配正则表达式
 const pseudoClassReg = /\:link|\:visited|\:active|\:hover|\:focus|\:before|\:\:before|\:after|\:\:after|\:first-letter|\:first-line|\:first-child|\:lang\(.*\)|\:lang|\:first-of-type|\:last-of-type|\:only-child|:nth-last-child\(.*\)|\:nth-of-type\(.*\)|\:nth-last-of-type\(.*\)|\:last-child|\:root|\:empty|\:target|\:enabled|\:disabled|\:checked|\:not\(.*\)|\:\:selection/g;
+//是否有同级选择器正则表达式 如： .a.b .a#b 
+const peerSelectReg = /(?=\.)|(?=\#)/g;
 
 gulp.task('one',async function(){
     const pageFilePath = path.join( PAGES_PATH,'/addtoptics' );
@@ -45,89 +48,99 @@ gulp.task('one',async function(){
         classSelects.push($2);
     })
     
+    //获取Wxml树
     const WxmlTree = getWxmlTree(pageWxml);
-    
-    //遍历出所有节点
-    // const deepWxmlTree = (tags,select)=>{
-    //     for( const obj of tags ){
-    //         const keys = Object.keys(obj);
-    //         keys.forEach(key=>{
-    //             if( obj[key].childs.length > 0 ){
-    //                 deepWxmlTree(obj[key].childs)
-    //             }
-    //         })
-    //     }
-    // }
+    //检查同级元素
+    const _checkHasSelect = (select) => {
+        const peerSelect = select.split( peerSelectReg )
+        if( peerSelect.length > 1 ){
+            if( selectNodeCache[peerSelect[0]] ){
+                const firstPeerSelect = selectNodeCache[peerSelect[1]][0];
+                const firstPeerSelectKey = Object.keys( firstPeerSelect )[0];
+                const otherPeerSelects = peerSelect.slice(1,peerSelect.length);
+                return otherPeerSelects.map( ps=> selectNodeCache[ps] ).every( node => !!node )
+            }else{
+                return false;
+            }
+        }else{
+            return selectNodeCache[peerSelect[0]] ? true : false;
+        }
+    }
 
-    // 选择器查找元素逻辑
-    // 如果元素带有 伪元素或者伪类选择器 则无视 有对应元素标签就为有使用的选择器
-    // 属性选择器 如果在标签内判断有对应的属性名 就为有使用的选择器
+    //寻找子元素的父级元素
+    const _findNodeParent = (node,select) => {
+        // 已经到达root节点 寻找不到节点
+        if( node.parent.key == 'root' ) return null;
 
+        const peerSelect =  select.split(peerSelectReg);
+        if( peerSelect.length > 1 ){
+            const finds = [];
+            peerSelect.forEach(v1 => {
+                finds.push( node.parent.obj.class.findIndex(v2=> `.${v2}` == v1) )
+            })
+            const isParent = finds.every(v=> v!=-1 )
+            return isParent ? node.parent.obj : 
+               _findNodeParent(node.parent.obj,select)
+        }else{
+            const isParent = node.parent.obj.class.findIndex(v2=> `.${v2}` == select)
+            return isParent != -1 ? node.parent.obj : 
+                _findNodeParent(node.parent.obj,select)
+        }
+    }
+
+    //从子节点开始查找
     for( let i = 0 ,len = classSelects.length; i < len; i++ ){
 
-        //存入selectMap
+        //     //存入selectMap
         selectMap[classSelects[i]] = { };
         const that = selectMap[classSelects[i]];
 
         //过滤掉伪元素伪类
         const selectQuery = classSelects[i].replace(pseudoClassReg,'')
+        //从子节点开始查找 把选择器数组翻转
         const selectNodes = selectQuery.split(' ').filter(v=>v).reverse();
 
-        // 只有一个选择器的情况下
-        if( selectNodes.length == 1 ){
-            // console.log('here',selectNodes)
-            let peerSelect = selectNodes[0].split(/(?=\.)|(?=\#)/g);
-            // 是否有同级选择器
-            if( peerSelect.length > 1 ){
-                console.log( selectNodeCache[ peerSelect[0] ],'123' )               
-            }else{
-            //没有同级情况
-                that.select =  selectNodeCache[selectNodes[0]] ? true : false;
-            }
-        }else{
-            let hasFirst = false;
-            //如果第一个元素都没有就不往下寻找元素了
-            let peerSelect = selectNodes[0].split(/(?=\.)|(?=\#)/g);
-             // 是否有同级选择器
-            if( peerSelect.length > 1 ){
-                
-            }else{
-                hasFirst = selectNodeCache[selectNodes[0]] ? true : false;
-            }
-        }
 
+        //选择器只匹配一个元素
+        if( selectNodes.length == 1 ){
+            that.select = _checkHasSelect(selectNodes[0])
+        }
+        //多元素选择器
+        else{
+
+            // 对于标签选择器后面再做处理
+           let cureetNode = null;
+           for( let i2 = 0,len = selectNodes.length; i2 < len; i2++ ){
+                if( i2 == 0 ){
+                    if( _checkHasSelect(selectNodes[i2]) ){
+                        const finds = []; 
+                        const selectNode = selectNodeCache[selectNodes[i2]];    
+                        const selectNodeKey = Object.keys(selectNode[0])[0]
+                        selectNode.forEach(v=>{
+                            finds.push( _findNodeParent( v ,selectNodes[i2+1] ) )
+                        })
+                        
+                        console.log( classSelects[i], finds.some(v=>v) )
+
+                    }else{
+                        that.select = false;
+                        break;
+                    }
+                }
+           }
+        }
     }
 
 
+    // console.log( selectMap )
 
 })
 
 
-
-const hasNodes = (select) => {
-
-};
-
-const testFun = (node,select) => {
-    // console.log(node,'node')
-    // console.log(select,'select')
-
-    node[Object.keys(node)[0]].childs.forEach(child=>{
-        console.log(child)
-    })
-}
-
-// 相对于节点寻找元素
-const relativeSearchNode = (node,select) => {
-    node.childs.forEach(child=>{
-        child=>{
-            console.log(child,'child')
-        }
-    })
-}
-
 // 把Wxml结构转为树结构
 // 在转成树结构的过程中就可以把所有节点存储起来
+// 标签不会被覆盖 这个核实过了
+
 const getWxmlTree = (wxmlStr)=>{
         //过滤调pageWxml中的注释
         wxmlStr = wxmlStr.replace(/\<!--(.*)-->/g,'')
@@ -148,7 +161,8 @@ const getWxmlTree = (wxmlStr)=>{
         let head = WxmlTree.root;
         let parentkey = 'root';
     
-        //从上到下获取全部标签
+        // 从上到下获取全部标签    
+        // 注意标签连写情况 如：<view>A</view><view>B</view><view>C</view>
         wxmlStr.replace(/\<.*\>/g,($1,$2)=>{
     
             const isSingeTagReg = /\<(.*)\/\>/;
@@ -180,6 +194,7 @@ const getWxmlTree = (wxmlStr)=>{
                     // 一些写法不规范的开发者 会写多个class 这里先不管
                     tag = tag.replace(TagClassStr,'');
                     if( hasClass.test(tag) ) {
+
                        return _getTagClass(tag,TagClass)
                     }
                 }
@@ -210,13 +225,21 @@ const getWxmlTree = (wxmlStr)=>{
 
             // 存入节点缓存对象 
             const _setNodeCache = (tag,classes,id) =>{
+                //避免用重复class元素
                 if( classes ){
                     classes.forEach(classname=>{
-                        selectNodeCache[`.${classname}`] = tag;
+                        if(!selectNodeCache[`.${classname}`]){
+                            selectNodeCache[`.${classname}`] = [];
+                        }
+                        selectNodeCache[`.${classname}`].push(tag);
                     })
                 }
+                //避免有重复id元素
                 if( id ){
-                    selectNodeCache[`#${id}`] = tag
+                    if(!selectNodeCache[`#${id}`]){
+                        selectNodeCache[`#${id}`] = [];
+                    }
+                    selectNodeCache[`#${id}`].push(tag);
                 }
             }
 
@@ -240,15 +263,17 @@ const getWxmlTree = (wxmlStr)=>{
                     [$1]:self
                 })
                 return; 
-            };
+            }
     
             //是否闭合标签
             if( isCloseTagReg.test($1) ){
                 
                 const isCompleteTag = isCompleteTagReg.test($1);
                 
+                // parentkey != 'root'  ||
+
                 //需找到闭合标签 把指针指向上一层
-                if( parentkey != 'root'  ||  !isCompleteTag ){
+                if( !isCompleteTag ){       
                     parentkey = head.parent.key
                     head = head.parent.obj
                 }
@@ -271,10 +296,11 @@ const getWxmlTree = (wxmlStr)=>{
                 head.childs.push({
                     [$1]:self
                 })
-    
+
                 return;
             }
             
+
             //不是闭合标签 也不是 单标签 就是启始标签
             const self = {
                 [$1]:{
@@ -288,15 +314,92 @@ const getWxmlTree = (wxmlStr)=>{
                 }
             }
               
-            _setNodeCache(self,tagClass,tagId)
+            _setNodeCache(self[$1],tagClass,tagId)
 
             head.childs.push(self);
+
             //把指针指向这个标签
             head = self[$1];
+            parentkey = $1;
        
         }) 
 
         return WxmlTree;
 }
 
+/*************************************************************************/
 
+
+
+// const hasNodes = (select) => {
+
+// };
+
+// const testFun = (node,select) => {
+//     // console.log(node,'node')
+//     // console.log(select,'select')
+
+//     node[Object.keys(node)[0]].childs.forEach(child=>{
+//         console.log(child)
+//     })
+// }
+
+// // 相对于节点寻找元素
+// const relativeSearchNode = (node,select) => {
+//     node.childs.forEach(child=>{
+//         child=>{
+//             console.log(child,'child')
+//         }
+//     })
+// }
+
+//遍历出所有节点
+// const deepWxmlTree = (tags,select)=>{
+//     for( const obj of tags ){
+//         const keys = Object.keys(obj);
+//         keys.forEach(key=>{
+//             if( obj[key].childs.length > 0 ){
+//                 deepWxmlTree(obj[key].childs)
+//             }
+//         })
+//     }
+// }
+
+// 选择器查找元素逻辑
+// 如果元素带有 伪元素或者伪类选择器 则无视 有对应元素标签就为有使用的选择器
+// 属性选择器 如果在标签内判断有对应的属性名 就为有使用的选择器
+
+// for( let i = 0 ,len = classSelects.length; i < len; i++ ){
+
+//     //存入selectMap
+//     selectMap[classSelects[i]] = { };
+//     const that = selectMap[classSelects[i]];
+
+//     //过滤掉伪元素伪类
+//     const selectQuery = classSelects[i].replace(pseudoClassReg,'')
+//     const selectNodes = selectQuery.split(' ').filter(v=>v).reverse();
+
+//     // 只有一个选择器的情况下
+//     if( selectNodes.length == 1 ){
+//         // console.log('here',selectNodes)
+//         let peerSelect = selectNodes[0].split(/(?=\.)|(?=\#)/g);
+//         // 是否有同级选择器
+//         if( peerSelect.length > 1 ){
+//             console.log( selectNodeCache[ peerSelect[0] ],'123' )               
+//         }else{
+//         //没有同级情况
+//             that.select =  selectNodeCache[selectNodes[0]] ? true : false;
+//         }
+//     }else{
+//         let hasFirst = false;
+//         //如果第一个元素都没有就不往下寻找元素了
+//         let peerSelect = selectNodes[0].split(/(?=\.)|(?=\#)/g);
+//          // 是否有同级选择器
+//         if( peerSelect.length > 1 ){
+            
+//         }else{
+//             hasFirst = selectNodeCache[selectNodes[0]] ? true : false;
+//         }
+//     }
+
+// }
