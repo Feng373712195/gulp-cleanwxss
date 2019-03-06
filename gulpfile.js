@@ -81,20 +81,20 @@ gulp.task('one',async function(){
         if( peerSelect.length > 1 ){
             const finds = [];
             peerSelect.forEach(v1 => {
+                //注意这里要区分id 和 class
                 finds.push( node.parent.obj.class.findIndex(v2=> `.${v2}` == v1) )
             })
             const isParent = finds.every(v=> v!=-1 )
             return isParent ? node.parent.obj : 
                     _findNodeParent(node.parent.obj,select)
         }else{
+            //注意这里要区分id 和 class
             const isParent = node.parent.obj.class.findIndex(v2=> `.${v2}` == select)
             return isParent != -1 ? node.parent.obj : 
                     _findNodeParent(node.parent.obj,select)
         }
     }
-
-    
-    
+   
     //从子节点开始查找
     for( let i = 0 ,len = classSelects.length; i < len; i++ ){
         //存入selectMap
@@ -189,7 +189,11 @@ const getWxmlTree = (wxmlStr)=>{
         // 从上到下获取全部标签    
         // 注意标签连写情况 如：<view>A</view><view>B</view><view>C</view>
         wxmlStr.replace(/\<.*\>/g,($1,$2)=>{
-    
+            
+            const tagExec = /\<([\w|\-]+)\s?|\/(\w+)\s?\>/.exec($1)
+            const tagName = tagExec[1] ? tagExec[1] : tagExec[2];
+            console.log(tagName,'tagName')
+
             const isSingeTagReg = /\<(.*)\/\>/;
             const isCloseTagReg = /\<\/(.*)\>/;
             const isCompleteTagReg = /\<.*\>.*\<.*\>/
