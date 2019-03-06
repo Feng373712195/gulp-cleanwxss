@@ -24,6 +24,11 @@ const PAGES_PATH = path.join(__dirname,'wx/wcjs_wx_miniprogram/pages')
 // 元素从到内到外查找 如果是常用标签则选择它的父级 class元素
 // Wmxl因该不能直接存标签字符串作为key 以免遇到相同的情况 会被覆盖
 
+// 2019-3-06 待做
+// 标签选择器 处理
+// _findNodeParent函数内部 区分id和class
+// 完成后生成HTML
+
 // 对已经查找过的节点位置缓存 下次可以直接在这里获取
 const selectNodeCache = {}
 // 样式选择器对应的Wxml片段 用于完成后生成HTML使用
@@ -80,18 +85,19 @@ gulp.task('one',async function(){
             })
             const isParent = finds.every(v=> v!=-1 )
             return isParent ? node.parent.obj : 
-               _findNodeParent(node.parent.obj,select)
+                    _findNodeParent(node.parent.obj,select)
         }else{
             const isParent = node.parent.obj.class.findIndex(v2=> `.${v2}` == select)
             return isParent != -1 ? node.parent.obj : 
-                _findNodeParent(node.parent.obj,select)
+                    _findNodeParent(node.parent.obj,select)
         }
     }
 
+    
+    
     //从子节点开始查找
     for( let i = 0 ,len = classSelects.length; i < len; i++ ){
-
-        //     //存入selectMap
+        //存入selectMap
         selectMap[classSelects[i]] = { };
         const that = selectMap[classSelects[i]];
 
@@ -100,37 +106,56 @@ gulp.task('one',async function(){
         //从子节点开始查找 把选择器数组翻转
         const selectNodes = selectQuery.split(' ').filter(v=>v).reverse();
 
-
         //选择器只匹配一个元素
         if( selectNodes.length == 1 ){
             that.select = _checkHasSelect(selectNodes[0])
         }
         //多元素选择器
         else{
-
-            // 对于标签选择器后面再做处理
+           // 存放已查找到的元素
+           let finds = []; 
+           // 对于标签选择器后面再做处理
            let cureetNode = null;
            for( let i2 = 0,len = selectNodes.length; i2 < len; i2++ ){
                 if( i2 == 0 ){
                     if( _checkHasSelect(selectNodes[i2]) ){
-                        const finds = []; 
                         const selectNode = selectNodeCache[selectNodes[i2]];    
                         const selectNodeKey = Object.keys(selectNode[0])[0]
                         selectNode.forEach(v=>{
                             finds.push( _findNodeParent( v ,selectNodes[i2+1] ) )
                         })
-                        
-                        console.log( classSelects[i], finds.some(v=>v) )
+
+                        const hasParent = finds.some(v=>v);
+                        if( selectNodes.length == 2 ){
+                            that.select = hasParent ? true : false
+                            break;
+                        }else{
+                            if( hasParent ){
+                                //过滤掉null值
+                                finds = finds.filter(v=>v)
+                                continue;
+                            }else{
+                                that.select = false;
+                                break;
+                            }
+                        }
 
                     }else{
                         that.select = false;
                         break;
                     }
                 }
+                else if( i2 == selectNodes.length-1 ){
+                    that.select = finds.some(v=>v);
+                }
+                else{
+                    const _finds = [];
+                    finds.map(node=> _findNodeParent( node ,selectNodes[i2+1] ) )
+                    finds = finds.filter(v=>v);
+                }
            }
         }
     }
-
 
     // console.log( selectMap )
 
@@ -326,80 +351,3 @@ const getWxmlTree = (wxmlStr)=>{
 
         return WxmlTree;
 }
-
-/*************************************************************************/
-
-
-
-// const hasNodes = (select) => {
-
-// };
-
-// const testFun = (node,select) => {
-//     // console.log(node,'node')
-//     // console.log(select,'select')
-
-//     node[Object.keys(node)[0]].childs.forEach(child=>{
-//         console.log(child)
-//     })
-// }
-
-// // 相对于节点寻找元素
-// const relativeSearchNode = (node,select) => {
-//     node.childs.forEach(child=>{
-//         child=>{
-//             console.log(child,'child')
-//         }
-//     })
-// }
-
-//遍历出所有节点
-// const deepWxmlTree = (tags,select)=>{
-//     for( const obj of tags ){
-//         const keys = Object.keys(obj);
-//         keys.forEach(key=>{
-//             if( obj[key].childs.length > 0 ){
-//                 deepWxmlTree(obj[key].childs)
-//             }
-//         })
-//     }
-// }
-
-// 选择器查找元素逻辑
-// 如果元素带有 伪元素或者伪类选择器 则无视 有对应元素标签就为有使用的选择器
-// 属性选择器 如果在标签内判断有对应的属性名 就为有使用的选择器
-
-// for( let i = 0 ,len = classSelects.length; i < len; i++ ){
-
-//     //存入selectMap
-//     selectMap[classSelects[i]] = { };
-//     const that = selectMap[classSelects[i]];
-
-//     //过滤掉伪元素伪类
-//     const selectQuery = classSelects[i].replace(pseudoClassReg,'')
-//     const selectNodes = selectQuery.split(' ').filter(v=>v).reverse();
-
-//     // 只有一个选择器的情况下
-//     if( selectNodes.length == 1 ){
-//         // console.log('here',selectNodes)
-//         let peerSelect = selectNodes[0].split(/(?=\.)|(?=\#)/g);
-//         // 是否有同级选择器
-//         if( peerSelect.length > 1 ){
-//             console.log( selectNodeCache[ peerSelect[0] ],'123' )               
-//         }else{
-//         //没有同级情况
-//             that.select =  selectNodeCache[selectNodes[0]] ? true : false;
-//         }
-//     }else{
-//         let hasFirst = false;
-//         //如果第一个元素都没有就不往下寻找元素了
-//         let peerSelect = selectNodes[0].split(/(?=\.)|(?=\#)/g);
-//          // 是否有同级选择器
-//         if( peerSelect.length > 1 ){
-            
-//         }else{
-//             hasFirst = selectNodeCache[selectNodes[0]] ? true : false;
-//         }
-//     }
-
-// }
