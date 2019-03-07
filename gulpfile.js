@@ -55,6 +55,7 @@ gulp.task('one',async function(){
     
     //获取Wxml树
     const WxmlTree = getWxmlTree(pageWxml);
+
     //检查同级元素
     const _checkHasSelect = (select) => {
         const peerSelect = select.split( peerSelectReg )
@@ -94,7 +95,20 @@ gulp.task('one',async function(){
                     _findNodeParent(node.parent.obj,select)
         }
     }
-   
+    
+    //寻找元素里面是否含有指定标签
+    const _findNodeHasTag = (node,tagname) => {
+        for( let i = 0, len = node.childs.length; i < len ; i++ ){
+            const key = Object.keys(node.childs[i])
+            if( node.childs[i][key].tag == tagname ){
+                return true;
+            }else{
+                if( _findNodeParent(node.childs[i][key],tagname) ) return true
+            }
+        }
+        return false;
+    }
+
     //从子节点开始查找
     for( let i = 0 ,len = classSelects.length; i < len; i++ ){
         //存入selectMap
@@ -117,47 +131,80 @@ gulp.task('one',async function(){
            // 对于标签选择器后面再做处理
            let cureetNode = null;
            for( let i2 = 0,len = selectNodes.length; i2 < len; i2++ ){
-                if( i2 == 0 ){
-                    if( _checkHasSelect(selectNodes[i2]) ){
-                        const selectNode = selectNodeCache[selectNodes[i2]];    
-                        const selectNodeKey = Object.keys(selectNode[0])[0]
-                        selectNode.forEach(v=>{
-                            finds.push( _findNodeParent( v ,selectNodes[i2+1] ) )
+                
+                // 为标签选择器
+                if( !/^\.|^\#/.test(selectNodes[i2]) ){
+
+                    const currentFindNodes = finds.length ? 
+                                             finds :
+                                             selectNodeCache[selectNodes[i2+1]]
+
+                    console.log('here')
+
+                    if( currentFindNodes ){    
+                        
+                        const hasTag =  [];               
+                        currentFindNodes.forEach((node,index)=>{
+                            hasTag.push( _findNodeHasTag(node,selectNodes[i2]) )
                         })
-
-                        const hasParent = finds.some(v=>v);
-                        if( selectNodes.length == 2 ){
-                            that.select = hasParent ? true : false
-                            break;
+                        if( hasTag.some(v=>v) ){
+                            console.log( '111 - 1' )
+                            that.select = true;
+                            continue;
                         }else{
-                            if( hasParent ){
-                                //过滤掉null值
-                                finds = finds.filter(v=>v)
-                                continue;
-                            }else{
-                                that.select = false;
-                                break;
-                            }
+                            console.log( '222 - 1' )
+                            that.select = false;
+                            break;
                         }
-
                     }else{
                         that.select = false;
                         break;
                     }
                 }
-                else if( i2 == selectNodes.length-1 ){
-                    that.select = finds.some(v=>v);
-                }
+                // 为class id选择器
                 else{
-                    const _finds = [];
-                    finds.map(node=> _findNodeParent( node ,selectNodes[i2+1] ) )
-                    finds = finds.filter(v=>v);
+                    if( i2 == 0 ){
+                        if( _checkHasSelect(selectNodes[i2]) ){
+                            const selectNode = selectNodeCache[selectNodes[i2]];    
+                            const selectNodeKey = Object.keys(selectNode[0])[0]
+                            selectNode.forEach(v=>{
+                                finds.push( _findNodeParent( v ,selectNodes[i2+1] ) )
+                            })
+
+                            const hasParent = finds.some(v=>v);
+                            if( selectNodes.length == 2 ){
+                                that.select = hasParent ? true : false
+                                break;
+                            }else{
+                                if( hasParent ){
+                                    //过滤掉null值
+                                    finds = finds.filter(v=>v)
+                                    continue;
+                                }else{
+                                    that.select = false;
+                                    break;
+                                }
+                            }
+
+                        }else{
+                            that.select = false;
+                            break;
+                        }
+                    }
+                    else if( i2 == selectNodes.length-1 ){
+                        that.select = finds.some(v=>v);
+                    }
+                    else{
+                        const _finds = [];
+                        finds.map(node=> _findNodeParent( node ,selectNodes[i2+1] ) )
+                        finds = finds.filter(v=>v);
+                    }
                 }
            }
         }
     }
 
-    // console.log( selectMap )
+    console.log( selectMap )
 
 })
 
@@ -165,7 +212,6 @@ gulp.task('one',async function(){
 // 把Wxml结构转为树结构
 // 在转成树结构的过程中就可以把所有节点存储起来
 // 标签不会被覆盖 这个核实过了
-
 const getWxmlTree = (wxmlStr)=>{
         //过滤调pageWxml中的注释
         wxmlStr = wxmlStr.replace(/\<!--(.*)-->/g,'')
@@ -190,10 +236,6 @@ const getWxmlTree = (wxmlStr)=>{
         // 注意标签连写情况 如：<view>A</view><view>B</view><view>C</view>
         wxmlStr.replace(/\<.*\>/g,($1,$2)=>{
             
-            const tagExec = /\<([\w|\-]+)\s?|\/(\w+)\s?\>/.exec($1)
-            const tagName = tagExec[1] ? tagExec[1] : tagExec[2];
-            console.log(tagName,'tagName')
-
             const isSingeTagReg = /\<(.*)\/\>/;
             const isCloseTagReg = /\<\/(.*)\>/;
             const isCompleteTagReg = /\<.*\>.*\<.*\>/
@@ -252,6 +294,13 @@ const getWxmlTree = (wxmlStr)=>{
                 return "";
             }
 
+            // 取得标签名称
+            const _getTagName = (tag)=>{
+                const tagExec = /\<([\w|\-]+)\s?|\/(\w+)\s?\>/.exec(tag)
+                const tagName = tagExec[1] ? tagExec[1] : tagExec[2];
+                return tagName
+            }
+
             // 存入节点缓存对象 
             const _setNodeCache = (tag,classes,id) =>{
                 //避免用重复class元素
@@ -274,13 +323,15 @@ const getWxmlTree = (wxmlStr)=>{
 
             const tagClass = _getTagClass($1);
             const tagId = _getId($1);
-            
+            const tagName = _getTagName($1);
+
             //是否单标签
             if( isSingeTagReg.test($1) ){
                 const self = {
                     childs:[],
                     class:tagClass,
                     id:tagId,
+                    tag:tagName,
                     parent:{
                         key:parentkey,
                         obj:head    
@@ -311,6 +362,7 @@ const getWxmlTree = (wxmlStr)=>{
                     childs:[],
                     class:tagClass,
                     id:tagId,
+                    tag:tagName,
                     parent:{
                         key:parentkey,
                         obj:head    
@@ -329,13 +381,13 @@ const getWxmlTree = (wxmlStr)=>{
                 return;
             }
             
-
             //不是闭合标签 也不是 单标签 就是启始标签
             const self = {
                 [$1]:{
                     childs:[],
                     class:tagClass,
                     id:tagId,
+                    tag:tagName,
                     parent:{
                         key:parentkey,
                         obj:head
