@@ -103,7 +103,7 @@ gulp.task('one',async function(){
             if( node.childs[i][key].tag == tagname ){
                 return true;
             }else{
-                if( _findNodeParent(node.childs[i][key],tagname) ) return true
+                if( _findNodeHasTag(node.childs[i][key],tagname) ) return true
             }
         }
         return false;
@@ -131,28 +131,22 @@ gulp.task('one',async function(){
            // 对于标签选择器后面再做处理
            let cureetNode = null;
            for( let i2 = 0,len = selectNodes.length; i2 < len; i2++ ){
-                
                 // 为标签选择器
+                // 这里可以设置一个到某个元素停止搜索的参数 避免如这种情况 .a view .b view 避免到.a搜到view标签 .b还会继续搜索下去
                 if( !/^\.|^\#/.test(selectNodes[i2]) ){
-
                     const currentFindNodes = finds.length ? 
                                              finds :
                                              selectNodeCache[selectNodes[i2+1]]
-
-                    console.log('here')
-
                     if( currentFindNodes ){    
-                        
                         const hasTag =  [];               
                         currentFindNodes.forEach((node,index)=>{
                             hasTag.push( _findNodeHasTag(node,selectNodes[i2]) )
                         })
-                        if( hasTag.some(v=>v) ){
-                            console.log( '111 - 1' )
+                        if( hasTag.some(v=>v) ){ 
+                            finds = currentFindNodes.concat();
                             that.select = true;
                             continue;
                         }else{
-                            console.log( '222 - 1' )
                             that.select = false;
                             break;
                         }
@@ -282,7 +276,7 @@ const getWxmlTree = (wxmlStr)=>{
                     // 获取id属性在标签的开始位置
                     const startIndex = tag.search(/id\=[\'|\"]/)
                     // 判断开始是双引号还是单引号
-                    const startMark = tag.substr(startIndex+3,1);
+                    const startMark = tag.substr(startIndex + 3,1);
                     // 获得结束位置
                     const endIndex = tag.substring(startIndex + 4 ,tag.length).indexOf(startMark);
                     // 取得整段id
@@ -292,6 +286,24 @@ const getWxmlTree = (wxmlStr)=>{
                 }
 
                 return "";
+            }
+
+            // 取得表情的属性
+            const _getAttr = (tag,attr) => {
+                const hasAttr = tag.indexOf(` ${attr}`)
+                if( hasAttr ){
+                    // 获取属性在标签的开始位置
+                    const startMark = tag.substr( hasAttr + ` ${attr}=`.length ,  1);
+                    console.log( startMark,'startMark' )
+                    // 获取属性在标签的结束位置
+                    const endIndex = tag.substring( hasAttr + ` ${attr}=`.length + 1 , ).indexOf(startMark);
+                    console.log( endIndex )
+                    //取得整段属性
+                    const AttrStr = tag.substring( hasAttr + ` ${attr}=`.length + 1 , hasAttr + endIndex + 1 )
+                    return AttrStr
+                }else{
+                    return ''
+                }
             }
 
             // 取得标签名称
@@ -324,6 +336,21 @@ const getWxmlTree = (wxmlStr)=>{
             const tagClass = _getTagClass($1);
             const tagId = _getId($1);
             const tagName = _getTagName($1);
+
+            // 是否import标签
+            const isImportReg = /import/i; 
+            // 是否template标签
+            const isTemplateReg = /template/i;
+
+            if( isImportReg.test(tagName) ){
+                console.log( $1 );
+                console.log( _getAttr($1,'src') )
+            }
+
+            if( isTemplateReg.test(tagName) ){
+                console.log($1)
+                console.log( _getAttr($1,'is') )
+            }
 
             //是否单标签
             if( isSingeTagReg.test($1) ){
