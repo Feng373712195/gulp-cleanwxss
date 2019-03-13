@@ -32,8 +32,9 @@ const PAGES_PATH = path.join(__dirname,'wx/wcjs_wx_miniprogram/pages')
 // 对已经查找过的节点位置缓存 下次可以直接在这里获取
 const selectNodeCache = {}
 // 样式选择器对应的Wxml片段 用于完成后生成HTML使用
-
 const selectMap = {};
+// 存放查找到的模版
+const templateCache = {}
 // 伪元素伪类匹配正则表达式
 const pseudoClassReg = /\:link|\:visited|\:active|\:hover|\:focus|\:before|\:\:before|\:after|\:\:after|\:first-letter|\:first-line|\:first-child|\:lang\(.*\)|\:lang|\:first-of-type|\:last-of-type|\:only-child|:nth-last-child\(.*\)|\:nth-of-type\(.*\)|\:nth-last-of-type\(.*\)|\:last-child|\:root|\:empty|\:target|\:enabled|\:disabled|\:checked|\:not\(.*\)|\:\:selection/g;
 //是否有同级选择器正则表达式 如： .a.b .a#b 
@@ -198,12 +199,28 @@ gulp.task('one',async function(){
         }
     }
 
-    console.log( selectMap )
+    // console.log( selectMap )
 
 })
 
+// 取得表情的属性
+const getAttr = (tag,attr) => {
+    const hasAttr = tag.indexOf(` ${attr}`)
+    if( hasAttr ){
+        const attrStrStartL = hasAttr + ` ${attr}=`.length;
+        // 获取属性在标签的开始位置
+        const startMark = tag.substr( attrStrStartL,  1);
+        // 获取属性在标签的结束位置
+        const endIndex = tag.substring( attrStrStartL + 1 , ).indexOf(startMark);
+        //取得整段属性
+        const AttrStr = tag.substring( attrStrStartL + 1 , attrStrStartL + endIndex + 1 )
+        return AttrStr
+    }else{
+        return ''
+    }
+}
 
-// 把Wxml结构转为树结构
+// 把Wxml字符串转为树结构
 // 在转成树结构的过程中就可以把所有节点存储起来
 // 标签不会被覆盖 这个核实过了
 const getWxmlTree = (wxmlStr)=>{
@@ -228,7 +245,7 @@ const getWxmlTree = (wxmlStr)=>{
     
         // 从上到下获取全部标签    
         // 注意标签连写情况 如：<view>A</view><view>B</view><view>C</view>
-        wxmlStr.replace(/\<.*\>/g,($1,$2)=>{
+        wxmlStr.replace(/\<.*\>/g,async ($1,$2)=>{
             
             const isSingeTagReg = /\<(.*)\/\>/;
             const isCloseTagReg = /\<\/(.*)\>/;
@@ -288,24 +305,6 @@ const getWxmlTree = (wxmlStr)=>{
                 return "";
             }
 
-            // 取得表情的属性
-            const _getAttr = (tag,attr) => {
-                const hasAttr = tag.indexOf(` ${attr}`)
-                if( hasAttr ){
-                    // 获取属性在标签的开始位置
-                    const startMark = tag.substr( hasAttr + ` ${attr}=`.length ,  1);
-                    console.log( startMark,'startMark' )
-                    // 获取属性在标签的结束位置
-                    const endIndex = tag.substring( hasAttr + ` ${attr}=`.length + 1 , ).indexOf(startMark);
-                    console.log( endIndex )
-                    //取得整段属性
-                    const AttrStr = tag.substring( hasAttr + ` ${attr}=`.length + 1 , hasAttr + endIndex + 1 )
-                    return AttrStr
-                }else{
-                    return ''
-                }
-            }
-
             // 取得标签名称
             const _getTagName = (tag)=>{
                 const tagExec = /\<([\w|\-]+)\s?|\/(\w+)\s?\>/.exec(tag)
@@ -343,13 +342,15 @@ const getWxmlTree = (wxmlStr)=>{
             const isTemplateReg = /template/i;
 
             if( isImportReg.test(tagName) ){
-                console.log( $1 );
-                console.log( _getAttr($1,'src') )
+                const importSrc =  getAttr($1,'src');
+                const templatePath = path.join( path.join( PAGES_PATH,'/addtoptics' ), importSrc );
+                const tmp = await fsp.readFile(templatePath,'utf-8')
+                templateCache[importSrc] = getTemplateWxmlTree(importSrc,tmp);
             }
 
             if( isTemplateReg.test(tagName) ){
-                console.log($1)
-                console.log( _getAttr($1,'is') )
+                // console.log($1)
+                // console.log( getAttr($1,'is'),'is' )
             }
 
             //是否单标签
@@ -433,4 +434,18 @@ const getWxmlTree = (wxmlStr)=>{
         }) 
 
         return WxmlTree;
+}
+
+// 把Wxml字符串转为树结构
+const getTemplateWxmlTree = (temkey,wxmlStr) => {
+    console.log('getTemplateWxmlTree')
+    console.log( getWxmlTree(wxmlStr).root )
+
+    let tmpstart = false;
+    getWxmlTree(wxmlStr).root.childs.forEach( (wxml,key)=>{
+        if( wxml.tag === 'template' ){
+            tmpstart = true;
+        }
+    })
+    
 }
