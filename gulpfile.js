@@ -33,7 +33,11 @@ const PAGES_PATH = path.join(__dirname,'wx/wcjs_wx_miniprogram/pages')
 const selectNodeCache = {}
 // 样式选择器对应的Wxml片段 用于完成后生成HTML使用
 const selectMap = {};
+
+
 // 存放查找到的模版
+const findTemplates = {}
+// 模版缓存
 const templateCache = {}
 // 伪元素伪类匹配正则表达式
 const pseudoClassReg = /\:link|\:visited|\:active|\:hover|\:focus|\:before|\:\:before|\:after|\:\:after|\:first-letter|\:first-line|\:first-child|\:lang\(.*\)|\:lang|\:first-of-type|\:last-of-type|\:only-child|:nth-last-child\(.*\)|\:nth-of-type\(.*\)|\:nth-last-of-type\(.*\)|\:last-child|\:root|\:empty|\:target|\:enabled|\:disabled|\:checked|\:not\(.*\)|\:\:selection/g;
@@ -56,6 +60,12 @@ gulp.task('one',async function(){
     
     //获取Wxml树
     const WxmlTree = getWxmlTree(pageWxml);
+
+    for( const name in findTemplates ){
+        templateCache[name] = await findTemplates[name]()
+    }
+
+    console.log( templateCache )
 
     //检查同级元素
     const _checkHasSelect = (select) => {
@@ -343,9 +353,11 @@ const getWxmlTree = (wxmlStr)=>{
 
             if( isImportReg.test(tagName) ){
                 const importSrc =  getAttr($1,'src');
-                const templatePath = path.join( path.join( PAGES_PATH,'/addtoptics' ), importSrc );
-                const tmp = await fsp.readFile(templatePath,'utf-8')
-                templateCache[importSrc] = getTemplateWxmlTree(importSrc,tmp);
+                findTemplates[importSrc] =  () => new Promise( async (resolve,reject)=>{
+                    const templatePath = path.join( path.join( PAGES_PATH,'/addtoptics' ), importSrc );
+                    const tmp = await fsp.readFile(templatePath,'utf-8')
+                    resolve( getTemplateWxmlTree(importSrc,tmp) );
+                })
             }
 
             if( isTemplateReg.test(tagName) ){
@@ -360,6 +372,8 @@ const getWxmlTree = (wxmlStr)=>{
                     class:tagClass,
                     id:tagId,
                     tag:tagName,
+                    statrTag:true,
+                    endTag:true,
                     parent:{
                         key:parentkey,
                         obj:head    
@@ -377,8 +391,6 @@ const getWxmlTree = (wxmlStr)=>{
             if( isCloseTagReg.test($1) ){
                 
                 const isCompleteTag = isCompleteTagReg.test($1);
-                
-                // parentkey != 'root'  ||
 
                 //需找到闭合标签 把指针指向上一层
                 if( !isCompleteTag ){       
@@ -391,6 +403,8 @@ const getWxmlTree = (wxmlStr)=>{
                     class:tagClass,
                     id:tagId,
                     tag:tagName,
+                    statrTag:isCompleteTag ? true : false,
+                    endTag:true,
                     parent:{
                         key:parentkey,
                         obj:head    
@@ -416,6 +430,8 @@ const getWxmlTree = (wxmlStr)=>{
                     class:tagClass,
                     id:tagId,
                     tag:tagName,
+                    statrTag:true,
+                    endTag:false,
                     parent:{
                         key:parentkey,
                         obj:head
@@ -438,14 +454,16 @@ const getWxmlTree = (wxmlStr)=>{
 
 // 把Wxml字符串转为树结构
 const getTemplateWxmlTree = (temkey,wxmlStr) => {
-    console.log('getTemplateWxmlTree')
-    console.log( getWxmlTree(wxmlStr).root )
+    const templates = {};
 
-    let tmpstart = false;
-    getWxmlTree(wxmlStr).root.childs.forEach( (wxml,key)=>{
-        if( wxml.tag === 'template' ){
-            tmpstart = true;
+    getWxmlTree(wxmlStr).root.childs.forEach( (child,index)=>{
+        const wxmlNode =  Object.keys(child)[0]
+        if( child[wxmlNode].tag === 'template' && child[wxmlNode].statrTag ){
+            const templateName = getAttr( wxmlNode,'name' );
+            templates[templateName] = child[wxmlNode].childs
         }
     })
+
+    return templates
     
 }
