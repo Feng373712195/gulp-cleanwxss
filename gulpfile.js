@@ -33,10 +33,6 @@ const PAGES_PATH = path.join(__dirname,'wx/wcjs_wx_miniprogram/pages')
 const selectNodeCache = {}
 // 样式选择器对应的Wxml片段 用于完成后生成HTML使用
 const selectMap = {};
-
-
-// 存放查找到的模版
-const findTemplates = {}
 // 模版缓存
 const templateCache = {}
 // 伪元素伪类匹配正则表达式
@@ -59,12 +55,10 @@ gulp.task('one',async function(){
     })
     
     //获取Wxml树
-    const WxmlTree = getWxmlTree(pageWxml);
+    const WxmlTree = await getWxmlTree(pageWxml);
 
-    for( const name in findTemplates ){
-        templateCache[name] = await findTemplates[name]()
-    }
-
+    console.log(templateCache,'templateCatech')
+ 
     console.log( templateCache )
 
     //检查同级元素
@@ -233,7 +227,10 @@ const getAttr = (tag,attr) => {
 // 把Wxml字符串转为树结构
 // 在转成树结构的过程中就可以把所有节点存储起来
 // 标签不会被覆盖 这个核实过了
-const getWxmlTree = (wxmlStr)=>{
+const getWxmlTree = async (wxmlStr,isTemplateWxml = false )=>{
+        //存放找到的模版
+        const findTemplates = {}
+
         //过滤调pageWxml中的注释
         wxmlStr = wxmlStr.replace(/\<!--(.*)-->/g,'')
 
@@ -360,9 +357,9 @@ const getWxmlTree = (wxmlStr)=>{
                 })
             }
 
-            if( isTemplateReg.test(tagName) ){
-                // console.log($1)
-                // console.log( getAttr($1,'is'),'is' )
+            if( isTemplateReg.test(tagName) && !isTemplateWxml ){
+                console.log($1,'===')
+                console.log( getAttr($1,'is'),'is','===' )
             }
 
             //是否单标签
@@ -448,15 +445,24 @@ const getWxmlTree = (wxmlStr)=>{
             parentkey = $1;
        
         }) 
+        
+        if( !isTemplateWxml ){
+            for( const name in findTemplates ){
+                console.log('name ====',name)
+                templateCache[name] = await findTemplates[name]()
+            }
+        }
 
         return WxmlTree;
 }
 
 // 把Wxml字符串转为树结构
-const getTemplateWxmlTree = (temkey,wxmlStr) => {
+const getTemplateWxmlTree = async (temkey,wxmlStr) => {
     const templates = {};
 
-    getWxmlTree(wxmlStr).root.childs.forEach( (child,index)=>{
+    const templateWxmlTree = await getWxmlTree(wxmlStr,true)
+
+    templateWxmlTree.root.childs.forEach( (child,index)=>{
         const wxmlNode =  Object.keys(child)[0]
         if( child[wxmlNode].tag === 'template' && child[wxmlNode].statrTag ){
             const templateName = getAttr( wxmlNode,'name' );
