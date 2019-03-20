@@ -33,8 +33,6 @@ const PAGES_PATH = path.join(__dirname,'wx/wcjs_wx_miniprogram/pages')
 const selectNodeCache = {}
 // 样式选择器对应的Wxml片段 用于完成后生成HTML使用
 const selectMap = {};
-// 模版缓存
-const templateCache = {}
 // 伪元素伪类匹配正则表达式
 const pseudoClassReg = /\:link|\:visited|\:active|\:hover|\:focus|\:before|\:\:before|\:after|\:\:after|\:first-letter|\:first-line|\:first-child|\:lang\(.*\)|\:lang|\:first-of-type|\:last-of-type|\:only-child|:nth-last-child\(.*\)|\:nth-of-type\(.*\)|\:nth-last-of-type\(.*\)|\:last-child|\:root|\:empty|\:target|\:enabled|\:disabled|\:checked|\:not\(.*\)|\:\:selection/g;
 //是否有同级选择器正则表达式 如： .a.b .a#b 
@@ -56,10 +54,6 @@ gulp.task('one',async function(){
     
     //获取Wxml树
     const WxmlTree = await getWxmlTree(pageWxml);
-
-    console.log(templateCache,'templateCatech')
- 
-    console.log( templateCache )
 
     //检查同级元素
     const _checkHasSelect = (select) => {
@@ -228,8 +222,13 @@ const getAttr = (tag,attr) => {
 // 在转成树结构的过程中就可以把所有节点存储起来
 // 标签不会被覆盖 这个核实过了
 const getWxmlTree = async (wxmlStr,isTemplateWxml = false )=>{
+        
+        // 模版缓存
+        const templateCache = {}
         //存放找到的模版
         const findTemplates = {}
+        // 找到的使用模版 反正重名 使用数组
+        const findUseTemplates = []
 
         //过滤调pageWxml中的注释
         wxmlStr = wxmlStr.replace(/\<!--(.*)-->/g,'')
@@ -357,30 +356,29 @@ const getWxmlTree = async (wxmlStr,isTemplateWxml = false )=>{
                 })
             }
 
-            if( isTemplateReg.test(tagName) && !isTemplateWxml ){
-                console.log($1,'===')
-                console.log( getAttr($1,'is'),'is','===' )
-            }
-
             //是否单标签
             if( isSingeTagReg.test($1) ){
+
                 const self = {
-                    childs:[],
-                    class:tagClass,
-                    id:tagId,
-                    tag:tagName,
-                    statrTag:true,
-                    endTag:true,
-                    parent:{
-                        key:parentkey,
-                        obj:head    
+                    [$1]:{
+                        childs:[],
+                        class:tagClass,
+                        id:tagId,
+                        tag:tagName,
+                        statrTag:true,
+                        endTag:true,
+                        parent:{
+                            key:parentkey,
+                            obj:head    
+                        }
                     }
                 }
-                _setNodeCache(self,tagClass,tagId)
+                if( isTemplateReg.test(tagName) && !isTemplateWxml ){
+                    findUseTemplates.push( { [getAttr($1,'is')] : self } )
+                }
+                _setNodeCache(self[$1],tagClass,tagId)
 
-                head.childs.push({
-                    [$1]:self
-                })
+                head.childs.push(self)
                 return; 
             }
     
@@ -396,26 +394,28 @@ const getWxmlTree = async (wxmlStr,isTemplateWxml = false )=>{
                 }
 
                 const self = {
-                    childs:[],
-                    class:tagClass,
-                    id:tagId,
-                    tag:tagName,
-                    statrTag:isCompleteTag ? true : false,
-                    endTag:true,
-                    parent:{
-                        key:parentkey,
-                        obj:head    
+                    [$1]:{
+                        childs:[],
+                        class:tagClass,
+                        id:tagId,
+                        tag:tagName,
+                        statrTag:isCompleteTag ? true : false,
+                        endTag:true,
+                        parent:{
+                            key:parentkey,
+                            obj:head    
+                        }
                     }
                 }
 
-                                
+                if( isTemplateReg.test(tagName) && !isTemplateWxml ){
+                    findUseTemplates.push( { [getAttr($1,'is')] : self } )
+                }                
                 if( isCompleteTag ){
-                    _setNodeCache(self,tagClass,tagId)
+                    _setNodeCache(self[$1],tagClass,tagId)
                 }
 
-                head.childs.push({
-                    [$1]:self
-                })
+                head.childs.push(self)
 
                 return;
             }
@@ -435,7 +435,11 @@ const getWxmlTree = async (wxmlStr,isTemplateWxml = false )=>{
                     }
                 }
             }
-              
+
+            if( isTemplateReg.test(tagName) && !isTemplateWxml ){
+                findUseTemplates.push( { [getAttr($1,'is')] : self } )
+            }
+
             _setNodeCache(self[$1],tagClass,tagId)
 
             head.childs.push(self);
@@ -451,7 +455,30 @@ const getWxmlTree = async (wxmlStr,isTemplateWxml = false )=>{
                 console.log('name ====',name)
                 templateCache[name] = await findTemplates[name]()
             }
+
+            console.log( templateCache )
         }
+
+        findUseTemplates.forEach(usetml=>{
+            // 准备被替换的模版
+            let replaceTml = null;
+            const useTemplateName = Object.keys(usetml)[0];
+            console.log('<<<<<<<<<<<<<<<<<<<<<<')
+            for( let importTmlPath in templateCache ){
+                if( templateCache[importTmlPath][useTemplateName] ){
+                    replaceTml = templateCache[importTmlPath][useTemplateName] 
+                    break;
+                }
+            }
+
+            if( replaceTml ){
+                // 找到要被替换模版在父组件的位置
+                console.log( usetml[useTemplateName] )
+                const useTemplateStr = Object.keys(usetml[useTemplateName])[0]
+                console.log( usetml[useTemplateName][useTemplateStr].parent.obj.childs.indexOf(usetml[useTemplateName]),'point' )
+            }
+            console.log('>>>>>>>>>>>>>>>>>>>>>>')
+        })
 
         return WxmlTree;
 }
