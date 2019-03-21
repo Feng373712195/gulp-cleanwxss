@@ -197,7 +197,7 @@ gulp.task('one',async function(){
         }
     }
 
-    // console.log( selectMap )
+    console.log( selectMap )
 
 })
 
@@ -221,6 +221,9 @@ const getAttr = (tag,attr) => {
 // 把Wxml字符串转为树结构
 // 在转成树结构的过程中就可以把所有节点存储起来
 // 标签不会被覆盖 这个核实过了
+
+// 2019-03-21 
+// selectNodeCache不再作为全局变量 而作为getWxmlTree的返回值
 const getWxmlTree = async (wxmlStr,isTemplateWxml = false )=>{
         
         // 模版缓存
@@ -376,6 +379,7 @@ const getWxmlTree = async (wxmlStr,isTemplateWxml = false )=>{
                 if( isTemplateReg.test(tagName) && !isTemplateWxml ){
                     findUseTemplates.push( { [getAttr($1,'is')] : self } )
                 }
+
                 _setNodeCache(self[$1],tagClass,tagId)
 
                 head.childs.push(self)
@@ -410,7 +414,8 @@ const getWxmlTree = async (wxmlStr,isTemplateWxml = false )=>{
 
                 if( isTemplateReg.test(tagName) && !isTemplateWxml ){
                     findUseTemplates.push( { [getAttr($1,'is')] : self } )
-                }                
+                }
+
                 if( isCompleteTag ){
                     _setNodeCache(self[$1],tagClass,tagId)
                 }
@@ -463,7 +468,6 @@ const getWxmlTree = async (wxmlStr,isTemplateWxml = false )=>{
             // 准备被替换的模版
             let replaceTml = null;
             const useTemplateName = Object.keys(usetml)[0];
-            console.log('<<<<<<<<<<<<<<<<<<<<<<')
             for( let importTmlPath in templateCache ){
                 if( templateCache[importTmlPath][useTemplateName] ){
                     replaceTml = templateCache[importTmlPath][useTemplateName] 
@@ -473,11 +477,12 @@ const getWxmlTree = async (wxmlStr,isTemplateWxml = false )=>{
 
             if( replaceTml ){
                 // 找到要被替换模版在父组件的位置
-                console.log( usetml[useTemplateName] )
                 const useTemplateStr = Object.keys(usetml[useTemplateName])[0]
-                console.log( usetml[useTemplateName][useTemplateStr].parent.obj.childs.indexOf(usetml[useTemplateName]),'point' )
+                let templateParentTheChilren = usetml[useTemplateName][useTemplateStr].parent.obj.childs;
+                let templatehaschildrenNodeIndex = templateParentTheChilren.indexOf(usetml[useTemplateName])
+                // 进行替换 
+                Array.prototype.splice.apply( templateParentTheChilren,[templatehaschildrenNodeIndex,1,...replaceTml] )
             }
-            console.log('>>>>>>>>>>>>>>>>>>>>>>')
         })
 
         return WxmlTree;
