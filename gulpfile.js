@@ -29,8 +29,6 @@ const PAGES_PATH = path.join(__dirname,'wx/wcjs_wx_miniprogram/pages')
 // _findNodeParent函数内部 区分id和class
 // 完成后生成HTML
 
-// 对已经查找过的节点位置缓存 下次可以直接在这里获取
-const selectNodeCache = {}
 // 样式选择器对应的Wxml片段 用于完成后生成HTML使用
 const selectMap = {};
 // 伪元素伪类匹配正则表达式
@@ -53,7 +51,7 @@ gulp.task('one',async function(){
     })
     
     //获取Wxml树
-    const WxmlTree = await getWxmlTree(pageWxml);
+    const { WxmlTree,selectNodeCache } = await getWxmlTree(pageWxml);
 
     //检查同级元素
     const _checkHasSelect = (select) => {
@@ -197,7 +195,7 @@ gulp.task('one',async function(){
         }
     }
 
-    console.log( selectMap )
+    // console.log( selectMap )
 
 })
 
@@ -226,6 +224,8 @@ const getAttr = (tag,attr) => {
 // selectNodeCache不再作为全局变量 而作为getWxmlTree的返回值
 const getWxmlTree = async (wxmlStr,isTemplateWxml = false )=>{
         
+        // 对已经查找过的节点位置缓存 下次可以直接在这里获取
+        const selectNodeCache = {}
         // 模版缓存
         const templateCache = {}
         //存放找到的模版
@@ -485,22 +485,42 @@ const getWxmlTree = async (wxmlStr,isTemplateWxml = false )=>{
             }
         })
 
-        return WxmlTree;
+        return { WxmlTree,selectNodeCache };
 }
 
 // 把Wxml字符串转为树结构
 const getTemplateWxmlTree = async (temkey,wxmlStr) => {
     const templates = {};
 
-    const templateWxmlTree = await getWxmlTree(wxmlStr,true)
+    // const { WxmlTree:templateWxmlTree,selectNodeCache } = await getWxmlTree(wxmlStr,true)
+    // console.log( selectNodeCache )
+    // templateWxmlTree.root.childs.forEach((child,index)=>{
+    //     const wxmlNode =  Object.keys(child)[0]
+    //     if( child[wxmlNode].tag === 'template' && child[wxmlNode].statrTag ){
+    //         const templateName = getAttr( wxmlNode,'name' );
+    //         templates[templateName] = child[wxmlNode].childs
+    //     }
+    // })
+    
+    const templateStartIndex = wxmlStr.search(/\<template.*\>/)
+    const templateEndIndex = wxmlStr.search(/\<\/template.*\>/) 
 
-    templateWxmlTree.root.childs.forEach( (child,index)=>{
-        const wxmlNode =  Object.keys(child)[0]
-        if( child[wxmlNode].tag === 'template' && child[wxmlNode].statrTag ){
-            const templateName = getAttr( wxmlNode,'name' );
-            templates[templateName] = child[wxmlNode].childs
+    const wxmlStrFindTemplate = (str) => {
+        const finds = [];
+        if( templateStartIndex!= -1 && templateEndIndex != -1 ){
+          let tml = str.slice(templateStartIndex,templateEndIndex + '10')
+          console.log(tml,'tml')
+          str = str.replace(tml,'') 
+          console.log(str,'str')
+          finds.push(tml)
+          // return wxmlStrFindTemplate(str)
         }
-    })
+        return finds;
+        
+    }
+
+    wxmlStrFindTemplate(wxmlStr)
+    // console.log( wxmlStrFindTemplate(wxmlStr) )
 
     return templates
     
