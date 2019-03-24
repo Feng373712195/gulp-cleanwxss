@@ -43,7 +43,7 @@ const PAGES_PATH = path.join(WX_DIR_PATH,'/pages')
 // 注意模版中的模版的是否可以处理 
 // js 动态渲染的class 或者 id 要特殊处理
 // 插件最后 记得写上测试用例
-// 不对注释节点处理
+// 不对注释节点处理 OK
 // 样式选择器对应的Wxml片段 用于完成后生成HTML使用
 
 // 2019-3-24
