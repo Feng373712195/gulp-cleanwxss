@@ -306,9 +306,7 @@ const getWxmlTree = async (wxmlStr,isTemplateWxml = false )=>{
 
         // 过滤调pageWxml中的注释 
         // 注意 单行注释可以 去除多行注释不成功
-        wxmlStr = wxmlStr.replace(/\<!--(.*)-->/g,'')
-
-        console.log( isTemplateWxml && wxmlStr )
+        wxmlStr = wxmlStr.replace(/\<!--([\s\S]*?)-->/g,'')
 
         //Wxml树结构
         const WxmlTree = {
@@ -394,15 +392,9 @@ const getWxmlTree = async (wxmlStr,isTemplateWxml = false )=>{
         
         // 取得标签名称
         const _getTagName = (tag)=>{
-            // console.log( tag,'tag' )
-            try{
-                const tagExec = /\<([\w|\-]+)\s?|\/(\w+)\s?\>/.exec(tag)
-                const tagName = tagExec[1] ? tagExec[1] : tagExec[2];
-                return tagName
-            }catch(e){
-                console.log( tag )
-                console.log('here err')
-            }
+            const tagExec = /\<([\w|\-]+)\s?|\/([\w|\-]+)\s?\>/.exec(tag)
+            const tagName = tagExec[1] ? tagExec[1] : tagExec[2];
+            return tagName
         }
 
         // 存入节点缓存对象 
