@@ -145,10 +145,34 @@
 
         // 2019-03-21 
         // selectNodeCache不再作为全局变量 而作为getWxmlTree的返回值
+        
+        // 2019-03-25
+        //  getTemplateWxmlTree 修改
+        //  返回结构如
+        //  templates:{
+        //     'template-a':{
+        //         template:,
+        //         selectNodes:''
+        //     },
+        //     'template-b':{
+        //         template:,
+        //         selectNodes:''
+        //     }
+        // }
+        // 注意嵌套template selectNode返回 
+
         const getWxmlTree =  (wxmlStr,isTemplateWxml = false)=>{
+
+                const templateStartTagReg = /\<template.*\s+name=/
                 
                 // 对已经查找过的节点位置缓存 下次可以直接在这里获取
-                const selectNodeCache = {}
+                const selectNodeCache = {}11
+
+                // template层数
+                let templateCount = 0;
+
+
+                let _todoName1 = {}
 
                 //存放找到的模版
                 const findTemplates = {}
@@ -301,6 +325,15 @@
 
                         let $1 = match[0]
                         console.log($1,'$1')
+
+                        if( isTemplateWxml ){
+                           if( templateStartTagReg.test($1) ){
+                                ++templateCount
+                                _todoName1[getAttr($1,'name')] = {}
+                                console.log(  _todoName1 )
+                           }
+                        }
+
                         wxmlStr = wxmlStr.replace($1,'');
 
                         const tagClass = _getTagClass($1);
@@ -549,21 +582,6 @@
         }
 
         startWork(str)
-
-        // getTemplateWxmlTree 修改
-
-        // 返回结构如
-        // templates:{
-        //     'template-a':{
-        //         template:,
-        //         selectNodes:''
-        //     },
-        //     'template-b':{
-        //         template:,
-        //         selectNodes:''
-        //     }
-        // }
-
 
     </script>
 </body>
