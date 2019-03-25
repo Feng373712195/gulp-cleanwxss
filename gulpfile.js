@@ -50,6 +50,9 @@ const PAGES_PATH = path.join(WX_DIR_PATH,'/pages')
 // 优化 异步报错机制
 // selectNode 问题
 
+// 2019-3-25
+// 把未匹配的选择器存储起来 下次遇到类似的选择器不用再去重复查找
+
 const selectMap = {};
 // 伪元素伪类匹配正则表达式
 const pseudoClassReg = /\:link|\:visited|\:active|\:hover|\:focus|\:before|\:\:before|\:after|\:\:after|\:first-letter|\:first-line|\:first-child|\:lang\(.*\)|\:lang|\:first-of-type|\:last-of-type|\:only-child|:nth-last-child\(.*\)|\:nth-of-type\(.*\)|\:nth-last-of-type\(.*\)|\:last-child|\:root|\:empty|\:target|\:enabled|\:disabled|\:checked|\:not\(.*\)|\:\:selection/g;
@@ -58,9 +61,11 @@ const peerSelectReg = /(?=\.)|(?=\#)/g;
 
 /**
  * '/addtoptics' 
- * '/all_column'
+ * '/all_column' 检查完毕 没有问题
+ * '/assistant'  检查完毕 没有问题
+ * '/authorization' 检查完毕 没有问题
  */
-const PAGE_DIR_PATH = '/assistant'
+const PAGE_DIR_PATH = '/brands'
 
 gulp.task('one',async function(){
     const pageFilePath = path.join( PAGES_PATH, PAGE_DIR_PATH );
@@ -78,11 +83,6 @@ gulp.task('one',async function(){
     
     //获取Wxml树
     const { WxmlTree,selectNodeCache } = await getWxmlTree(pageWxml);
-
-    console.log( selectNodeCache['.title'].length,'wxmlTree' )
-    console.log('=== Next ===')
-
-    return;
 
     //检查同级元素
     const _checkHasSelect = (select) => {
@@ -270,18 +270,18 @@ gulp.task('one',async function(){
     }
 
     // console.log( selectNodeCache )
-    // console.log( selectMap )
+    console.log( selectMap )
 
     // 检查没有被选中的元素
-    for( let x in selectMap ) {
-        !selectMap[x].select && console.log(x,selectMap[x])
-    }
+    // for( let x in selectMap ) {
+    //     !selectMap[x].select && console.log(x,selectMap[x])
+    // }
 
 })
 
-const debug = (str)=>{
-    const isDebug = false;
-    isDebug && console.log(str)
+const debug = (str,plase = true)=>{
+    const isDebug = true;
+    isDebug && plase && console.log(str)
 }
 
 // 取得表情的属性
@@ -417,7 +417,6 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false )=>{
         const _setNodeCache = (tag,classes,id,selectNodes)=>{
             //避免用重复class元素
             if( classes.length ){
-                classes.indexOf('title') != -1 && console.log( 'classes' )
                 classes.forEach(classname=>{
                     if(!selectNodes[`.${classname}`]){
                         selectNodes[`.${classname}`] = [];
@@ -441,10 +440,7 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false )=>{
             const node2Keys = Object.keys(nodes2)
             node2Keys.forEach(key=>{
                 if(nodes1[key]){
-                    console.log( key,'key' )
-                    console.log( 'after',nodes1[key].length )
                     nodes1[key] = nodes1[key].concat(nodes2[key])
-                    console.log( 'before',nodes1[key].length )
                 }else{
                     nodes1[key] = nodes2[key]
                 }
@@ -548,7 +544,7 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false )=>{
                     //需找到闭合标签 把指针指向上一层
                     if( !isCompleteTag ){
                         try{
-                            debug(head)
+                            debug(head,false)
                             parentkey = head.parent.key
                             head = head.parent.obj
                         }catch(e){
@@ -582,7 +578,7 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false )=>{
                     }
 
                     try{
-                        debug(head)
+                        debug(head,false)
                         head.childs.push(self)
                     }catch(e){
                         console.log('闭合标签 head 报错')
@@ -618,7 +614,7 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false )=>{
                 _setNodeCache(self[$1],tagClass,tagId,isTemplateWxml ? templateSelectNodes : pageSelectNodes)
                 
                 try{
-                    debug(head)
+                    debug(head,false)
                     head.childs.push(self)
                 }catch(e){
                     console.log('启始标签 head 报错')

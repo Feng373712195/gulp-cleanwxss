@@ -9,97 +9,118 @@
 <body>
     <script>
         
-        const str = `<view class="change-news-lists" wx:for="{{portalList}}" wx:key="{{index}}">
-                        <view class="news-item-templatewrap" wx:if="{{standard || (index+1)%4!=0 || item.hread_thumb=='' || bringOut}}"
-                            data-id="{{item.id?item.id:item.item_id}}" data-type="{{item.type||item.item_type}}"
-                            hover-class="hoverClass" bindtap="ToDetail">
-                            <view class="item-border-top change-news-list " wx:if="{{ item.data_type != 'video' }}">
-                                <view class="list-left">
-                                    <text class="list-left-title">{{item.post_title?item.post_title : item.item_name}}</text>
-                                    <view class="list-bottom" wx:if="{{title!='买车必看'}}">
-                                        <view class="author">
-                                            <text>{{item.post_from?item.post_from:'原创'}}</text>
-                                        </view>
-                                        <view>
-                                            <text>阅读</text>
-                                            {{item.post_hits}}
-                                            <text>评论</text>
-                                            {{item.comment_count}}
-                                        </view>
-                                    </view>
-                                    <view wx:else class="list-bottom" style="display:flex;">
-                                        <view class="sub_tag" wx:for="{{item.sub_tag}}" wx:key="{{index}}">{{item}}</view>
-                                    </view>
+        const str = `<template name="car-model-list">
+                        <view wx:if="{{ type =='chat' }}" class="car-model-list">
+                            <navigator
+                                hover-class="hoverClass"
+                                url="/pages/chat/chat?id={{item.id}}"
+                                data-id="{{ item.style_id ? item.style_id: item.object_id }}"
+                                data-order="{{ item.id }}"
+                                wx:key="{{index}}"
+                                class="list-block item-border-bottom"
+                                wx:for="{{carModellist.list}}">
+                                <image lazy-load="true" mode="aspectFit" src="{{item.thumb}}" style="width: 120px; height: 80px;" />
+                                <view class="car-info">
+                                    <text class="name">{{item.name}}</text>
+                                    <template is="star" data="{{ starData: item.starData }}" ></template>
+                                    <text class="price">{{item.price}}</text>
                                 </view>
-                                <view class="left-image">
-                                    <image src="{{item.imgUrl!=null?item.imgUrl:item.item_thumb}}" mode="widthFix"/>
-                                    <view class="list-bottom-date">{{item.last_modified_dateformat?item.last_modified_dateformat :
-                                        item.item_date}}
+                                <text data-styleid="{{item.style_id}}" data-index="{{index}}" wx:if="{{carModellist.showbtn}}" catchtap="aTapAskprice" class="{{item.status ? 'tag tag-askprice': 'tag tag-askprice-disable' }}">一键询价</text>
+                                <button plain="{{true}}" class="right-btn" hover-class="right-btn-hover" wx:if="{{item.rightText}}"
+                                    size="default"
+                                    catchtap="{{carModellist.rightBtnTapName}}"
+                                    data-id="{{item.id}}">{{item.rightText}}</button>
+                            </navigator>
+                        </view>
+                        <view wx:if="{{ type=='carlist' }}" class="car-model-list">
+                            <view bindtap="toDetail"
+                                data-id="{{ item.style_id ? item.style_id: item.object_id }}"
+                                data-order="{{ item.id }}"
+                                data-type="{{ item.type ? item.type : '' }}"
+                                  data-thumb="{{item.thumb}}"
+                                  data-name="{{item.name}}"
+                                wx:key="{{index}}"
+                                class="list-block item-border-bottom"
+                                wx:for="{{carModellist.list}}"
+                                hover-class="hoverClass">
+                                <image mode="aspectFit" src="{{item.thumb}}" style="width: 120px; height: 80px;" />
+                                <view class="car-info">
+                                    <view class="info-top">
+                                        <text class="name {{ item.type == 'article' ? 'newsName' : '' }}">{{item.name}}</text>
+                                        <view class="title-tag" wx:if="{{ item.tag != underfined && item.tag != '' }}">{{ item.tag }}</view>
                                     </view>
-                                    <view></view>
+                                    <template is="star" data="{{ starData: item.starData }}" wx:if="{{ item.tag == '' && item.type != 'article' }}"></template>
+                                    <text class="price {{ item.tag != '' ? 'priceMagin' : '' }} ">{{item.price}}</text>
+                                    <view class="list-date" wx:if="{{ item.tag != '' && item.date != '' }}"> {{ item.date }} </view>
+                                </view>
+                                <text data-id="{{item.id}}" data-styleid="{{item.style_id}}" data-index="{{index}}" wx:if="{{carModellist.showbtn}}" catchtap="aTapAskprice" class="{{item.status ? 'tag tag-askprice': 'tag tag-askprice-disable' }}">{{carModellist.inquiry? '免费询价' : '一键询价'}}</text>
+                                <button plain="{{true}}" class="right-btn" hover-class="right-btn-hover" wx:if="{{item.rightText}}"
+                                    size="default"
+                                    catchtap="{{carModellist.rightBtnTapName}}"
+                                    data-id="{{item.id}}"
+                                    data-index="{{index}}">{{item.rightText}}</button>
+                                    <view class="icon-right" wx:if="{{!item.rightText && !carModellist.showbtn}}"></view>
+                            </view>
+                        </view>
+                        <!-- 口碑排行 -->
+                        <view wx:if="{{type=='praise'}}" class="car-model-list">
+                            <view
+                                bindtap="toDetail"
+                                wx:key="{{index}}"
+                                data-id="{{item.model_id}}"
+                                class="list-block item-border-bottom"
+                                wx:if="{{index<3}}"
+                                wx:for="{{koubeiList}}"
+                                hover-class="hoverClass">
+                                <image mode="aspectFit" src="{{item.thumb}}" style="width: 120px; height: 80px;" />
+                                <view class="car-info">
+                                   <text class="name">{{item.name}}</text>
+                                   <template is="star" data="{{ starData: item.starData }}" ></template>
+                                   <text class="price">{{item.price}}</text>
+                                   <view class="six_box_warpper">
+                                        <view class="six_box six_box_{{index}}"><text>{{index+1}}</text></view>
+                                   </view>
+
                                 </view>
                             </view>
-                            <view wx:else class="twitter" data-class="1">
-                                <view>
-                                    <view>
-                                        <view wx:if="{{ !item.play }}" class="video-image" data-play="{{item.play}}" bindtap="playVideo"
-                                            data-id="{{item.id}}">
-                                            <image src="{{item.imgUrl}}" mode="aspectFill"></image>
-                                            <image src="/assets/icons/play.png" class="play-icon" wx:if="{{item.videoUrl}}"/>
-                                        </view>
-                                        <video wx:else src="{{item.videoUrl}}" id="{{ 'video' + item.videoId }}" controls
-                                            autoplay="{{item.autoPlay}}" objectFit="fill"></video>
-                                    </view>
-                                    <view class="twitter-bottom" data-id="{{item.id}}" data-type="{{item.data_type}}"
-                                        bindtap="ToDetail">
-                                        <view class="title">{{item.post_title}}</view>
-                                        <view>{{item.last_modified_dateformat}}
-                                            <view>
-                                                <text class="spacing">阅读</text>
-                                                {{item.post_hits}}
-                                                <text class="spacing">评论</text>
-                                                {{item.comment_count}}
-                                            </view>
-                                        </view>
-                                    </view>
+                            <view
+                                hover-class="hoverClass"
+                                bindtap="toDetail"
+                                wx:key="{{index}}"
+                                data-id="{{item.model_id}}"
+                                class="list-block item-border-bottom"
+                                wx:if="{{index>=3 && index<5}}"
+                                wx:for="{{koubeiList}}">
+                                <view class="car-info_simple">
+                                   <text class="name">{{item.name}}</text>
+                                   <view class="six_box_warpper">
+                                        <view class="six_box"><text>{{index+1}}</text></view>
+                                   </view>
                                 </view>
                             </view>
                         </view>
-                        <view wx:else class="twitter" data-class="1">
-                            <view hover-class="hoverClass">
-                                <image src="{{item.hread_thumb}}" mode="aspectFill" wx:if="{{ item.data_type == 'article' }}"
-                                    data-id="{{item.id}}" data-type="{{item.data_type}}" bindtap="ToDetail"></image>
-                                <view wx:else>
-                                    <view>
-                                        <view wx:if="{{ !item.play }}" class="video-image" data-id="{{item.id}}" data-index="{{index}}"
-                                            bindtap="playVideo">
-                                            <image src="{{item.imgUrl}}" mode="aspectFill"></image>
-                                            <image src="/assets/icons/play.png" class="play-icon" wx:if="{{item.videoUrl}}"/>
-                                        </view>
-                                        <video wx:else src="{{item.videoUrl}}" id="{{ 'video' + item.videoId }}" controls
-                                            objectFit="fill"></video>
-                                    </view>
-                                    <!-- <video src="{{item.videoUrl}}" id="{{ 'video' + item.videoId }}" controls autoplay="{{item.autoPlay}}"></video> -->
 
-                                </view>
-                                <view class="twitter-bottom" data-id="{{item.id}}" data-type="{{item.data_type}}" bindtap="ToDetail">
-                                    <view class="title">{{item.post_title}}</view>
-                                    <view>{{item.last_modified_dateformat}}
-                                        <view>
-                                            <text class="spacing">阅读</text>
-                                            {{item.post_hits}}
-                                            <text class="spacing">评论</text>
-                                            {{item.comment_count}}
+                        <view wx:if="{{ type=='carmouth' }}" class="car-model-list" wx:for="{{carModellist}}" wx:key="{{index}}">
+                            <navigator url="/pages/detail/detail?id={{item.model_id}}" data-modelname="{{item.model_name}}" data-modelid="{{item.model_id}}" bindtap="catchHistory">
+                                <view class="list-block {{index+1==lengths?'':'item-border-bottom'}}" >
+                                    <view style="position:relative">
+                                        <view class="car-ranking">{{index+1}}</view>
+                                        <image mode="aspectFit" src="{{item.thumb}}"  />
+                                    </view>
+                                    <view class="car-wordofmouth">
+                                        <view class="car-name">
+                                            <view class="">{{item.model_name}}</view>
+                                            <view class="">{{item.minprice}}万-{{item.maxprice}}万</view>
+                                        </view>
+                                        <view class="car-score" data-modelname="{{item.model_name}}" data-modelid="{{item.model_id}}" catchtap="jumpToCarerRating">
+                                            <view>{{item.score}}</view>
+                                            <view>{{item.koubei_count}}条口碑</view>
                                         </view>
                                     </view>
                                 </view>
-                            </view>
+                            </navigator>
                         </view>
-                    </view>`
-
-        const startWork = async (pageWxml)=>{
-            const { WxmlTree,selectNodeCache } = await getWxmlTree(pageWxml);
-        }
+                    </template>`
 
         // 取得表情的属性
         const getAttr = (tag,attr) => {
@@ -124,14 +145,15 @@
 
         // 2019-03-21 
         // selectNodeCache不再作为全局变量 而作为getWxmlTree的返回值
-        const getWxmlTree =  (wxmlStr,isTemplateWxml = false )=>{
+        const getWxmlTree =  (wxmlStr,isTemplateWxml = false)=>{
                 
                 // 对已经查找过的节点位置缓存 下次可以直接在这里获取
                 const selectNodeCache = {}
-                // 模版缓存
-                const templateCache = {}
+
                 //存放找到的模版
                 const findTemplates = {}
+                // 模版缓存
+                const templateCache = {}
                 // 找到的使用模版 反正重名 使用数组
                 const findUseTemplates = []
 
@@ -287,6 +309,7 @@
 
                         if( isImportReg.test(tagName) ){
                             const importSrc =  getAttr($1,'src');
+
                             findTemplates[importSrc] =  () => new Promise( async (_resolve,_reject)=>{
                                 let templatePath = '';
                                 
@@ -299,7 +322,7 @@
                                 })
                                 .catch(err=>{
                                     console.log('没有找到模版文件 模版地址:',importSrc);
-                                    reject( )
+                                    reject()
                                 })
                                 .then(tmp =>{
                                     return getTemplateWxmlTree(importSrc,tmp)
@@ -478,47 +501,70 @@
 
         // 把Wxml字符串转为树结构
         const getTemplateWxmlTree = async (temkey,wxmlStr) => {
-            const templates = {};
-            const templateStartRegExp = /\<template.*\>/
-            const templateEndRegExp = /\<\/template.*\>/
             
-            const wxmlStrFindTemplate = (str,finds) => {
-                finds = finds || [];
-                let templateName = ''
-                const templateStartIndex = str.search(templateStartRegExp)
-                const templateEndIndex = str.search(templateEndRegExp) 
+            // const templates = {};
+            // const templateStartRegExp = /\<template.*\>/
+            // const templateEndRegExp = /\<\/template.*\>/
+            
+            // const wxmlStrFindTemplate = (str,finds) => {
+            //     finds = finds || [];
+            //     let templateName = ''
+            //     const templateStartIndex = str.search(templateStartRegExp)
+            //     const templateEndIndex = str.search(templateEndRegExp) 
 
-                if( templateStartIndex!= -1 && templateEndIndex != -1 ){
-                let tpl = str.substr(templateStartIndex,templateEndIndex + 11)
-                str = str.replace(tpl,'')
-                finds.push({ name:'',tpl:tpl.replace(templateStartRegExp,($1,$2)=>{
-                        templateName = getAttr($1,'name')
-                        return ''
-                })
-                .replace(templateEndRegExp,'') })
-                finds[finds.length-1].name = templateName;
-                return wxmlStrFindTemplate(str,finds)
-                }
-                return finds;
-            }
+            //     if( templateStartIndex!= -1 && templateEndIndex != -1 ){
+            //     let tpl = str.substr(templateStartIndex,templateEndIndex + 11)
+            //     str = str.replace(tpl,'')
+            //     finds.push({ name:'',tpl:tpl.replace(templateStartRegExp,($1,$2)=>{
+            //             templateName = getAttr($1,'name')
+            //             return ''
+            //     })
+            //     .replace(templateEndRegExp,'') })
+            //     finds[finds.length-1].name = templateName;
+            //     return wxmlStrFindTemplate(str,finds)
+            //     }
+            //     return finds;
+            // }
 
-            const templateStrArr = wxmlStrFindTemplate(wxmlStr)
-            for( let index = 0,len = templateStrArr.length; index < len ; index++ ){
-                const templateName = templateStrArr[index].name
-                console.log( templateStrArr[index].name,'<<<<<<<<<<<<<<<<<<<<< templateName >>>>>>>>>>>>>>>>>>>>>' )
-                const { WxmlTree:templateWxmlTree,selectNodesCache } = await getWxmlTree(templateStrArr[index].tpl,true)
-                templates[templateName] = {
-                    templateWxmlTree:templateWxmlTree.root.childs,
-                    templateSelectNodes:selectNodesCache
-                }
-            }
+            // const templateStrArr = wxmlStrFindTemplate(wxmlStr)
+            // for( let index = 0,len = templateStrArr.length; index < len ; index++ ){
+            //     const templateName = templateStrArr[index].name
+            //     console.log( templateStrArr[index].name,'<<<<<<<<<<<<<<<<<<<<< templateName >>>>>>>>>>>>>>>>>>>>>' )
+            //     const { WxmlTree:templateWxmlTree,selectNodesCache } = await getWxmlTree(templateStrArr[index].tpl,true)
+            //     templates[templateName] = {
+            //         templateWxmlTree:templateWxmlTree.root.childs,
+            //         templateSelectNodes:selectNodesCache
+            //     }
+            // }
 
-            return templates
+            // return templates
+
+            return await getWxmlTree(wxmlStr,true)
             
         }
 
+        const startWork = async (pageWxml)=>{
+            // const { WxmlTree,selectNodeCache } = await getWxmlTree(pageWxml);
+            const { templateWxmlTree,templateSelectNodes } = getTemplateWxmlTree('test',pageWxml)
+        }
 
         startWork(str)
+
+        // getTemplateWxmlTree 修改
+
+        // 返回结构如
+        // templates:{
+        //     'template-a':{
+        //         template:,
+        //         selectNodes:''
+        //     },
+        //     'template-b':{
+        //         template:,
+        //         selectNodes:''
+        //     }
+        // }
+
+
     </script>
 </body>
 </html>
