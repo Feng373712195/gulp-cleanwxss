@@ -164,14 +164,16 @@
         const getWxmlTree =  (wxmlStr,isTemplateWxml = false)=>{
 
                 const templateStartTagReg = /\<template.*\s+name=/
+
+                const useTemplateTagReg = /<\template.*\s+is=/
                 
                 // 对已经查找过的节点位置缓存 下次可以直接在这里获取
-                const selectNodeCache = {}11
+                const selectNodeCache = {}
 
                 // template层数
                 let templateCount = 0;
 
-
+                // 临时遍历1
                 let _todoName1 = {}
 
                 //存放找到的模版
@@ -324,16 +326,6 @@
                     while( match = /\<[\s\S]*?\>/.exec(wxmlStr) ){
 
                         let $1 = match[0]
-                        console.log($1,'$1')
-
-                        if( isTemplateWxml ){
-                           if( templateStartTagReg.test($1) ){
-                                ++templateCount
-                                _todoName1[getAttr($1,'name')] = {}
-                                console.log(  _todoName1 )
-                           }
-                        }
-
                         wxmlStr = wxmlStr.replace($1,'');
 
                         const tagClass = _getTagClass($1);
@@ -373,9 +365,32 @@
                             })
                         }
 
+                        if( isTemplateWxml && isTemplateReg.test(tagName) ){
+                            console.log($1,'isTemplateReg')
+                           if( templateStartTagReg.test($1) ){
+                                ++templateCount
+                               console.log('templateCount',templateCount)
+                                _todoName1[getAttr($1,'name')] = {}
+                                continue;
+                           }else if( isCloseTagReg.test($1) ){
+                               --templateCount
+                               console.log('templateCount',templateCount)
+                               if( templateCount == 0 ){
+                                    console.log('last close')
+                                    console.log('templateCount',templateCount)
+                                    continue;
+                               }
+                           }else if( isCompleteTagReg.test($1) ){
+
+                           }else{
+                               ++templateCount
+                               console.log('templateCount',templateCount)
+                           }
+                        }
+
                         //是否单标签
                         if( isSingeTagReg.test($1) ){
-                            console.log('是单标签')
+                            // console.log('是单标签')
 
                             const self = {
                                 [$1]:{
@@ -393,7 +408,7 @@
                             }
 
                             //收集使用的模版
-                            if( isTemplateReg.test(tagName) && !isTemplateWxml ){
+                            if( isTemplateReg.test(tagName) ){
                                 findUseTemplates.push( { [getAttr($1,'is')] : self } )
                             }
 
@@ -406,14 +421,14 @@
                 
                         //是否闭合标签
                         if( isCloseTagReg.test($1) ){
-                            console.log('是闭合标签')
+                            // console.log('是闭合标签')
 
                             const isCompleteTag = isCompleteTagReg.test($1);
 
                             //需找到闭合标签 把指针指向上一层
                             if( !isCompleteTag ){
                                 try{
-                                    console.log(head)
+                                    // console.log(head)
                                     parentkey = head.parent.key
                                     head = head.parent.obj
                                 }catch(e){
@@ -438,7 +453,7 @@
                                 }
                             }
 
-                            if( isTemplateReg.test(tagName) && !isTemplateWxml ){
+                            if( isTemplateReg.test(tagName) ){
                                 findUseTemplates.push( { [getAttr($1,'is')] : self } )
                             }
 
@@ -447,7 +462,7 @@
                             }
 
                             try{
-                                console.log(head)
+                                // console.log(head)
                                 head.childs.push(self)
                             }catch(e){
                                 console.log('闭合标签 head 报错')
@@ -458,7 +473,7 @@
                             continue;
                         }
 
-                        console.log('是起始标签')
+                        // console.log('是起始标签')
                         
                         //不是闭合标签 也不是 单标签 就是启始标签
                         const self = {
@@ -476,14 +491,14 @@
                             }
                         }
 
-                        if( isTemplateReg.test(tagName) && !isTemplateWxml ){
+                        if( isTemplateReg.test(tagName) ){
                             findUseTemplates.push( { [getAttr($1,'is')] : self } )
                         }
 
                         _setNodeCache(self[$1],tagClass,tagId)
                         
                         try{
-                            console.log(head)
+                            // console.log(head)
                             head.childs.push(self)
                         }catch(e){
                             console.log('启始标签 head 报错')
