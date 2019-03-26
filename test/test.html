@@ -122,7 +122,9 @@
                         </view>
                     </template>
                     <template name="car-model-list2222222222">
+                        <view class="a" ></view>
                         <template is="star_4" data="{{ starData: item.starData }}" ></template>
+                        <view class="b" ></view>
                         <template is="star_5" data="{{ starData: item.starData }}" ></template>
                         <template is="star_6" data="{{ starData: item.starData }}" ></template>
                     </template>
@@ -172,9 +174,14 @@
                 const templateStartTagReg = /\<template.*\s+name=/
 
                 const useTemplateTagReg = /\<template.*\s+is=/
+
+                // 页面中对应选择器元素
+                const pageSelectNodes = {}
+                // 组件中对应选择器元素
+                let templateSelectNodes = {}
                 
                 // 对已经查找过的节点位置缓存 下次可以直接在这里获取
-                const selectNodeCache = {}
+                let selectNodeCache = {}
 
                 // template层数 isTemplateWxml为true时会用到
                 let templateCount = 0;
@@ -225,7 +232,7 @@
                     }
                     head = newWxmlTree.root
                     parentkey = 'root'
-
+                    templateSelectNodes = {}
                     return newWxmlTree
                 }
 
@@ -302,22 +309,22 @@
                 }
 
                 // 存入节点缓存对象 
-                const _setNodeCache = (tag,classes,id)=>{
+                const _setNodeCache = (tag,classes,id,selectNodes)=>{
                     //避免用重复class元素
-                    if( classes ){
+                    if( classes.length ){
                         classes.forEach(classname=>{
-                            if(!selectNodeCache[`.${classname}`]){
-                                selectNodeCache[`.${classname}`] = [];
+                            if(!selectNodes[`.${classname}`]){
+                                selectNodes[`.${classname}`] = [];
                             }
-                            selectNodeCache[`.${classname}`].push(tag);
+                            selectNodes[`.${classname}`].push(tag);
                         })
                     }
                     //避免有重复id元素
                     if( id ){
-                        if(!selectNodeCache[`#${id}`]){
-                            selectNodeCache[`#${id}`] = [];
+                        if(!selectNodes[`#${id}`]){
+                            selectNodes[`#${id}`] = [];
                         }
-                        selectNodeCache[`#${id}`].push(tag);
+                        selectNodes[`#${id}`].push(tag);
                     }
                 }
                 
@@ -429,7 +436,7 @@
                                 findUseTemplates.push( { [getAttr($1,'is')] : self } )
                             }
 
-                            _setNodeCache(self[$1],tagClass,tagId)
+                            _setNodeCache(self[$1],tagClass,tagId,isTemplateWxml ? templateSelectNodes : pageSelectNodes)
 
                             head.childs.push(self)
 
@@ -445,7 +452,7 @@
                                 // 模板包裹 的闭合template标签找到 
                                 if( templateCount == 0 ){
                                     _todoName1[currentTemplateName].tpl = WxmlTree.root.childs
-                                    console.log( _todoName1 )
+                                    _todoName1[currentTemplateName].selectNode = templateSelectNodes;
                                     WxmlTree = resetWxmlTree()
                                     continue;
                                 }
@@ -487,7 +494,7 @@
                             }
 
                             if( isCompleteTag ){
-                                _setNodeCache(self[$1],tagClass,tagId)
+                                _setNodeCache(self[$1],tagClass,tagId,isTemplateWxml ? templateSelectNodes : pageSelectNodes)
                             }
 
                             try{
@@ -529,7 +536,7 @@
                             ++templateCount
                         }
 
-                        _setNodeCache(self[$1],tagClass,tagId)
+                        _setNodeCache(self[$1],tagClass,tagId,isTemplateWxml ? templateSelectNodes : pageSelectNodes)
                         
                         try{
                             // console.log(head)
@@ -546,6 +553,8 @@
                 
                     }
                     
+                    console.log( _todoName1 )
+
                     // 处理import元素 找到的模板存入到templateCache
                     for( const name in findTemplates ){
                         templateCache[name] = await findTemplates[name]()
@@ -573,11 +582,11 @@
                             // 进行替换 
                             Array.prototype.splice.apply( templateParentTheChilren,[templatehaschildrenNodeIndex,1,...templateWxmlTree] )
                             // 合并 页面的selectNode 和 组件的selectNode
-                            mergeSelectNode(selectNodeCache,selectNode)
+                            mergeSelectNode( pageSelectNodes,selectNodeCache )
                         }
                     })
     
-                    resolve({ WxmlTree,selectNodeCache });
+                    resolve({ WxmlTree,selectNodeCache: isTemplateWxml ? templateSelectNodes : pageSelectNodes });
                 })
         }
 
