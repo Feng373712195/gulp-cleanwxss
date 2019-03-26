@@ -9,7 +9,7 @@
 <body>
     <script>
         
-        const str = `<template name="car-model-list">
+        const str = `<template name="car-model-list111111111">
                         <view wx:if="{{ type =='chat' }}" class="car-model-list">
                             <navigator
                                 hover-class="hoverClass"
@@ -22,7 +22,7 @@
                                 <image lazy-load="true" mode="aspectFit" src="{{item.thumb}}" style="width: 120px; height: 80px;" />
                                 <view class="car-info">
                                     <text class="name">{{item.name}}</text>
-                                    <template is="star" data="{{ starData: item.starData }}" ></template>
+                                    <template is="star_1" data="{{ starData: item.starData }}" ></template>
                                     <text class="price">{{item.price}}</text>
                                 </view>
                                 <text data-styleid="{{item.style_id}}" data-index="{{index}}" wx:if="{{carModellist.showbtn}}" catchtap="aTapAskprice" class="{{item.status ? 'tag tag-askprice': 'tag tag-askprice-disable' }}">一键询价</text>
@@ -49,7 +49,7 @@
                                         <text class="name {{ item.type == 'article' ? 'newsName' : '' }}">{{item.name}}</text>
                                         <view class="title-tag" wx:if="{{ item.tag != underfined && item.tag != '' }}">{{ item.tag }}</view>
                                     </view>
-                                    <template is="star" data="{{ starData: item.starData }}" wx:if="{{ item.tag == '' && item.type != 'article' }}"></template>
+                                    <template is="star_2" data="{{ starData: item.starData }}" wx:if="{{ item.tag == '' && item.type != 'article' }}"></template>
                                     <text class="price {{ item.tag != '' ? 'priceMagin' : '' }} ">{{item.price}}</text>
                                     <view class="list-date" wx:if="{{ item.tag != '' && item.date != '' }}"> {{ item.date }} </view>
                                 </view>
@@ -75,7 +75,7 @@
                                 <image mode="aspectFit" src="{{item.thumb}}" style="width: 120px; height: 80px;" />
                                 <view class="car-info">
                                    <text class="name">{{item.name}}</text>
-                                   <template is="star" data="{{ starData: item.starData }}" ></template>
+                                   <template is="star_3" data="{{ starData: item.starData }}" ></template>
                                    <text class="price">{{item.price}}</text>
                                    <view class="six_box_warpper">
                                         <view class="six_box six_box_{{index}}"><text>{{index+1}}</text></view>
@@ -120,7 +120,13 @@
                                 </view>
                             </navigator>
                         </view>
-                    </template>`
+                    </template>
+                    <template name="car-model-list2222222222">
+                        <template is="star_4" data="{{ starData: item.starData }}" ></template>
+                        <template is="star_5" data="{{ starData: item.starData }}" ></template>
+                        <template is="star_6" data="{{ starData: item.starData }}" ></template>
+                    </template>
+                    `
 
         // 取得表情的属性
         const getAttr = (tag,attr) => {
@@ -165,16 +171,17 @@
 
                 const templateStartTagReg = /\<template.*\s+name=/
 
-                const useTemplateTagReg = /<\template.*\s+is=/
+                const useTemplateTagReg = /\<template.*\s+is=/
                 
                 // 对已经查找过的节点位置缓存 下次可以直接在这里获取
                 const selectNodeCache = {}
 
-                // template层数
+                // template层数 isTemplateWxml为true时会用到
                 let templateCount = 0;
-
                 // 临时遍历1
                 let _todoName1 = {}
+                // 当前处理模板名称
+                let currentTemplateName = ''
 
                 //存放找到的模版
                 const findTemplates = {}
@@ -188,7 +195,7 @@
                 wxmlStr = wxmlStr.replace(/\<!--([\s\S]*?)-->/g,'')
 
                 //Wxml树结构
-                const WxmlTree = {
+                let WxmlTree = {
                     root:{
                         childs:[
 
@@ -199,10 +206,29 @@
                         }
                     }
                 };
-            
+
                 let head = WxmlTree.root;
                 let parentkey = 'root';
                 
+                // 重置Wxml树
+                const resetWxmlTree = ()=>{
+                    const newWxmlTree = {
+                        root:{
+                            childs:[
+
+                            ],
+                            parent:{
+                                key:null,
+                                obj:null,
+                            }
+                        }
+                    }
+                    head = newWxmlTree.root
+                    parentkey = 'root'
+
+                    return newWxmlTree
+                }
+
                 // 取得标签内的Class
                 // 注意还有hover-class 之类的情况
                 const _getTagClass = (tag,arr)=>{
@@ -326,6 +352,7 @@
                     while( match = /\<[\s\S]*?\>/.exec(wxmlStr) ){
 
                         let $1 = match[0]
+                        console.log( $1 ,'$1' )
                         wxmlStr = wxmlStr.replace($1,'');
 
                         const tagClass = _getTagClass($1);
@@ -366,25 +393,15 @@
                         }
 
                         if( isTemplateWxml && isTemplateReg.test(tagName) ){
-                            console.log($1,'isTemplateReg')
+                            // 模板包裹 的启始template标签找到 
                            if( templateStartTagReg.test($1) ){
                                 ++templateCount
-                               console.log('templateCount',templateCount)
-                                _todoName1[getAttr($1,'name')] = {}
+                                currentTemplateName = getAttr($1,'name')
+                                _todoName1[currentTemplateName] = {
+                                    tpl:null,
+                                    selectNode:null
+                                }
                                 continue;
-                           }else if( isCloseTagReg.test($1) ){
-                               --templateCount
-                               console.log('templateCount',templateCount)
-                               if( templateCount == 0 ){
-                                    console.log('last close')
-                                    console.log('templateCount',templateCount)
-                                    continue;
-                               }
-                           }else if( isCompleteTagReg.test($1) ){
-
-                           }else{
-                               ++templateCount
-                               console.log('templateCount',templateCount)
                            }
                         }
 
@@ -408,7 +425,7 @@
                             }
 
                             //收集使用的模版
-                            if( isTemplateReg.test(tagName) ){
+                            if( useTemplateTagReg.test($1) ){
                                 findUseTemplates.push( { [getAttr($1,'is')] : self } )
                             }
 
@@ -422,6 +439,17 @@
                         //是否闭合标签
                         if( isCloseTagReg.test($1) ){
                             // console.log('是闭合标签')
+
+                            if( isTemplateWxml && isTemplateReg.test(tagName) ){
+                                --templateCount
+                                // 模板包裹 的闭合template标签找到 
+                                if( templateCount == 0 ){
+                                    _todoName1[currentTemplateName].tpl = WxmlTree.root.childs
+                                    console.log( _todoName1 )
+                                    WxmlTree = resetWxmlTree()
+                                    continue;
+                                }
+                            }
 
                             const isCompleteTag = isCompleteTagReg.test($1);
 
@@ -453,7 +481,8 @@
                                 }
                             }
 
-                            if( isTemplateReg.test(tagName) ){
+                            //收集使用的模版
+                            if( useTemplateTagReg.test($1) ){
                                 findUseTemplates.push( { [getAttr($1,'is')] : self } )
                             }
 
@@ -491,8 +520,13 @@
                             }
                         }
 
-                        if( isTemplateReg.test(tagName) ){
+                        //收集使用的模版
+                        if( useTemplateTagReg.test($1) ){
                             findUseTemplates.push( { [getAttr($1,'is')] : self } )
+                        }
+
+                        if( isTemplateWxml && isTemplateReg.test(tagName) ){
+                            ++templateCount
                         }
 
                         _setNodeCache(self[$1],tagClass,tagId)
@@ -512,12 +546,12 @@
                 
                     }
                     
-                    if( !isTemplateWxml ){
-                        for( const name in findTemplates ){
-                            templateCache[name] = await findTemplates[name]()
-                        }
+                    // 处理import元素 找到的模板存入到templateCache
+                    for( const name in findTemplates ){
+                        templateCache[name] = await findTemplates[name]()
                     }
-
+                    
+                    // 遍历在wxml中找到 带有is属性的template标签 
                     findUseTemplates.forEach(usetml=>{
                         // 准备被替换的模版
                         let replaceTml = null;
@@ -542,7 +576,7 @@
                             mergeSelectNode(selectNodeCache,selectNode)
                         }
                     })
-
+    
                     resolve({ WxmlTree,selectNodeCache });
                 })
         }

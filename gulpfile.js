@@ -53,6 +53,9 @@ const PAGES_PATH = path.join(WX_DIR_PATH,'/pages')
 // 2019-3-25
 // 把未匹配的选择器存储起来 下次遇到类似的选择器不用再去重复查找
 
+// 2019-3-26
+// css 还需要处理引入 css 引入的css中还有引入的问题
+
 const selectMap = {};
 // 伪元素伪类匹配正则表达式
 const pseudoClassReg = /\:link|\:visited|\:active|\:hover|\:focus|\:before|\:\:before|\:after|\:\:after|\:first-letter|\:first-line|\:first-child|\:lang\(.*\)|\:lang|\:first-of-type|\:last-of-type|\:only-child|:nth-last-child\(.*\)|\:nth-of-type\(.*\)|\:nth-last-of-type\(.*\)|\:last-child|\:root|\:empty|\:target|\:enabled|\:disabled|\:checked|\:not\(.*\)|\:\:selection/g;
