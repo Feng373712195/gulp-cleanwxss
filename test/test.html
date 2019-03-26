@@ -169,24 +169,26 @@
         // }
         // 注意嵌套template selectNode返回 
 
-        const getWxmlTree =  (wxmlStr,isTemplateWxml = false)=>{
+        const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = {})=>{
 
                 const templateStartTagReg = /\<template.*\s+name=/
-
                 const useTemplateTagReg = /\<template.*\s+is=/
 
                 // 页面中对应选择器元素
-                const pageSelectNodes = {}
+                // const pageSelectNodes = {}
                 // 组件中对应选择器元素
-                let templateSelectNodes = {}
-                
+                // let templateSelectNodes = {}
                 // 对已经查找过的节点位置缓存 下次可以直接在这里获取
-                let selectNodeCache = {}
+                // let selectNodeCache = {}
+                
+                let _selectNodes = {};
+
 
                 // template层数 isTemplateWxml为true时会用到
                 let templateCount = 0;
-                // 临时遍历1
-                let _todoName1 = {}
+
+                // 解析模版wxmlTree时 会存在这个对象
+                let templateNode = {}
                 // 当前处理模板名称
                 let currentTemplateName = ''
 
@@ -232,7 +234,7 @@
                     }
                     head = newWxmlTree.root
                     parentkey = 'root'
-                    templateSelectNodes = {}
+                    _selectNodes = {}
                     return newWxmlTree
                 }
 
@@ -359,7 +361,6 @@
                     while( match = /\<[\s\S]*?\>/.exec(wxmlStr) ){
 
                         let $1 = match[0]
-                        console.log( $1 ,'$1' )
                         wxmlStr = wxmlStr.replace($1,'');
 
                         const tagClass = _getTagClass($1);
@@ -404,7 +405,7 @@
                            if( templateStartTagReg.test($1) ){
                                 ++templateCount
                                 currentTemplateName = getAttr($1,'name')
-                                _todoName1[currentTemplateName] = {
+                                templateNode[currentTemplateName] = {
                                     tpl:null,
                                     selectNode:null
                                 }
@@ -436,7 +437,7 @@
                                 findUseTemplates.push( { [getAttr($1,'is')] : self } )
                             }
 
-                            _setNodeCache(self[$1],tagClass,tagId,isTemplateWxml ? templateSelectNodes : pageSelectNodes)
+                            _setNodeCache(self[$1],tagClass,tagId,_selectNodes)
 
                             head.childs.push(self)
 
@@ -451,8 +452,8 @@
                                 --templateCount
                                 // 模板包裹 的闭合template标签找到 
                                 if( templateCount == 0 ){
-                                    _todoName1[currentTemplateName].tpl = WxmlTree.root.childs
-                                    _todoName1[currentTemplateName].selectNode = templateSelectNodes;
+                                    templateNode[currentTemplateName].tpl = WxmlTree.root.childs
+                                    templateNode[currentTemplateName].selectNode = _selectNodes;
                                     WxmlTree = resetWxmlTree()
                                     continue;
                                 }
@@ -494,7 +495,7 @@
                             }
 
                             if( isCompleteTag ){
-                                _setNodeCache(self[$1],tagClass,tagId,isTemplateWxml ? templateSelectNodes : pageSelectNodes)
+                                _setNodeCache(self[$1],tagClass,tagId,_selectNodes)
                             }
 
                             try{
@@ -536,7 +537,7 @@
                             ++templateCount
                         }
 
-                        _setNodeCache(self[$1],tagClass,tagId,isTemplateWxml ? templateSelectNodes : pageSelectNodes)
+                        _setNodeCache(self[$1],tagClass,tagId,_selectNodes)
                         
                         try{
                             // console.log(head)
@@ -553,7 +554,7 @@
                 
                     }
                     
-                    console.log( _todoName1 )
+                    console.log( templateNode )
 
                     // 处理import元素 找到的模板存入到templateCache
                     for( const name in findTemplates ){
@@ -582,16 +583,16 @@
                             // 进行替换 
                             Array.prototype.splice.apply( templateParentTheChilren,[templatehaschildrenNodeIndex,1,...templateWxmlTree] )
                             // 合并 页面的selectNode 和 组件的selectNode
-                            mergeSelectNode( pageSelectNodes,selectNodeCache )
+                            mergeSelectNode( mianSelectNodes,_selectNodes )
                         }
                     })
     
-                    resolve({ WxmlTree,selectNodeCache: isTemplateWxml ? templateSelectNodes : pageSelectNodes });
+                    resolve( isTemplateReg ? templateNode : { WxmlTree,selectNodeCache: mianSelectNodes });
                 })
         }
 
         // 把Wxml字符串转为树结构
-        const getTemplateWxmlTree = async (temkey,wxmlStr) => {
+        const getTemplateWxmlTree = async (temkey,wxmlStr,selectNodes) => {
             
             // const templates = {};
             // const templateStartRegExp = /\<template.*\>/
@@ -630,7 +631,7 @@
 
             // return templates
 
-            return await getWxmlTree(wxmlStr,true)
+            return await getWxmlTree(wxmlStr,true,selectNodes)
             
         }
 
