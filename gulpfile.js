@@ -34,32 +34,36 @@ const PAGES_PATH = path.join(WX_DIR_PATH,'/pages')
 // 2019-3-23
 // 选择器处理进度
 // element	p	选择所有 <p> 元素。	1 《处理》
-// element,element	div,p	选择所有 <div> 元素和所有 <p> 元素。	1  逗号分割的当作多个选择器处理
+// element,element	div,p	选择所有 <div> 元素和所有 <p> 元素。	1  逗号分割的当作多个选择器处理 《处理》
 // element element	div p	选择 <div> 元素内部的所有 <p> 元素。	1 《处理》
 // element>element	div>p	选择父元素为 <div> 元素的所有 <p> 元素。	2
 // element+element	div+p	选择紧接在 <div> 元素之后的所有 <p> 元素。	2
 // 要注意 @supper @miade @keyfame 可能拼错了 -。- 的写法处理
 // 插件使用方法 参考 uncss
-// 注意模版中的模版的是否可以处理 
+// 注意模版中的模版的是否可以处理 OK
 // js 动态渲染的class 或者 id 要特殊处理
 // 插件最后 记得写上测试用例
 // 不对注释节点处理 OK
 // 样式选择器对应的Wxml片段 用于完成后生成HTML使用
 
 // 2019-3-24
-// 优化 异步报错机制
-// selectNode 问题
+// 优化 异步报错机制 OK
+// selectNode 问题 OK
 
 // 2019-3-25
-// 把未匹配的选择器存储起来 下次遇到类似的选择器不用再去重复查找
+// 把未匹配的选择器存储起来 下次遇到类似的选择器不用再去重复查找 
 
 // 2019-3-26
-// css 还需要处理引入 css 引入的css中还有引入的问题
-// 模版中重复is使用的模版可以跳过不再处理
-// 没引入的模版class 的选择器也存入selectNode了
+// css 还需要处理引入 css 引入的css中还有引入的问题 
+// 模版中重复is使用的模版可以跳过不再处理 OK
+// 没引入的模版class 的选择器也存入selectNode了 OK
 
+// 2019-3-27
 // 组件的 传入class名称也要留意如何处理 OK
 // selectNode 发现有class名称截取有问题 如模板中 'A B' 分别为两个class 没有处理好 OK
+// improt 引用路径不一样 其实模板是一样的问题
+// .tags-list .tag.active  { select: false } 错误  .top-swiper-dots .dot.active  { select: false } 错误  包含动态渲染的class 这种情况下判断选择器是否在用有问题
+
 
 const selectMap = {};
 // 伪元素伪类匹配正则表达式
@@ -91,10 +95,6 @@ gulp.task('one',async function(){
     
     //获取Wxml树
     const { WxmlTree,selectNodeCache } = await getWxmlTree(pageWxml);
-
-    // console.log( Object.keys(selectNodeCache) )
-
-    return
 
     //检查同级元素
     const _checkHasSelect = (select) => {
@@ -164,26 +164,17 @@ gulp.task('one',async function(){
         return false;
     }
 
-    //从子节点开始查找
-    for( let i = 0 ,len = classSelects.length; i < len; i++ ){
-        //存入selectMap
-        selectMap[classSelects[i]] = { };
-        const that = selectMap[classSelects[i]];
-        
-        // Page选择器 特殊处理
-        if( classSelects[i].match(/page/i) ){
-            that.select = true;
-            continue;
-        }
-
+    // 检查后代选择器是否生效
+    const checkProgenySelect = (classSelect) => {
         //过滤掉伪元素伪类
-        const selectQuery = classSelects[i].replace(pseudoClassReg,'')
+        const selectQuery = classSelect.replace(pseudoClassReg,'')
         //从子节点开始查找 把选择器数组翻转
         const selectNodes = selectQuery.split(' ').filter(v=>v).reverse();
 
         //选择器只匹配一个元素
         if( selectNodes.length == 1 ){
-            that.select = _checkHasSelect(selectNodes[0]) ? true : false
+            // that.select = _checkHasSelect(selectNodes[0]) ? true : false
+            return  _checkHasSelect(selectNodes[0]) ? true : false
         }
         //多元素选择器
         else{
@@ -207,16 +198,19 @@ gulp.task('one',async function(){
                         })
                         if( hasTag.some(v=>v) ){ 
                             finds = currentFindNodes.concat();
-                            that.select = true;
+                            // that.select = true;
+                            return true
                             continue;
                         }
                         else{
-                            that.select = false;
+                            // that.select = false;
+                            return false
                             break;
                         }
                     }
                     else{
-                        that.select = false;
+                        // that.select = false;
+                        return false
                         break;
                     }
                 }
@@ -242,7 +236,8 @@ gulp.task('one',async function(){
                             const hasParent = finds.some(v=>v);
                             // 如果选择器只有两个级别 如 .a .b 则这个选择器搜索完成
                             if( selectNodes.length == 2 ){
-                                that.select = hasParent ? true : false
+                                // that.select = hasParent ? true : false
+                                return hasParent ? true : false
                                 break;
                             }
                             else{
@@ -253,7 +248,8 @@ gulp.task('one',async function(){
                                     continue;
                                 }else{
                                     // 没有匹配 结束这个选择器的搜索
-                                    that.select = false;
+                                    // that.select = false;
+                                    return false
                                     break;
                                 }
                             }
@@ -261,13 +257,15 @@ gulp.task('one',async function(){
                         // 没有使用到这个选择器的页面元素
                         else{
                             // 没有匹配 结束这个选择器的搜索
-                            that.select = false;
+                            // that.select = false;
+                            return false
                             break;
                         }
                     }
                     else if( i2 == selectNodes.length-1 ){
                         // 每个选择器的最后一步 如果finds还有元素 说明找到了选择器的最顶层 说明页面中正在使用这个选择器
-                        that.select = finds.some(v=>v);
+                        // that.select = finds.some(v=>v);
+                        return finds.some(v=>v)
                     }
                     else{
                         // 继续搜索上一级 从子级到父级的搜索
@@ -281,6 +279,30 @@ gulp.task('one',async function(){
         }
     }
 
+    //从子节点开始查找
+    for( let i = 0 ,len = classSelects.length; i < len; i++ ){
+        //存入selectMap
+        selectMap[classSelects[i]] = { };
+        const that = selectMap[classSelects[i]];
+        
+        // Page选择器 特殊处理
+        if( classSelects[i].match(/page/i) ){
+            that.select = true;
+            continue;
+        }
+
+        // 是否为逗号分隔
+        let separateClassSelect = classSelects[i].split(',') 
+        // 有逗号分隔的选择器 其中一项有被使用就返回true
+        // 注意: 可以优化 在最后制作弹出的HTML 显示哪些被动 哪些没用 可以让使用者删除更多无用代码
+        if( separateClassSelect.length > 1 ){
+            that.select = separateClassSelect.some( classSelect => checkProgenySelect(classSelect) )
+        }else{
+            that.select = checkProgenySelect(classSelects[i])
+        }
+
+    }
+
     // console.log( selectNodeCache )
     // console.log( selectMap )
 
@@ -290,7 +312,7 @@ gulp.task('one',async function(){
     }
 })
 
-const debug = (str,plase = true)=>{
+const debug = (str,plase = true)=> {
     const isDebug = true;
     isDebug && plase && console.log(str)
 }
@@ -323,13 +345,8 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = {})=>{
     const templateStartTagReg = /\<template.*\s+name=/
     const useTemplateTagReg = /\<template.*\s+is=/
 
-    // 页面中对应选择器元素
-    // const pageSelectNodes = {}
-    // 组件中对应选择器元素
-    // let templateSelectNodes = {}
     // 对已经查找过的节点位置缓存 下次可以直接在这里获取
-    // let selectNodeCache = {}
-    
+    // let selectNodeCache = {}    
     let _selectNodes = {};
 
     // template层数 isTemplateWxml为true时会用到
@@ -348,7 +365,6 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = {})=>{
     const findUseTemplates = []
 
     // 过滤调pageWxml中的注释 
-    // 注意 单行注释可以 去除多行注释不成功
     wxmlStr = wxmlStr.replace(/\<!--([\s\S]*?)-->/g,'')
 
     //Wxml树结构
@@ -538,10 +554,10 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = {})=>{
                         reject()
                     })
                     .then(tmp =>{
-                        return getTemplateWxmlTree(importSrc,tmp)
+                        return getTemplateWxmlTree(importSrc,tmp,mianSelectNodes)
                     })
                     .then(res =>{
-                        console.log( 'resolve ===========' )
+                        // console.log( 'resolve ===========' )
                         _resolve(res)
                     })
                     .catch(err=>{
@@ -728,8 +744,6 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = {})=>{
 
             if( replaceTml ){
                 const { templateWxmlTree,selectNode } = replaceTml
-                // console.log( useTemplateName,'useTemplateName' )
-                // console.log( selectNode,'selectNode' )
                 // 找到要被替换模版在父组件的位置
                 const useTemplateStr = Object.keys(usetml[useTemplateName])[0]
                 let templateParentTheChilren = usetml[useTemplateName][useTemplateStr].parent.obj.childs;
@@ -739,7 +753,6 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = {})=>{
 
                 // 发现找到的第一次找到时合并 后面就没必要合并了 因为都一样 会造成重复
                 if( replaceTml.count == 1 ){
-                    console.log( 'replaceTml mergeSelectNode' )
                     // 使用它模板或者页面的selectNode 合并和 组件的selectNode
                     mergeSelectNode( mianSelectNodes,selectNode )
                 }
@@ -747,7 +760,6 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = {})=>{
         })
 
         if( !isTemplateWxml ){
-            console.log( 'page mergeSelectNode' )
             mergeSelectNode( mianSelectNodes,_selectNodes )
         }
 
