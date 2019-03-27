@@ -57,8 +57,9 @@ const PAGES_PATH = path.join(WX_DIR_PATH,'/pages')
 // css 还需要处理引入 css 引入的css中还有引入的问题
 // 模版中重复is使用的模版可以跳过不再处理
 // 没引入的模版class 的选择器也存入selectNode了
-// 组件的 传入class名称也要留意如何处理
-// selectNode 发现有class名称截取有问题
+
+// 组件的 传入class名称也要留意如何处理 OK
+// selectNode 发现有class名称截取有问题 如模板中 'A B' 分别为两个class 没有处理好 OK
 
 const selectMap = {};
 // 伪元素伪类匹配正则表达式
@@ -91,6 +92,9 @@ gulp.task('one',async function(){
     //获取Wxml树
     const { WxmlTree,selectNodeCache } = await getWxmlTree(pageWxml);
 
+    // console.log( Object.keys(selectNodeCache) )
+
+    return
 
     //检查同级元素
     const _checkHasSelect = (select) => {
@@ -281,9 +285,9 @@ gulp.task('one',async function(){
     // console.log( selectMap )
 
     // 检查没有被选中的元素
-    // for( let x in selectMap ) {
-    //     selectMap[x].select && console.log(x,selectMap[x])
-    // }
+    for( let x in selectMap ) {
+        !selectMap[x].select && console.log(x,selectMap[x])
+    }
 })
 
 const debug = (str,plase = true)=>{
@@ -407,7 +411,10 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = {})=>{
             while( dynamicClass = dynamicClassReg.exec(TagClassStr) ){
                 // console.log( dynamicClass,'dynamicClass' )
                 dynamicClass[1].replace(/[\'|\"](.*?)[\'|\"]/g,($1,$2)=>{
-                    $2 && TagClass.push($2)
+                    if($2){
+                        const classnames = $2.split(' ')
+                        tagClass = TagClass.concat(classnames)
+                    }
                 })
                 TagClassStr = TagClassStr.replace(dynamicClass[0],'')
             }
@@ -714,26 +721,33 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = {})=>{
             for( let importTmlPath in templateCache ){
                 if( templateCache[importTmlPath][useTemplateName] ){
                     replaceTml = templateCache[importTmlPath][useTemplateName]
+                    replaceTml.count ? (++replaceTml.count) : (replaceTml.count = 1)
                     break;
                 }
             }
 
             if( replaceTml ){
                 const { templateWxmlTree,selectNode } = replaceTml
-                console.log( useTemplateName,'useTemplateName' )
-                console.log( selectNode,'selectNode' )
+                // console.log( useTemplateName,'useTemplateName' )
+                // console.log( selectNode,'selectNode' )
                 // 找到要被替换模版在父组件的位置
                 const useTemplateStr = Object.keys(usetml[useTemplateName])[0]
                 let templateParentTheChilren = usetml[useTemplateName][useTemplateStr].parent.obj.childs;
                 let templatehaschildrenNodeIndex = templateParentTheChilren.indexOf(usetml[useTemplateName])    
                 // 进行替换 
                 Array.prototype.splice.apply( templateParentTheChilren,[templatehaschildrenNodeIndex,1,...templateWxmlTree] )
-                // 合并 页面的selectNode 和 组件的selectNode
-                mergeSelectNode( mianSelectNodes,selectNode )
+
+                // 发现找到的第一次找到时合并 后面就没必要合并了 因为都一样 会造成重复
+                if( replaceTml.count == 1 ){
+                    console.log( 'replaceTml mergeSelectNode' )
+                    // 使用它模板或者页面的selectNode 合并和 组件的selectNode
+                    mergeSelectNode( mianSelectNodes,selectNode )
+                }
             }
         })
 
         if( !isTemplateWxml ){
+            console.log( 'page mergeSelectNode' )
             mergeSelectNode( mianSelectNodes,_selectNodes )
         }
 
