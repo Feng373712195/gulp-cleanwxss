@@ -76,8 +76,11 @@ const peerSelectReg = /(?=\.)|(?=\#)/g;
  * '/all_column' 检查完毕 没有问题
  * '/assistant'  检查完毕 没有问题
  * '/authorization' 检查完毕 没有问题
+ * '/autoActivities' 检查完毕 没有问题
+ * '/brands' 检查完毕 没有问题
+ * 
  */
-const PAGE_DIR_PATH = '/brands'
+const PAGE_DIR_PATH = '/brand_selection'
 
 gulp.task('one',async function(){
     const pageFilePath = path.join( PAGES_PATH, PAGE_DIR_PATH );
@@ -92,9 +95,15 @@ gulp.task('one',async function(){
     pageWxss.replace(/([\.|\#|\w+].*)\{/g,($1,$2)=>{
         classSelects.push($2);
     })
+
+    console.log(pageWxss.replace( /@keyframes.*[\s\S]\{([\s\S]*)\}/g,''))
+
+    return;
     
     //获取Wxml树
     const { WxmlTree,selectNodeCache } = await getWxmlTree(pageWxml);
+
+    console.log( selectNodeCache['.active'],'selectNodeCache' )
 
     //检查同级元素
     const _checkHasSelect = (select) => {
@@ -228,6 +237,7 @@ gulp.task('one',async function(){
                             // console.log( selectNodes[i2],'=== 222 ===' )
                             // console.log( selectNode,'=== 333 ===' )
                             // 遍历所有使用到这个选择器的元素
+
                             matchNode.forEach(v=>{
                                 // 搜索是否下个选择器的是否为这个选择器元素的父级
                                 finds.push( _findNodeParent( v ,selectNodes[i2+1] ) )
@@ -304,7 +314,7 @@ gulp.task('one',async function(){
     }
 
     // console.log( selectNodeCache )
-    // console.log( selectMap )
+    console.log( selectMap )
 
     // 检查没有被选中的元素
     for( let x in selectMap ) {
@@ -410,6 +420,7 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = {})=>{
         
         // 判断前面是否有空格 避免匹配到 *-class 
         const hasClass = /\s+class=/;
+        let isD = false
         // 判断标签是否拥有class
         if( hasClass.test(tag) ){
             // 获取class属性在标签的开始位置
@@ -428,8 +439,9 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = {})=>{
                 // console.log( dynamicClass,'dynamicClass' )
                 dynamicClass[1].replace(/[\'|\"](.*?)[\'|\"]/g,($1,$2)=>{
                     if($2){
+                        isD = true
                         const classnames = $2.split(' ')
-                        tagClass = TagClass.concat(classnames)
+                        TagClass = TagClass.concat(classnames)
                     }
                 })
                 TagClassStr = TagClassStr.replace(dynamicClass[0],'')
