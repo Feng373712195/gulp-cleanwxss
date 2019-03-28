@@ -170,7 +170,8 @@ gulp.task('one',async function(){
     }
 
     // 检查后代选择器是否生效
-    const checkSelectQuery = (classSelect) => {        
+    const checkSelectQuery = (classSelect) => {    
+
         //过滤掉伪元素伪类
         const selectQuery = classSelect.replace(pseudoClassReg,'')
         //从子节点开始查找 把选择器数组翻转
@@ -178,10 +179,11 @@ gulp.task('one',async function(){
 
         //选择器只匹配一个元素
         if( selectNodes.length == 1 ){
-            
+
             if( ~selectNodes[0].indexOf('>') ){
-                console.log( classSelect )
+               checkBrotherSelectQuery(selectNodes[0])
             }
+
             // that.select = _checkHasSelect(selectNodes[0]) ? true : false
             return  _checkHasSelect(selectNodes[0]) ? true : false
         }
@@ -195,7 +197,7 @@ gulp.task('one',async function(){
            for( let i2 = 0,len = selectNodes.length; i2 < len; i2++ ){
 
                 if( ~selectNodes[i2].indexOf('>') ){
-                    console.log( classSelect )
+                    checkBrotherSelectQuery(selectNodes[i2])
                 }
 
                 // 为标签选择器
@@ -291,6 +293,33 @@ gulp.task('one',async function(){
                     }
                 }
            }
+        }
+    }
+
+    // 检查兄弟选择器是否生效
+    const checkBrotherSelectQuery = (classSelects) => {
+        console.log('checkBrotherSelectQuery',classSelects)
+
+        const selectNodes = classSelects.replace('>',' ').split(' ').filter(v=>v).reverse();
+         // 存放已查找到的元素
+        let finds = []; 
+        
+        for( let i = 0,len = selectNodes.length; i < len; i++ ){
+            if( i == 0 ){
+                if( !/^\.|^\#/.test(selectNodes[i]) ){
+                    
+                }else{
+                    
+                }
+            }else if(i == selectNodes.length-1){
+                return 
+            }else{
+                if( !/^\.|^\#/.test(selectNodes[i]) ){
+                    
+                }else{
+                    
+                }
+            }
         }
     }
 
