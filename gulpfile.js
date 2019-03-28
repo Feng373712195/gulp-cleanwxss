@@ -67,7 +67,7 @@ const PAGES_PATH = path.join(WX_DIR_PATH,'/pages')
 
 const selectMap = {};
 // 伪元素伪类匹配正则表达式
-const pseudoClassReg = /\:link|\:visited|\:active|\:hover|\:focus|\:before|\:\:before|\:after|\:\:after|\:first-letter|\:first-line|\:first-child|\:lang\(.*\)|\:lang|\:first-of-type|\:last-of-type|\:only-child|:nth-last-child\(.*\)|\:nth-of-type\(.*\)|\:nth-last-of-type\(.*\)|\:last-child|\:root|\:empty|\:target|\:enabled|\:disabled|\:checked|\:not\(.*\)|\:\:selection/g;
+const pseudoClassReg = /\:link|\:visited|\:active|\:hover|\:focus|\:before|\:\:before|\:after|\:\:after|\:first-letter|\:first-line|\:first-child|\:lang\(.*\)|\:lang|\:first-of-type|\:last-of-type|\:only-child|:nth-child\(.*\)|:nth-last-child\(.*\)|\:nth-of-type\(.*\)|\:nth-last-of-type\(.*\)|\:last-child|\:root|\:empty|\:target|\:enabled|\:disabled|\:checked|\:not\(.*\)|\:\:selection/g;
 //是否有同级选择器正则表达式 如： .a.b .a#b 
 const peerSelectReg = /(?=\.)|(?=\#)/g;
 
@@ -80,7 +80,7 @@ const peerSelectReg = /(?=\.)|(?=\#)/g;
  * '/brands' 检查完毕 没有问题
  * 
  */
-const PAGE_DIR_PATH = '/brand_selection'
+const PAGE_DIR_PATH = '/carerRating'
 
 gulp.task('one',async function(){
     const pageFilePath = path.join( PAGES_PATH, PAGE_DIR_PATH );
@@ -96,14 +96,10 @@ gulp.task('one',async function(){
         classSelects.push($2);
     })
 
-    console.log(pageWxss.replace( /@keyframes.*[\s\S]\{([\s\S]*)\}/g,''))
-
-    return;
+    // console.log(pageWxss.replace( /@keyframes.*[\s\S]\{([\s\S]*)\}/g,''))
     
     //获取Wxml树
     const { WxmlTree,selectNodeCache } = await getWxmlTree(pageWxml);
-
-    console.log( selectNodeCache['.active'],'selectNodeCache' )
 
     //检查同级元素
     const _checkHasSelect = (select) => {
@@ -174,7 +170,7 @@ gulp.task('one',async function(){
     }
 
     // 检查后代选择器是否生效
-    const checkProgenySelect = (classSelect) => {
+    const checkSelectQuery = (classSelect) => {        
         //过滤掉伪元素伪类
         const selectQuery = classSelect.replace(pseudoClassReg,'')
         //从子节点开始查找 把选择器数组翻转
@@ -182,6 +178,10 @@ gulp.task('one',async function(){
 
         //选择器只匹配一个元素
         if( selectNodes.length == 1 ){
+            
+            if( ~selectNodes[0].indexOf('>') ){
+                console.log( classSelect )
+            }
             // that.select = _checkHasSelect(selectNodes[0]) ? true : false
             return  _checkHasSelect(selectNodes[0]) ? true : false
         }
@@ -193,6 +193,11 @@ gulp.task('one',async function(){
            let cureetNode = null;
            // 把选择器转化成数组 如 .search-block .search-list .tag 转为 [.tag,.search-list,.search-block]
            for( let i2 = 0,len = selectNodes.length; i2 < len; i2++ ){
+
+                if( ~selectNodes[i2].indexOf('>') ){
+                    console.log( classSelect )
+                }
+
                 // 为标签选择器
                 // 这里可以设置一个到某个元素停止搜索的参数 避免如这种情况 .a view .b view 避免到.a搜到view标签 .b还会继续搜索下去
                 if( !/^\.|^\#/.test(selectNodes[i2]) ){
@@ -291,6 +296,7 @@ gulp.task('one',async function(){
 
     //从子节点开始查找
     for( let i = 0 ,len = classSelects.length; i < len; i++ ){
+
         //存入selectMap
         selectMap[classSelects[i]] = { };
         const that = selectMap[classSelects[i]];
@@ -306,20 +312,20 @@ gulp.task('one',async function(){
         // 有逗号分隔的选择器 其中一项有被使用就返回true
         // 注意: 可以优化 在最后制作弹出的HTML 显示哪些被动 哪些没用 可以让使用者删除更多无用代码
         if( separateClassSelect.length > 1 ){
-            that.select = separateClassSelect.some( classSelect => checkProgenySelect(classSelect) )
+            that.select = separateClassSelect.some( classSelect => checkSelectQuery(classSelect) )
         }else{
-            that.select = checkProgenySelect(classSelects[i])
+            that.select = checkSelectQuery(classSelects[i])
         }
 
     }
 
     // console.log( selectNodeCache )
-    console.log( selectMap )
+    // console.log( selectMap )
 
-    // 检查没有被选中的元素
-    for( let x in selectMap ) {
-        !selectMap[x].select && console.log(x,selectMap[x])
-    }
+    // // 检查没有被选中的元素
+    // for( let x in selectMap ) {
+    //     !selectMap[x].select && console.log(x,selectMap[x])
+    // }
 })
 
 const debug = (str,plase = true)=> {
