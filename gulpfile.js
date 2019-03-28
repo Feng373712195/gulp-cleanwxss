@@ -80,6 +80,7 @@ const peerSelectReg = /(?=\.)|(?=\#)/g;
  * '/brands' 检查完毕 没有问题
  * 
  */
+
 const PAGE_DIR_PATH = '/carerRating'
 
 gulp.task('one',async function(){
@@ -134,35 +135,59 @@ gulp.task('one',async function(){
     }
 
     //寻找子元素的父级元素
-    const _findNodeParent = (node,select) => {
+    const _findNodeParent = (node,select,deep = 9999) => {
+        console.log( 'findNodeParent' )
+        console.log('==== node =====')
+        console.log(node)
+        console.log('==== select ====')
+        console.log(select)
+        console.log('==== node.parent.key ====')
+        console.log( node.parent.key )
+        console.log('==== node.parent.obj.class ====')
+        console.log( node.parent.obj.class )
+        console.log( node.parent.key == null )
+        --deep;
         // 已经到达root节点 寻找不到节点
-        if( node.parent.key == 'root' ) return null;
+        if( node.parent.key == null ) return null;
 
         const peerSelect =  select.split(peerSelectReg);
         if( peerSelect.length > 1 ){
+            console.log('111')
             const finds = [];
             peerSelect.forEach(v1 => {
                 //注意这里要区分id 和 class
                 finds.push( node.parent.obj.class.findIndex(v2=> `.${v2}` == v1) )
             })
             const isParent = finds.every(v=> v!=-1 )
-            return isParent ? node.parent.obj : 
-                    _findNodeParent(node.parent.obj,select)
+            if( deep == 0 ){
+                return isParent ? node.parent.obj : null
+            }else{
+                return isParent ? node.parent.obj : 
+                        _findNodeParent(node.parent.obj,select)
+            }
         }else{
+            console.log('222')
             //注意这里要区分id 和 class
+            console.log( node.parent.obj )
             const isParent = node.parent.obj.class.findIndex(v2=> `.${v2}` == select)
-            return isParent != -1 ? node.parent.obj : 
-                    _findNodeParent(node.parent.obj,select)
+            if( deep == 0 ){
+                return isParent ? node.parent.obj : null
+            }else{
+                return isParent != -1 ? node.parent.obj : 
+                        _findNodeParent(node.parent.obj,select)
+            }
         }
     }
     
     //寻找元素里面是否含有指定标签
-    const _findNodeHasTag = (node,tagname) => {
+    const _findNodeHasTag = (node,tagname,deep = 9999) => {
+        --deep;
         for( let i = 0, len = node.childs.length; i < len ; i++ ){
             const key = Object.keys(node.childs[i])
             if( node.childs[i][key].tag == tagname ){
                 return true;
             }else{
+                if( deep == 0 ) return false;
                 if( _findNodeHasTag(node.childs[i][key],tagname) ) return true
             }
         }
@@ -170,18 +195,28 @@ gulp.task('one',async function(){
     }
 
     // 检查后代选择器是否生效
-    const checkSelectQuery = (classSelect) => {    
+    const checkSelectQuery = (classSelect,type) => {    
 
-        //过滤掉伪元素伪类
-        const selectQuery = classSelect.replace(pseudoClassReg,'')
-        //从子节点开始查找 把选择器数组翻转
-        const selectNodes = selectQuery.split(' ').filter(v=>v).reverse();
+        let selectNodes = null
+        
+        // 子元素选择器 >
+        if( type == 'child' ){
+            selectNodes = classSelect.replace('>',' ').split(' ').filter(v=>v).reverse();
+        }
+        // 后代选择器 
+        else
+        {
+            //过滤掉伪元素伪类
+            const selectQuery = classSelect.replace(pseudoClassReg,'')
+            //从子节点开始查找 把选择器数组翻转
+            selectNodes = selectQuery.split(' ').filter(v=>v).reverse();
+        }
 
         //选择器只匹配一个元素
         if( selectNodes.length == 1 ){
 
             if( ~selectNodes[0].indexOf('>') ){
-               checkBrotherSelectQuery(selectNodes[0])
+               return checkChildSelectQuery(selectNodes[0]) 
             }
 
             // that.select = _checkHasSelect(selectNodes[0]) ? true : false
@@ -197,7 +232,7 @@ gulp.task('one',async function(){
            for( let i2 = 0,len = selectNodes.length; i2 < len; i2++ ){
 
                 if( ~selectNodes[i2].indexOf('>') ){
-                    checkBrotherSelectQuery(selectNodes[i2])
+                   return checkChildSelectQuery(selectNodes[i2])
                 }
 
                 // 为标签选择器
@@ -207,25 +242,26 @@ gulp.task('one',async function(){
                     const currentFindNodes = finds.length ? 
                                              finds :
                                              selectNodeCache[selectNodes[i2+1]]
+
                     if( currentFindNodes ){    
                         const hasTag =  [];               
                         currentFindNodes.forEach((node,index)=>{
-                            hasTag.push( _findNodeHasTag(node,selectNodes[i2]) )
+                            hasTag.push(    type == 'child' ?
+                                            _findNodeHasTag(node,selectNodes[i2],1) :
+                                            _findNodeHasTag(node,selectNodes[i2]) 
+                                        )
                         })
                         if( hasTag.some(v=>v) ){ 
                             finds = currentFindNodes.concat();
-                            // that.select = true;
                             return true
                             continue;
                         }
                         else{
-                            // that.select = false;
                             return false
                             break;
                         }
                     }
                     else{
-                        // that.select = false;
                         return false
                         break;
                     }
@@ -247,7 +283,10 @@ gulp.task('one',async function(){
 
                             matchNode.forEach(v=>{
                                 // 搜索是否下个选择器的是否为这个选择器元素的父级
-                                finds.push( _findNodeParent( v ,selectNodes[i2+1] ) )
+                                finds.push(     type == 'child' ?
+                                                _findNodeParent(v,selectNodes[i2+1],1) :
+                                                _findNodeParent(v,selectNodes[i2+1] )
+                                          )
                             })
                             // 如有搜索完毕 确实有元素
                             const hasParent = finds.some(v=>v);
@@ -288,7 +327,10 @@ gulp.task('one',async function(){
                         // 继续搜索上一级 从子级到父级的搜索
                         // 这里逻辑没有问题 不过可以进行优化
                         const _finds = [];
-                        finds.map(node=> _findNodeParent( node ,selectNodes[i2+1] ) )
+                        finds.map(node=> type == 'child' ?
+                                         _findNodeParent(node,selectNodes[i2+1],1) :
+                                         _findNodeParent(node,selectNodes[i2+1])
+                                 )
                         finds = finds.filter(v=>v);
                     }
                 }
@@ -297,30 +339,8 @@ gulp.task('one',async function(){
     }
 
     // 检查兄弟选择器是否生效
-    const checkBrotherSelectQuery = (classSelects) => {
-        console.log('checkBrotherSelectQuery',classSelects)
-
-        const selectNodes = classSelects.replace('>',' ').split(' ').filter(v=>v).reverse();
-         // 存放已查找到的元素
-        let finds = []; 
-        
-        for( let i = 0,len = selectNodes.length; i < len; i++ ){
-            if( i == 0 ){
-                if( !/^\.|^\#/.test(selectNodes[i]) ){
-                    
-                }else{
-                    
-                }
-            }else if(i == selectNodes.length-1){
-                return 
-            }else{
-                if( !/^\.|^\#/.test(selectNodes[i]) ){
-                    
-                }else{
-                    
-                }
-            }
-        }
+    const checkChildSelectQuery = (classSelects) => {
+        return checkSelectQuery(classSelects,'child')
     }
 
     //从子节点开始查找
@@ -348,13 +368,13 @@ gulp.task('one',async function(){
 
     }
 
-    // console.log( selectNodeCache )
+    // console.log( selectNodeCache['.cartoon-not-found'][0].parent )
     // console.log( selectMap )
 
-    // // 检查没有被选中的元素
-    // for( let x in selectMap ) {
-    //     !selectMap[x].select && console.log(x,selectMap[x])
-    // }
+    // 检查没有被选中的元素
+    for( let x in selectMap ) {
+        !selectMap[x].select && console.log(x,selectMap[x])
+    }
 })
 
 const debug = (str,plase = true)=> {
