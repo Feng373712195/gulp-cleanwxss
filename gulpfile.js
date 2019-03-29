@@ -144,8 +144,8 @@ gulp.task('one',async function(){
         console.log('==== node.parent.key ====')
         console.log( node.parent.key )
         console.log('==== node.parent.obj.class ====')
-        console.log( node.parent.obj.class )
-        console.log( node.parent.key == null )
+        console.log( node.parent )
+        console.log( node.parent )
         --deep;
         // 已经到达root节点 寻找不到节点
         if( node.parent.key == null ) return null;
@@ -195,7 +195,7 @@ gulp.task('one',async function(){
     }
 
     // 检查后代选择器是否生效
-    const checkSelectQuery = (classSelect,type) => {    
+    const checkSelectQuery = (classSelect,type) => {   
 
         let selectNodes = null
         
@@ -351,7 +351,7 @@ gulp.task('one',async function(){
         const that = selectMap[classSelects[i]];
         
         // Page选择器 特殊处理
-        if( classSelects[i].match(/page/i) ){
+        if( classSelects[i].match(/^page/i) ){
             that.select = true;
             continue;
         }
@@ -369,7 +369,7 @@ gulp.task('one',async function(){
     }
 
     // console.log( selectNodeCache['.cartoon-not-found'][0].parent )
-    // console.log( selectMap )
+    console.log( selectMap )
 
     // 检查没有被选中的元素
     for( let x in selectMap ) {
@@ -813,8 +813,16 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = {})=>{
                 const { templateWxmlTree,selectNode } = replaceTml
                 // 找到要被替换模版在父组件的位置
                 const useTemplateStr = Object.keys(usetml[useTemplateName])[0]
+                let templateParent = usetml[useTemplateName][useTemplateStr].parent;
                 let templateParentTheChilren = usetml[useTemplateName][useTemplateStr].parent.obj.childs;
                 let templatehaschildrenNodeIndex = templateParentTheChilren.indexOf(usetml[useTemplateName])    
+                
+                // 替换模板的父节点        
+                // 注意：这里要做浅拷贝
+                templateWxmlTree.forEach(node=>{
+                    const key = Object.keys(node)[0]
+                    node[key].parent = templateParent
+                })
                 // 进行替换 
                 Array.prototype.splice.apply( templateParentTheChilren,[templatehaschildrenNodeIndex,1,...templateWxmlTree] )
 
