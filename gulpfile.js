@@ -136,19 +136,18 @@ gulp.task('one',async function(){
 
     //寻找子元素的父级元素
     const _findNodeParent = (node,select,deep = 9999) => {
-        console.log( 'findNodeParent' )
-        console.log('==== node =====')
-        console.log(node)
-        console.log('==== select ====')
-        console.log(select)
-        console.log('==== node.parent.key ====')
-        console.log( node.parent.key )
-        console.log('==== node.parent.obj.class ====')
-        console.log( node.parent )
-        console.log( node.parent )
+        // console.log( 'findNodeParent' )
+        // console.log('==== node =====')
+        // console.log(node)
+        // console.log('==== select ====')
+        // console.log(select)
+        // console.log('==== node.parent.key ====')
+        // console.log( node.parent.key )
+        // console.log('==== node.parent.obj.class ====')
+        // console.log( node.parent )
         --deep;
         // 已经到达root节点 寻找不到节点
-        if( node.parent.key == null ) return null;
+        if( node.parent.key == 'root' ) return null;
 
         const peerSelect =  select.split(peerSelectReg);
         if( peerSelect.length > 1 ){
@@ -163,12 +162,12 @@ gulp.task('one',async function(){
                 return isParent ? node.parent.obj : null
             }else{
                 return isParent ? node.parent.obj : 
-                        _findNodeParent(node.parent.obj,select)
+                         _findNodeParent(node.parent.obj,select)
             }
         }else{
-            console.log('222')
+            // console.log('222')
             //注意这里要区分id 和 class
-            console.log( node.parent.obj )
+            // console.log( node.parent.obj )
             const isParent = node.parent.obj.class.findIndex(v2=> `.${v2}` == select)
             if( deep == 0 ){
                 return isParent ? node.parent.obj : null
@@ -195,7 +194,9 @@ gulp.task('one',async function(){
     }
 
     // 检查后代选择器是否生效
-    const checkSelectQuery = (classSelect,type) => {   
+    const checkSelectQuery = (classSelect,type) => { 
+        
+        console.log( 'checkSelectQuery',classSelect,type )
 
         let selectNodes = null
         
@@ -212,13 +213,13 @@ gulp.task('one',async function(){
             selectNodes = selectQuery.split(' ').filter(v=>v).reverse();
         }
 
+        console.log( selectNodes,'selectNodes' )
+
         //选择器只匹配一个元素
         if( selectNodes.length == 1 ){
-
             if( ~selectNodes[0].indexOf('>') ){
                return checkChildSelectQuery(selectNodes[0]) 
             }
-
             // that.select = _checkHasSelect(selectNodes[0]) ? true : false
             return  _checkHasSelect(selectNodes[0]) ? true : false
         }
@@ -231,6 +232,8 @@ gulp.task('one',async function(){
            // 把选择器转化成数组 如 .search-block .search-list .tag 转为 [.tag,.search-list,.search-block]
            for( let i2 = 0,len = selectNodes.length; i2 < len; i2++ ){
 
+                console.log(i2,'index')
+
                 if( ~selectNodes[i2].indexOf('>') ){
                    return checkChildSelectQuery(selectNodes[i2])
                 }
@@ -238,10 +241,13 @@ gulp.task('one',async function(){
                 // 为标签选择器
                 // 这里可以设置一个到某个元素停止搜索的参数 避免如这种情况 .a view .b view 避免到.a搜到view标签 .b还会继续搜索下去
                 if( !/^\.|^\#/.test(selectNodes[i2]) ){
+
                     // 注意 currentFindNods 是去寻找 用到tag选择器的上一级去寻找它内部是否使用了tag 不过有一种情况就是tag的上级又是tag呢？
                     const currentFindNodes = finds.length ? 
                                              finds :
                                              selectNodeCache[selectNodes[i2+1]]
+                    console.log( selectNodes[i2+1],'selectNodes[i2+1]' )
+                    console.log( currentFindNodes ,'currentFindNodes' )
 
                     if( currentFindNodes ){    
                         const hasTag =  [];               
@@ -265,6 +271,7 @@ gulp.task('one',async function(){
                         return false
                         break;
                     }
+
                 }
                 // 为class id选择器
                 else{
@@ -358,6 +365,7 @@ gulp.task('one',async function(){
 
         // 是否为逗号分隔
         let separateClassSelect = classSelects[i].split(',') 
+
         // 有逗号分隔的选择器 其中一项有被使用就返回true
         // 注意: 可以优化 在最后制作弹出的HTML 显示哪些被动 哪些没用 可以让使用者删除更多无用代码
         if( separateClassSelect.length > 1 ){
@@ -368,9 +376,10 @@ gulp.task('one',async function(){
 
     }
 
-    // console.log( selectNodeCache['.cartoon-not-found'][0].parent )
+    // console.log( selectNodeCache['.evaluation'][0] )
     console.log( selectMap )
 
+    console.log( '==================' )
     // 检查没有被选中的元素
     for( let x in selectMap ) {
         !selectMap[x].select && console.log(x,selectMap[x])
@@ -405,27 +414,29 @@ const getAttr = (tag,attr) => {
 
 // 2019-03-21 
 // selectNodeCache不再作为全局变量 而作为getWxmlTree的返回值
-const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = {})=>{
+const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = { __tag__:{} })=>{
+
+    console.log( mianSelectNodes,'mianSelectNodes'  )
 
     const templateStartTagReg = /\<template.*\s+name=/
     const useTemplateTagReg = /\<template.*\s+is=/
 
-    // 对已经查找过的节点位置缓存 下次可以直接在这里获取
-    // let selectNodeCache = {}    
-    let _selectNodes = {};
+    // 对已经查找过的节点位置缓存 下次可以直接在这里获取 针对class id  
+    // 2019-4-8 新增__tag__ 用来存放 tag所有对应标签元素
+    let _selectNodes = { __tag__:{} };
 
     // template层数 isTemplateWxml为true时会用到
     let templateCount = 0;
 
     // 解析模版wxmlTree时 会存在这个对象
-    let templateNode = {}
+    let templateNode = { }
     // 当前处理模板名称
     let currentTemplateName = ''
 
     //存放找到的模版
-    const findTemplates = {}
+    const findTemplates = {  }
     // 模版缓存
-    const templateCache = {}
+    const templateCache = {  }
     // 找到的使用模版 反正重名 使用数组
     const findUseTemplates = []
 
@@ -546,6 +557,8 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = {})=>{
 
     // 存入节点缓存对象 
     const _setNodeCache = (tag,classes,id,selectNodes)=>{
+        console.log( '_setNodeCache', Object.keys(selectNodes) )
+        // console.log( _selectNodes,'selectNode start' )
         //避免用重复class元素
         if( classes.length ){
             classes.forEach(classname=>{
@@ -562,19 +575,40 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = {})=>{
             }
             selectNodes[`#${id}`].push(tag);
         }
+        
+
+        // try{
+            selectNodes.__tag__[tag.tag] ? selectNodes.__tag__[tag.tag].push(tag) : (selectNodes.__tag__[tag.tag] = [tag])
+        // }catch(e){
+        //     console.log( e )
+        //     console.log( selectNodes )
+        //     return;
+        // }
     }
     
     // 合并两个selectNode
     // 把nodes2合并入nodes1 最终返回nodes1
     const mergeSelectNode = (nodes1,nodes2)=>{
+        console.log('mergeSelectNode')
         const node2Keys = Object.keys(nodes2)
         node2Keys.forEach(key=>{
-            if(nodes1[key]){
-                nodes1[key] = nodes1[key].concat(nodes2[key])
-            }else{
-                nodes1[key] = nodes2[key]
+            if( key !==  '__tag__' ){
+                if(nodes1[key]){
+                    nodes1[key] = nodes1[key].concat(nodes2[key])
+                }else{
+                    nodes1[key] = nodes2[key]
+                }
             }
         })
+        const node2TagKeys = Object.keys(nodes2.__tag__)
+        node2TagKeys.forEach(key=>{
+            // console.log(nodes1.__tag__,'nodes1')
+            if(nodes1.__tag__[key]){
+                nodes1.__tag__[key] = nodes1.__tag__[key].concat(nodes2.__tag__[key])
+            }else{
+                nodes1.__tag__[key] = nodes2.__tag__[key]
+            }
+        })    
         return nodes1
     }
                     
@@ -672,7 +706,7 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = {})=>{
                 if( useTemplateTagReg.test($1) ){
                     findUseTemplates.push( { [getAttr($1,'is')] : self } )
                 }
-
+                // console.log( _selectNodes,'selectNodes' )
                 _setNodeCache(self[$1],tagClass,tagId,_selectNodes)
 
                 head.childs.push(self)
@@ -731,6 +765,7 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = {})=>{
                 }
 
                 if( isCompleteTag ){
+                    // console.log( _selectNodes,'selectNodes' )
                     _setNodeCache(self[$1],tagClass,tagId,_selectNodes)
                 }
 
@@ -772,7 +807,8 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = {})=>{
             if( isTemplateWxml && isTemplateReg.test(tagName) ){
                 ++templateCount
             }
-
+            
+            // console.log( _selectNodes,'selectNodes' )
             _setNodeCache(self[$1],tagClass,tagId,_selectNodes)
             
             try{
@@ -810,7 +846,9 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = {})=>{
             }
 
             if( replaceTml ){
+                console.log( 'replaceTml' )
                 const { templateWxmlTree,selectNode } = replaceTml
+                console.log( selectNode,'replaceTml' )
                 // 找到要被替换模版在父组件的位置
                 const useTemplateStr = Object.keys(usetml[useTemplateName])[0]
                 let templateParent = usetml[useTemplateName][useTemplateStr].parent;
@@ -823,6 +861,7 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = {})=>{
                     const key = Object.keys(node)[0]
                     node[key].parent = templateParent
                 })
+
                 // 进行替换 
                 Array.prototype.splice.apply( templateParentTheChilren,[templatehaschildrenNodeIndex,1,...templateWxmlTree] )
 
@@ -837,8 +876,8 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = {})=>{
         if( !isTemplateWxml ){
             mergeSelectNode( mianSelectNodes,_selectNodes )
         }
-
-        resolve( isTemplateWxml ? templateNode : { WxmlTree,selectNodeCache: mianSelectNodes });
+        
+        resolve( isTemplateWxml ? templateNode : { WxmlTree,selectNodeCache:mianSelectNodes });
     })
 }
 
