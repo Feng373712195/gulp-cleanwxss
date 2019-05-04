@@ -68,6 +68,7 @@ const PAGES_PATH = path.join(WX_DIR_PATH,'/pages')
 // 过滤样式表注释
 
 
+
 const selectMap = {};
 // 伪元素伪类匹配正则表达式
 const pseudoClassReg = /\:link|\:visited|\:active|\:hover|\:focus|\:before|\:\:before|\:after|\:\:after|\:first-letter|\:first-line|\:first-child|\:lang\(.*\)|\:lang|\:first-of-type|\:last-of-type|\:only-child|:nth-child\(.*\)|:nth-last-child\(.*\)|\:nth-of-type\(.*\)|\:nth-last-of-type\(.*\)|\:last-child|\:root|\:empty|\:target|\:enabled|\:disabled|\:checked|\:not\(.*\)|\:\:selection/g;
@@ -81,7 +82,7 @@ const peerSelectReg = /(?=\.)|(?=\#)/g;
  * '/authorization' 检查完毕 没有问题
  * '/autoActivities' 检查完毕 没有问题
  * '/brands' 检查完毕 没有问题
- * 
+ * '/carerrating' 检查完毕 没有问题
  */
 
 const PAGE_DIR_PATH = '/carerRating'
@@ -236,10 +237,8 @@ gulp.task('one',async function(){
             //过滤掉伪元素伪类
             const selectQuery = classSelect.replace(pseudoClassReg,'')
             //从子节点开始查找 把选择器数组翻转
-            selectNodes = selectQuery.split(' ').filter(v=>v).reverse();
+            selectNodes = selectQuery.replace(/\s?\>\s?/,'>').split(/\s/g).filter(v=>v).reverse();
         }
-        
-        console.log( selectNodes,'selectNodes' )
 
         //选择器只匹配一个元素
         if( selectNodes.length == 1 ){
@@ -370,6 +369,14 @@ const debug = (str,plase = true)=> {
 // 和引入@import
 const getWxss = (str) => {
     const improts = [];
+
+    // 过滤掉wxss中的注释
+    str = str.replace(/\/\*([\s\S]*?)\*\//g,'')
+    // 获取wxss中的import
+
+
+    // 2019-05-04
+    // 如果文件中还有improt呢 需要处理这种情况
     str.replace(/@import\s?[\'|\"](.*)[\'|\"]\;/g,($1,$2)=>{
         improts.push($2)
     });
