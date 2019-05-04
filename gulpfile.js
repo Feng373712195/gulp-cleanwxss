@@ -83,20 +83,39 @@ const peerSelectReg = /(?=\.)|(?=\#)/g;
  * '/autoActivities' 检查完毕 没有问题
  * '/brands' 检查完毕 没有问题
  * '/carerrating' 检查完毕 没有问题
+ * '/carHot' 检查完毕 没有问题
+ * '/carHotDetaill' 检查完毕 没有问题
+ * '/chat' 检查完毕 没有问题
+ * '/chatWindow' 检查完毕 没有问题
+ * '/clause' 检查完毕 没有问题
+ * ‘/columns' 检查完毕 没有问题
+ * '/commentDetail' 检查完毕 没有问题
+ * '/config' 检查完毕 没有问题
  */
 
-const PAGE_DIR_PATH = '/carHot'
+const PAGE_DIR_PATH = '/configuration'
+
+// 用来收集渲染的css 只是给我自己看 无特殊作用
+const _cssVariable  = []
 
 const cssVariable = {
-    'cls':['fade'],
-    'pagenumAnimation':['pagenum-animation1','pagenum-animation2'],
-    'item.animatonData':['title-animation'],
-    'swiperdata':['zoom-background-image'],
-    'item.danmuCls':['slidein','slideout'],
-    'InnerItem.cls':['rotate0To90','rotate270To360'],
-    'item.prevCls':['numFadeOut'],
-    'item.nextCls':['numFadeIn'],
-    'ohSnap.cls':['show']
+
+    // ‘carHot Page use’
+    // 'cls':['fade'],
+    // 'pagenumAnimation':['pagenum-animation1','pagenum-animation2'],
+    // 'item.animatonData':['title-animation'],
+    // 'swiperdata':['zoom-background-image'],
+    // 'item.danmuCls':['slidein','slideout'],
+    // 'InnerItem.cls':['rotate0To90','rotate270To360'],
+    // 'item.prevCls':['numFadeOut'],
+    // 'item.nextCls':['numFadeIn'],
+    // 'ohSnap.cls':['show']
+
+    // 'compareCarList Page use'  
+    // 'item.bttoClassTOM':['compare-edit-btn','compare-begin-btn'],
+    // 'item.bttoClass':['c-linergradient-blue-bg','c-linergradient-yellow-bg']
+
+
 }
 
 
@@ -120,6 +139,8 @@ gulp.task('one',async function(){
     
     //获取Wxml树
     const { WxmlTree,selectNodeCache } = await getWxmlTree(pageWxml);
+
+    console.log( _cssVariable,'_cssVariable' )
 
     //检查同级元素
     const _checkHasSelect = (select) => {
@@ -381,6 +402,7 @@ const debug = (str,plase = true)=> {
 // 这个方法用来过滤掉Wxss中的注释
 // 和引入@import
 const getWxss = (str) => {
+    
     const improts = [];
 
     // 过滤掉wxss中的注释
@@ -395,6 +417,8 @@ const getWxss = (str) => {
     str.replace(/@import\s?[\'|\"](.*)[\'|\"]\;/g,($1,$2)=>{
         improts.push($2)
     });
+
+    if( improts.length == 0 ) return str 
 
     const findWxss = (importSrc) => { 
                         return new Promise((resolve,reject) => {
@@ -415,11 +439,12 @@ const getWxss = (str) => {
                         })       
                      }
     
-    return Promise.all(improts.map( src=>findWxss(src) ))
+    return Promise.all(improts.map( src=> findWxss(src) ))
     .then(res=>{
         let resWxss = str
-        res.forEach(wxss => {
-           resWxss = `${wxss} \n ${resWxss}`;
+        res.forEach(async wxss => {
+           wxss = await getWxss(wxss)
+           resWxss = `${wxss} \n ${ await resWxss }`;
         })
         return resWxss
     })
@@ -547,17 +572,37 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = { __tag_
                     dynamicClass[1].replace(ternaryExpressionReg,($1,$2,$3,$4)=>{
                         if( $3 != '' ){
                             if( isStringReg.test($3) ) TagClass.push( $3.replace(isStringReg,'$1').trim() )
-                            else if( cssVariable[$3] ) TagClass = TagClass.concat(cssVariable[$3])
+                            else if( cssVariable[$3] ){
+                                TagClass = TagClass.concat(cssVariable[$3])
+                            }
                         }
+
+                        if( !isStringReg.test($3) ){
+                            _cssVariable.push( $3 )
+                        }
+
                         if( $4 != '' ){
                             if( isStringReg.test($4) ) TagClass.push( $4.replace(isStringReg,'$1').trim() )
-                            else if( cssVariable[$4] ) TagClass = TagClass.concat(cssVariable[$4])
+                            else if( cssVariable[$4] ){
+                                TagClass = TagClass.concat(cssVariable[$4])
+                            }
+                        }
+
+
+                        if( !isStringReg.test($4) ){
+                            _cssVariable.push( $4 )
                         }
                     })
                 }else{
                     if( dynamicClass[1] != '' ){
                         if( isStringReg.test(dynamicClass[1]) ) TagClass.push( dynamicClass[1].replace(isStringReg,'$1').trim() )
-                        else if( cssVariable[dynamicClass[1]] ) TagClass = TagClass.concat(cssVariable[dynamicClass[1]])
+                        else if( cssVariable[dynamicClass[1]] ){
+                             TagClass = TagClass.concat(cssVariable[dynamicClass[1]])
+                        }
+
+                        if( !isStringReg.test(dynamicClass[1]) ){
+                            _cssVariable.push( dynamicClass[1] )
+                        }
                     }
                 }
 
