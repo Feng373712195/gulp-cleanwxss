@@ -101,15 +101,15 @@ const _cssVariable  = []
 const cssVariable = {
 
     // ‘carHot Page use’
-    // 'cls':['fade'],
-    // 'pagenumAnimation':['pagenum-animation1','pagenum-animation2'],
-    // 'item.animatonData':['title-animation'],
-    // 'swiperdata':['zoom-background-image'],
-    // 'item.danmuCls':['slidein','slideout'],
-    // 'InnerItem.cls':['rotate0To90','rotate270To360'],
-    // 'item.prevCls':['numFadeOut'],
-    // 'item.nextCls':['numFadeIn'],
-    // 'ohSnap.cls':['show']
+    'cls':['fade'],
+    'pagenumAnimation':['pagenum-animation1','pagenum-animation2'],
+    'item.animatonData':['title-animation'],
+    'swiperdata':['zoom-background-image'],
+    'item.danmuCls':['slidein','slideout'],
+    'InnerItem.cls':['rotate0To90','rotate270To360'],
+    'item.prevCls':['numFadeOut'],
+    'item.nextCls':['numFadeIn'],
+    'ohSnap.cls':['show']
 
     // 'compareCarList Page use'  
     // 'item.bttoClassTOM':['compare-edit-btn','compare-begin-btn'],
@@ -140,7 +140,7 @@ gulp.task('one',async function(){
     //获取Wxml树
     const { WxmlTree,selectNodeCache } = await getWxmlTree(pageWxml);
 
-    console.log( _cssVariable.length,'_cssVariable' )
+    console.log( _cssVariable,'_cssVariable' )
 
     //检查同级元素
     const _checkHasSelect = (select) => {
@@ -542,6 +542,20 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = { __tag_
         return newWxmlTree
     }
 
+    const getdynamicClass = (str) => {
+        const isStringReg = /[\'|\"](.*?)[\'|\"]/
+        if( str != ''  ){
+            console.log(str)
+            if( isStringReg.test(str) ){
+                console.log(1)
+                return [str.replace(isStringReg,'$1').trim()]
+            }else if( cssVariable[str] ){
+                console.log(2)
+                return cssVariable[str]
+            }
+        }
+    }
+
     // 取得标签内的Class
     // 注意还有hover-class 之类的情况
     const _getTagClass = (tag,arr)=>{
@@ -569,38 +583,28 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = { __tag_
             const isStringReg = /[\'|\"](.*?)[\'|\"]/
 
             let dynamicClass = '';
+
             while( dynamicClass = dynamicClassReg.exec(TagClassStr) ){
+
                 if( ternaryExpressionReg.test(dynamicClass[1]) ){
                     dynamicClass[1].replace(ternaryExpressionReg,($1,$2,$3,$4)=>{
-                        if( $3 != '' ){
-                            if( isStringReg.test($3) ) TagClass.push( $3.replace(isStringReg,'$1').trim() )
-                            else if( cssVariable[$3] ){
-                                TagClass = TagClass.concat(cssVariable[$3])
-                            }
-                        }
+
+                        TagClass = TagClass.concat( getdynamicClass($3) )
 
                         if( !isStringReg.test($3) ){
-                            _cssVariable.push( $3 )
+                            _cssVariable.push($3)
                         }
 
-                        if( $4 != '' ){
-                            if( isStringReg.test($4) ) TagClass.push( $4.replace(isStringReg,'$1').trim() )
-                            else if( cssVariable[$4] ){
-                                TagClass = TagClass.concat(cssVariable[$4])
-                            }
-                        }
-
+                        TagClass = TagClass.concat( getdynamicClass($4) )
 
                         if( !isStringReg.test($4) ){
-                            _cssVariable.push( $4 )
+                            _cssVariable.push($4)
                         }
                     })
                 }else{
                     if( dynamicClass[1] != '' ){
-                        if( isStringReg.test(dynamicClass[1]) ) TagClass.push( dynamicClass[1].replace(isStringReg,'$1').trim() )
-                        else if( cssVariable[dynamicClass[1]] ){
-                             TagClass = TagClass.concat(cssVariable[dynamicClass[1]])
-                        }
+
+                        TagClass = TagClass.concat( getdynamicClass(dynamicClass[1]) )
 
                         if( !isStringReg.test(dynamicClass[1]) ){
                             _cssVariable.push( dynamicClass[1] )
@@ -614,6 +618,8 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = { __tag_
             TagClassStr.replace(/class=[\'|\"](.*)[\'|\"]/,function(classStr,classNames){
                 TagClass = TagClass.concat( classNames.split(" ").filter(v=>v) )
             })
+
+            console.log( TagClass,'TagClass' )
 
             // 一些写法不规范的开发者 会写多个class 这里先不管
             tag = tag.replace(/(class=[\'|\"].*?[\'|\"])/,'');
