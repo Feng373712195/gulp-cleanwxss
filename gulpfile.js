@@ -140,7 +140,7 @@ gulp.task('one',async function(){
     //获取Wxml树
     const { WxmlTree,selectNodeCache } = await getWxmlTree(pageWxml);
 
-    console.log( _cssVariable,'_cssVariable' )
+    console.log( _cssVariable.length,'_cssVariable' )
 
     //检查同级元素
     const _checkHasSelect = (select) => {
@@ -410,6 +410,8 @@ const getWxss = (str) => {
 
     // 过滤掉keyframes
     str = str.replace(/\s?@keyframes.*\{([\s\S]*?)\n\}/g,'')
+    // 过滤掉font-face
+    str = str.replace(/\s?@font-face.*\{([\s\S]*?)\n\}/g,'')
 
     // 获取wxss中的import
     // 2019-05-04
