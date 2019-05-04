@@ -61,11 +61,11 @@ const PAGES_PATH = path.join(WX_DIR_PATH,'/pages')
 // 2019-3-27
 // 组件的 传入class名称也要留意如何处理 OK
 // selectNode 发现有class名称截取有问题 如模板中 'A B' 分别为两个class 没有处理好 OK
-// improt 引用路径不一样 其实模板是一样的问题
-// .tags-list .tag.active  { select: false } 错误  .top-swiper-dots .dot.active  { select: false } 错误  包含动态渲染的class 这种情况下判断选择器是否在用有问题
+// improt 引用路径不一样 其实模板是一样的问题 
+// .tags-list .tag.active  { select: false } 错误  .top-swiper-dots .dot.active  { select: false } 错误  包含动态渲染的class 这种情况下判断选择器是否在用有问题 ok
 
-// 2019-5-02
-// 过滤样式表注释
+// 2019-5-02 
+// 过滤样式表注释 ok
 
 
 
@@ -85,7 +85,20 @@ const peerSelectReg = /(?=\.)|(?=\#)/g;
  * '/carerrating' 检查完毕 没有问题
  */
 
-const PAGE_DIR_PATH = '/carerRating'
+const PAGE_DIR_PATH = '/carHot'
+
+const cssVariable = {
+    'cls':['fade'],
+    'pagenumAnimation':['pagenum-animation1','pagenum-animation2'],
+    'item.animatonData':['title-animation'],
+    'swiperdata':['zoom-background-image'],
+    'item.danmuCls':['slidein','slideout'],
+    'InnerItem.cls':['rotate0To90','rotate270To360'],
+    'item.prevCls':['numFadeOut'],
+    'item.nextCls':['numFadeIn'],
+    'ohSnap.cls':['show']
+}
+
 
 gulp.task('one',async function(){
     const pageFilePath = path.join( PAGES_PATH, PAGE_DIR_PATH );
@@ -372,9 +385,11 @@ const getWxss = (str) => {
 
     // 过滤掉wxss中的注释
     str = str.replace(/\/\*([\s\S]*?)\*\//g,'')
+
+    // 过滤掉keyframes
+    str = str.replace(/\s?@keyframes.*\{([\s\S]*?)\n\}/g,'')
+
     // 获取wxss中的import
-
-
     // 2019-05-04
     // 如果文件中还有improt呢 需要处理这种情况
     str.replace(/@import\s?[\'|\"](.*)[\'|\"]\;/g,($1,$2)=>{
@@ -456,9 +471,9 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = { __tag_
     let currentTemplateName = ''
 
     //存放找到的模版
-    const findTemplates = {  }
+    const findTemplates = {}
     // 模版缓存
-    const templateCache = {  }
+    const templateCache = {}
     // 找到的使用模版 反正重名 使用数组
     const findUseTemplates = []
 
@@ -508,7 +523,6 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = { __tag_
         
         // 判断前面是否有空格 避免匹配到 *-class 
         const hasClass = /\s+class=/;
-        let isD = false
         // 判断标签是否拥有class
         if( hasClass.test(tag) ){
             // 获取class属性在标签的开始位置
@@ -522,15 +536,31 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = { __tag_
             
             //获取动态选人的class
             const dynamicClassReg = /\{\{(.*?)\}\}/
+            // 是否为三元表达式
+            const ternaryExpressionReg = /(.*)\?(.*)\:(.*)/
+            // 是否字符串
+            const isStringReg = /[\'|\"](.*?)[\'|\"]/
+
             let dynamicClass = '';
             while( dynamicClass = dynamicClassReg.exec(TagClassStr) ){
-                dynamicClass[1].replace(/[\'|\"](.*?)[\'|\"]/g,($1,$2)=>{
-                    if($2){
-                        isD = true
-                        const classnames = $2.split(' ')
-                        TagClass = TagClass.concat(classnames)
+                if( ternaryExpressionReg.test(dynamicClass[1]) ){
+                    dynamicClass[1].replace(ternaryExpressionReg,($1,$2,$3,$4)=>{
+                        if( $3 != '' ){
+                            if( isStringReg.test($3) ) TagClass.push( $3.replace(isStringReg,'$1').trim() )
+                            else if( cssVariable[$3] ) TagClass = TagClass.concat(cssVariable[$3])
+                        }
+                        if( $4 != '' ){
+                            if( isStringReg.test($4) ) TagClass.push( $4.replace(isStringReg,'$1').trim() )
+                            else if( cssVariable[$4] ) TagClass = TagClass.concat(cssVariable[$4])
+                        }
+                    })
+                }else{
+                    if( dynamicClass[1] != '' ){
+                        if( isStringReg.test(dynamicClass[1]) ) TagClass.push( dynamicClass[1].replace(isStringReg,'$1').trim() )
+                        else if( cssVariable[dynamicClass[1]] ) TagClass = TagClass.concat(cssVariable[dynamicClass[1]])
                     }
-                })
+                }
+
                 TagClassStr = TagClassStr.replace(dynamicClass[0],'')
             }
 
@@ -578,6 +608,7 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = { __tag_
 
     // 存入节点缓存对象 
     const _setNodeCache = (tag,classes,id,selectNodes)=>{
+
         //避免用重复class元素
         if( classes.length ){
             classes.forEach(classname=>{
