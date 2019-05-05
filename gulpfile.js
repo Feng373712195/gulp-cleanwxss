@@ -101,15 +101,15 @@ const _cssVariable  = []
 const cssVariable = {
 
     // ‘carHot Page use’
-    'cls':['fade'],
-    'pagenumAnimation':['pagenum-animation1','pagenum-animation2'],
-    'item.animatonData':['title-animation'],
-    'swiperdata':['zoom-background-image'],
-    'item.danmuCls':['slidein','slideout'],
-    'InnerItem.cls':['rotate0To90','rotate270To360'],
-    'item.prevCls':['numFadeOut'],
-    'item.nextCls':['numFadeIn'],
-    'ohSnap.cls':['show']
+    // 'cls':['fade'],
+    // 'pagenumAnimation':['pagenum-animation1','pagenum-animation2'],
+    // 'item.animatonData':['title-animation'],
+    // 'swiperdata':['zoom-background-image'],
+    // 'item.danmuCls':['slidein','slideout'],
+    // 'InnerItem.cls':['rotate0To90','rotate270To360'],
+    // 'item.prevCls':['numFadeOut'],
+    // 'item.nextCls':['numFadeIn'],
+    // 'ohSnap.cls':['show']
 
     // 'compareCarList Page use'  
     // 'item.bttoClassTOM':['compare-edit-btn','compare-begin-btn'],
@@ -387,11 +387,11 @@ gulp.task('one',async function(){
     // console.log( selectNodeCache )
     // console.log( selectMap )
 
-    console.log( '==================' )
+    // console.log( '==================' )
     // 检查没有被选中的元素
-    for( let x in selectMap ) {
-        !selectMap[x].select && console.log(x,selectMap[x])
-    }
+    // for( let x in selectMap ) {
+    //     !selectMap[x].select && console.log(x,selectMap[x])
+    // }
 })
 
 const debug = (str,plase = true)=> {
@@ -484,6 +484,8 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = { __tag_
 
     const templateStartTagReg = /\<template.*\s+name=/
     const useTemplateTagReg = /\<template.*\s+is=/
+    //是否字符串正则表达式
+    const isStringReg = /[\'|\"](.*?)[\'|\"]/
 
     // 对已经查找过的节点位置缓存 下次可以直接在这里获取 针对class id  
     // 2019-4-8 新增__tag__ 用来存放 tag所有对应标签元素
@@ -542,18 +544,68 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = { __tag_
         return newWxmlTree
     }
 
+    const getJoinClass = (str,res = [])=>{
+        str.replace(/\s?(.*?)\s?(?=\+(.*))\s?/,($1,$2,$3)=>{
+            // $2 加号左边的内容 $3 加号右边的内容
+            console.log( $1,'$1',$2,'$2',$3,'$3' )
+
+            let sumL = []
+            let sumR = []
+
+            if( isStringReg.test($2) ){
+                const classes = $2.replace(isStringReg,'$1').split(' ')
+                const lastClass = classes.pop()
+                if( classes.length ){ res.concat( classes ) }
+                sumL.push( lastClass )
+
+            }else if( cssVariable[$2] ){
+                sumL = sumL.concat( cssVariable[$2] )
+            }
+            
+            if( isStringReg.test($3) ){
+                const classes = $3.replace(isStringReg,'$1').split(' ')
+                const lastClass = classes.pop()
+                if( classes.length ){ res.concat( classes ) }
+                sumR.push( lastClass )
+            }else if( cssVariable[$3] ){
+                sumR = sumR.concat( cssVariable[$3] )
+            }
+
+            sumL.forEach(L => {
+                sumR.forEach(R => {
+                    res.push( `${L}${R}` )
+                })
+            })
+
+            str = str.replace( $1,'customCssVariable' )
+            
+
+            // if( ~str.indexOf('+') ){
+            //     //自定义的 css变量
+            //     _cssVariable['customCssVariable'] = res
+            //     return getJoinClass(str)
+            // }else{
+            //    delete _cssVariable['customCssVariable']
+            //    return res 
+            // }
+            
+
+        })
+    }
+
     const getdynamicClass = (str) => {
-        const isStringReg = /[\'|\"](.*?)[\'|\"]/
         if( str != ''  ){
-            console.log(str)
             if( isStringReg.test(str) ){
                 console.log(1)
-                return [str.replace(isStringReg,'$1').trim()]
+                console.log(str)
+                const classes = getJoinClass(str);
+                // return [str.replace(isStringReg,'$1').trim()]
             }else if( cssVariable[str] ){
                 console.log(2)
                 return cssVariable[str]
             }
         }
+
     }
 
     // 取得标签内的Class
@@ -579,8 +631,6 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = { __tag_
             const dynamicClassReg = /\{\{(.*?)\}\}/
             // 是否为三元表达式
             const ternaryExpressionReg = /(.*)\?(.*)\:(.*)/
-            // 是否字符串
-            const isStringReg = /[\'|\"](.*?)[\'|\"]/
 
             let dynamicClass = '';
 
@@ -619,7 +669,7 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = { __tag_
                 TagClass = TagClass.concat( classNames.split(" ").filter(v=>v) )
             })
 
-            console.log( TagClass,'TagClass' )
+            // console.log( TagClass,'TagClass' )
 
             // 一些写法不规范的开发者 会写多个class 这里先不管
             tag = tag.replace(/(class=[\'|\"].*?[\'|\"])/,'');
