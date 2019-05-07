@@ -94,6 +94,9 @@ const peerSelectReg = /(?=\.)|(?=\#)/g;
  */
 
 const PAGE_DIR_PATH = '/configuration'
+// 用来收集css变量 开发时使用
+const _cssVariable = new Set()
+
 const cssVariable = {
 
     // ‘carHot Page use’
@@ -133,10 +136,10 @@ gulp.task('one',async function(){
         classSelects.push($2);
     })
 
-    // console.log(pageWxss.replace( /@keyframes.*[\s\S]\{([\s\S]*)\}/g,''))
-    
     //获取Wxml树
     const { WxmlTree,selectNodeCache } = await getWxmlTree(pageWxml);
+
+    console.log( _cssVariable,'_cssVariable' )
 
     //检查同级元素
     const _checkHasSelect = (select) => {
@@ -385,9 +388,9 @@ gulp.task('one',async function(){
 
     // console.log( '==================' )
     // 检查没有被选中的元素
-    // for( let x in selectMap ) {
-    //     !selectMap[x].select && console.log(x,selectMap[x])
-    // }
+    for( let x in selectMap ) {
+        !selectMap[x].select && console.log(x,selectMap[x])
+    }
 })
 
 const debug = (str,plase = true)=> {
@@ -559,32 +562,32 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = { __tag_
             if( isStringReg.test(sumLVal) ){
                 const classes = sumLVal.replace(isStringReg,'$1').split(' ')
                 const lastClass = classes.pop()
-                if( classes.length ){ res = sumL.concat( classes ) }
+                if( classes.length ){ res = res.concat( classes ) }
                 sumL.push( lastClass )
             }else if( cssVariable[sumLVal] ){
+                _cssVariable.add( sumLVal )
                 sumL = sumL.concat( cssVariable[sumLVal] )
             }
 
             if( isStringReg.test(sumRVal) ){
                 const classes = sumRVal.replace(isStringReg,'$1').split(' ')
                 const lastClass = classes.pop()
-                if( classes.length ){ res = sumR.concat( classes ) }
+                if( classes.length ){ res = res.concat( classes ) }
                 sumR.push( lastClass )
             }else if( cssVariable[sumRVal] ){
+                _cssVariable.add( sumRVal )
                 sumR = sumR.concat( cssVariable[sumRVal] )
             }
 
             sumL.forEach(L => {
-                sumR.forEach(R => {
-                    sumClass.push( `${L}${R}` )
-                })
+                sumR.forEach(R => { sumClass.push( `${L}${R}` ) })
             })
             
             cssVariable['customCssVariable'] = sumClass
 
             if( ~str.indexOf('+') ){
                 //自定义的 css变量
-                return getJoinClass(str,_cssVariable['customCssVariable'])
+                return getJoinClass(str,res)
             }else{
                if( cssVariable['customCssVariable'] ){
                     res = res.concat( cssVariable['customCssVariable'] )
@@ -600,13 +603,9 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = { __tag_
     const getDynamicClass = (str) => {
         if( str != ''  ){
             if( isStringReg.test(str) ){
-                console.log(1)
-                console.log(str)
                 const classes = getJoinClass(str);
-                console.log( classes,'classes' )
-                return classes
+                return classes ? classes : [str]
             }else if( cssVariable[str] ){
-                console.log(2)
                 return cssVariable[str]
             }
         }
@@ -644,29 +643,34 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = { __tag_
                 if( ternaryExpressionReg.test(dynamicClass[1]) ){
                     dynamicClass[1].replace(ternaryExpressionReg,($1,$2,$3,$4)=>{
                         
+
+                        $3 = $3.trimLeft().trimRight()
+                        $4 = $4.trimLeft().trimRight()
                         let = res = null
                         
                         res = getDynamicClass($3)
                         TagClass = TagClass.concat( res )
 
                         if( !isStringReg.test($3) ){
-                            cssVariable.push($3)
+                            _cssVariable.add($3)
                         }
 
                         res = getDynamicClass($4)
                         TagClass = TagClass.concat( res )
 
                         if( !isStringReg.test($4) ){
-                            cssVariable.push($4)
+                            _cssVariable.add($4)
                         }
                     })
                 }else{
                     if( dynamicClass[1] != '' ){
 
+                        dynamicClass[1] = dynamicClass[1].trimLeft().trimRight()
+
                         TagClass = TagClass.concat( getDynamicClass(dynamicClass[1]) )
 
                         if( !isStringReg.test(dynamicClass[1]) ){
-                            cssVariable.push( dynamicClass[1] )
+                            _cssVariable.add( dynamicClass[1] )
                         }
                     }
                 }
