@@ -91,9 +91,12 @@ const peerSelectReg = /(?=\.)|(?=\#)/g;
  * ‘/columns' 检查完毕 没有问题
  * '/commentDetail' 检查完毕 没有问题
  * '/config' 检查完毕 没有问题
+ * '/configuration' 太复杂 优先级放到最后 不过应该是没问题
+ * ‘/customer_chat’ 检查完毕 没有问题
+ * ‘/detail’
  */
 
-const PAGE_DIR_PATH = '/configuration'
+const PAGE_DIR_PATH = '/detail'
 // 用来收集css变量 开发时使用
 const _cssVariable = new Set()
 
@@ -792,10 +795,10 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = { __tag_
             const tagId = _getId($1);
             const tagName = _getTagName($1);
 
-            if( isImportReg.test(tagName) ){
+            if( isImportReg.test(tagName) && !/\<\s?\/import/i.test($1) ){
                 let importSrc =  getAttr($1,'src');
                 importSrc = /.*\.wxml$/i.test(importSrc) ? importSrc : importSrc + '.wxml'
-
+                
                 findTemplates[importSrc] =  () => new Promise( async (_resolve,_reject)=>{
                     let templatePath = '';
                     
