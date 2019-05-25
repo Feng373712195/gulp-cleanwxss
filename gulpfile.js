@@ -67,6 +67,8 @@ const PAGES_PATH = path.join(WX_DIR_PATH,'/pages')
 // 2019-5-02 
 // 过滤样式表注释 ok
 
+// 2019-5-25
+// 兄弟选择器还未处理
 
 
 const selectMap = {};
@@ -93,10 +95,11 @@ const peerSelectReg = /(?=\.)|(?=\#)/g;
  * '/config' 检查完毕 没有问题
  * '/configuration' 太复杂 优先级放到最后 不过应该是没问题
  * ‘/customer_chat’ 检查完毕 没有问题
- * ‘/detail’
+ * ‘/detail’太复杂 优先级放到最后
+ * '/discussion' 检查完毕 没有问题
  */
 
-const PAGE_DIR_PATH = '/detail'
+const PAGE_DIR_PATH = '/expertComment'
 // 用来收集css变量 开发时使用
 const _cssVariable = new Set()
 
@@ -118,7 +121,10 @@ const cssVariable = {
     // 'item.bttoClass':['c-linergradient-blue-bg','c-linergradient-yellow-bg']
 
     // 'configuration Page use'
-    tabBtnCurrentIndex:[1,2,3] 
+    // tabBtnCurrentIndex:[1,2,3] 
+
+    // discussion
+    // 'item.colorCls':['themered']
 }
 
 
@@ -484,6 +490,17 @@ const getAttr = (tag,attr) => {
 // selectNodeCache不再作为全局变量 而作为getWxmlTree的返回值
 const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = { __tag__:{} })=>{
 
+    // 解决 {{  }} 中使用尖括号会影响截取标签的正则表达式问题
+    const hasAngleBracketsReg = /[\<\>]/g
+    // 这段正则再优化一下使用便可以优化性能  /\{\{(.*[\>\<]{1}.*?)\}\}[\"|\']/
+    wxmlStr = wxmlStr.replace(/\{\{.*?\}\}/g,($1,$2)=>{
+        if( hasAngleBracketsReg.test($1) ){
+            $1 = $1.replace(hasAngleBracketsReg,' @@@block@@@ ')
+            return $1;
+        }
+        return $1; 
+    })
+
     const templateStartTagReg = /\<template.*\s+name=/
     const useTemplateTagReg = /\<template.*\s+is=/
     //是否字符串正则表达式
@@ -721,6 +738,7 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = { __tag_
     // 取得标签名称
     const _getTagName = (tag)=>{
         const tagExec = /\<([\w|\-]+)\s?|\/([\w|\-]+)\s?\>/.exec(tag)
+        // console.log( tag,'=== tag ===' )
         const tagName = tagExec[1] ? tagExec[1] : tagExec[2];
         return tagName
     }
@@ -795,6 +813,7 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = { __tag_
             const tagId = _getId($1);
             const tagName = _getTagName($1);
 
+            // /\<\s?\/import/i 这段正则用来防止 </improt> 标签也会进入这块处理 
             if( isImportReg.test(tagName) && !/\<\s?\/import/i.test($1) ){
                 let importSrc =  getAttr($1,'src');
                 importSrc = /.*\.wxml$/i.test(importSrc) ? importSrc : importSrc + '.wxml'
