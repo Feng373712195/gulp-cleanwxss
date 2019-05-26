@@ -103,10 +103,17 @@ const peerSelectReg = /(?=\.)|(?=\#)/g;
  * ’/hotComment‘ 检查完毕 没有问题
  * ’/index‘ 太复杂 优先级放到最后
  * ’/inquiry‘ 检查完毕 没有问题
- * 'jumpToAsk' 检查完毕 没有问题
+ * '/jumpToAsk' 检查完毕 没有问题
+ * ‘/locationBrands’ 检查完毕 没有问题
+ * '/myorder' 检查完毕 没有问题
+ * ‘/myscore’ 检查完毕 没有问题
+ * ‘/navBrands’ 检查完毕 没有问题
+ * '/navToMiniProgran' 检查完毕 没有问题
+ * 
+ * 
  */
 
-const PAGE_DIR_PATH = '/locationBrands'
+const PAGE_DIR_PATH = '/news/detail'
 // 用来收集css变量 开发时使用
 const _cssVariable = new Set()
 
@@ -495,7 +502,7 @@ const getAttr = (tag,attr) => {
 
 // 2019-03-21 
 // selectNodeCache不再作为全局变量 而作为getWxmlTree的返回值
-const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = { __tag__:{} })=>{
+const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = { __tag__:{} },templatePath)=>{
 
     // 解决 {{  }} 中使用尖括号会影响截取标签的正则表达式问题
     const hasAngleBracketsReg = /[\<\>]/g
@@ -674,7 +681,6 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = { __tag_
             let dynamicClass = '';
 
             while( dynamicClass = dynamicClassReg.exec(TagClassStr) ){
-                console.log( dynamicClass[1] ,'dynamicClass[1]' )
                 if( ternaryExpressionReg.test(dynamicClass[1]) ){
                     dynamicClass[1].replace(ternaryExpressionReg,($1,$2,$3,$4)=>{
 
@@ -834,11 +840,13 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = { __tag_
                 importSrc = /.*\.wxml$/i.test(importSrc) ? importSrc : importSrc + '.wxml'
                 
                 findTemplates[importSrc] =  () => new Promise( async (_resolve,_reject)=>{
-                    let templatePath = '';
-                    
+                    let _templatePath = '';
                     // 查找模版规则 首先查找相对路径 如果相对路径没有 则尝试绝对路径 如果都没有则弹出错误 当时不印象继续往下执行
-                    templatePath = path.join( path.join( PAGES_PATH,PAGE_DIR_PATH ), importSrc );
-                    fsp.readFile(templatePath,'utf-8')
+                    _templatePath = path.join( isTemplateWxml ? 
+                                               templatePath.replace(/\/\w+\.wxml$/,'') : 
+                                               path.join( PAGES_PATH,PAGE_DIR_PATH ), importSrc );
+
+                    fsp.readFile( _templatePath,'utf-8')
                     .catch(err=>{
                         templatePath = path.join( WX_DIR_PATH,importSrc )
                         return fsp.readFile(templatePath,'utf-8')
@@ -849,7 +857,7 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = { __tag_
                         reject()
                     })
                     .then(tmp =>{
-                        return getTemplateWxmlTree(importSrc,tmp,mianSelectNodes)
+                        return getTemplateWxmlTree(importSrc,tmp,mianSelectNodes,_templatePath)
                     })
                     .then(res =>{
                         // console.log( 'resolve ===========' )
@@ -1073,7 +1081,7 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = { __tag_
 }
 
 // 把Wxml字符串转为树结构
-const getTemplateWxmlTree = async (temkey,wxmlStr,selectNodes) => {
+const getTemplateWxmlTree = async (temkey,wxmlStr,selectNodes,templatePath) => {
     // const templates = {};
     // const templateStartRegExp = /\<template.*\>/
     // const templateEndRegExp = /\<\/template.*\>/
@@ -1109,6 +1117,6 @@ const getTemplateWxmlTree = async (temkey,wxmlStr,selectNodes) => {
     //     }
     // }
 
-    return await getWxmlTree(wxmlStr,true,selectNodes)
+    return await getWxmlTree(wxmlStr,true,selectNodes,templatePath)
     
 }
