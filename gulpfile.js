@@ -102,10 +102,11 @@ const peerSelectReg = /(?=\.)|(?=\#)/g;
  * ’/goPublic‘ 检查完毕 没有问题
  * ’/hotComment‘ 检查完毕 没有问题
  * ’/index‘ 太复杂 优先级放到最后
- * ’/inquiry‘ 
+ * ’/inquiry‘ 检查完毕 没有问题
+ * 'jumpToAsk' 检查完毕 没有问题
  */
 
-const PAGE_DIR_PATH = '/inquiry'
+const PAGE_DIR_PATH = '/locationBrands'
 // 用来收集css变量 开发时使用
 const _cssVariable = new Set()
 
@@ -633,12 +634,12 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = { __tag_
                 let res = [] 
                 // 解决字符串class 导致存入‘/‘classname/’’这样的class名
                 if( classes ){
-                  res = classes.map( item=>item.replace(isStringReg,'$1') ).filter(v=>v);
+                  res = classes.map( item=>item.replace(isStringReg,'$1') )
                 }else{
                   res = ~str.indexOf(' ') ? str.replace(isStringReg,'$1').split(' ') : [str.replace(isStringReg,'$1')]
+                  
                 }
-                console.log( res )
-                return res
+                return res.filter(v=>v)
             }else if( cssVariable[str] ){
                 return cssVariable[str]
             }
