@@ -97,9 +97,10 @@ const peerSelectReg = /(?=\.)|(?=\#)/g;
  * ‘/customer_chat’ 检查完毕 没有问题
  * ‘/detail’太复杂 优先级放到最后
  * '/discussion' 检查完毕 没有问题
+ * '/expertComment' 检查完毕 没有问题
  */
 
-const PAGE_DIR_PATH = '/expertComment'
+const PAGE_DIR_PATH = '/filterCar'
 // 用来收集css变量 开发时使用
 const _cssVariable = new Set()
 
@@ -623,8 +624,9 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = { __tag_
     const getDynamicClass = (str) => {
         if( str != ''  ){
             if( isStringReg.test(str) ){
-                const classes = getJoinClass(str);
-                return classes ? classes : [str]
+                let classes = getJoinClass(str);
+                // 解决字符串class 导致存入‘/‘classname/’’这样的class名
+                return (classes ? classes : [str]).map( item=>item.replace(isStringReg,'$1') ).filter(v=>v);;
             }else if( cssVariable[str] ){
                 return cssVariable[str]
             }
@@ -661,14 +663,15 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = { __tag_
             while( dynamicClass = dynamicClassReg.exec(TagClassStr) ){
 
                 if( ternaryExpressionReg.test(dynamicClass[1]) ){
+                    console.log(dynamicClass[1],'dynamicClass[1]')
                     dynamicClass[1].replace(ternaryExpressionReg,($1,$2,$3,$4)=>{
-                        
 
                         $3 = $3.trimLeft().trimRight()
                         $4 = $4.trimLeft().trimRight()
                         let = res = null
                         
                         res = getDynamicClass($3)
+                        console.log( res,'getDynamicClass($3)' )
                         TagClass = TagClass.concat( res )
 
                         if( !isStringReg.test($3) ){
@@ -676,6 +679,7 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = { __tag_
                         }
 
                         res = getDynamicClass($4)
+                        console.log( res,'getDynamicClass($4)' )
                         TagClass = TagClass.concat( res )
 
                         if( !isStringReg.test($4) ){
