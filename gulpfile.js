@@ -117,8 +117,8 @@ const PAGE_DIR_PATH = '/news/detail'
 // 用来收集css变量 开发时使用
 const _cssVariable = new Set()
 
+// 未来 config 参数 
 const cssVariable = {
-
     // ‘carHot Page use’
     // 'cls':['fade'],
     // 'pagenumAnimation':['pagenum-animation1','pagenum-animation2'],
@@ -139,6 +139,11 @@ const cssVariable = {
 
     // discussion
     // 'item.colorCls':['themered']
+
+}
+// 未来 config 参数 
+const componentsClasses = {
+    'c-bottom-nav':['bottomnav-button-class','bottomnav-icon-animated','bottomnav-icon-text-class','bottomnav-icon-class']
 }
 
 
@@ -149,6 +154,7 @@ gulp.task('one',async function(){
     
     let pageWxss = await fsp.readFile( path.join( pageFilePath,pageFiles.find(v=>/\.wxss/.test(v)) ) ,'utf-8' );
     let pageWxml = await fsp.readFile( path.join( pageFilePath,pageFiles.find(v=>/\.wxml/.test(v)) ), 'utf-8' );
+    let pageJson = await fsp.readFile( path.join( pageFilePath,pageFiles.find(v=>/\.json/.test(v)) ), 'utf-8' );
 
     pageWxss = await getWxss(pageWxss)
 
@@ -160,7 +166,7 @@ gulp.task('one',async function(){
     })
 
     //获取Wxml树
-    const { WxmlTree,selectNodeCache } = await getWxmlTree(pageWxml);
+    const { WxmlTree,selectNodeCache } = await getWxmlTree({ pageWxml,pageJson });
 
     console.log( _cssVariable,'_cssVariable' )
 
@@ -502,7 +508,22 @@ const getAttr = (tag,attr) => {
 
 // 2019-03-21 
 // selectNodeCache不再作为全局变量 而作为getWxmlTree的返回值
-const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = { __tag__:{} },templatePath)=>{
+const getWxmlTree =  ( data ,isTemplateWxml = false ,mianSelectNodes = { __tag__:{} },templatePath)=>{
+
+    let pageJson = null;
+    let useingComponents = {};
+    let wxmlStr = '';
+
+    if(typeof data === 'object'){
+        // 如果是页面 data为一个对象
+        pageJson = JSON.parse(data.pageJson)
+        // 拿到 page的 usingComponents
+        useingComponents = pageJson.usingComponents ? pageJson.usingComponents : useingComponents
+        wxmlStr = data.pageWxml
+    }else{
+        // 模版则是字符串
+        wxmlStr = data
+    }
 
     // 解决 {{  }} 中使用尖括号会影响截取标签的正则表达式问题
     const hasAngleBracketsReg = /[\<\>]/g
@@ -656,22 +677,23 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = { __tag_
 
     // 取得标签内的Class
     // 注意还有hover-class 之类的情况
-    const _getTagClass = (tag,arr)=>{
+    const _getTagClass = (classKey,tag,arr,debug)=>{
 
         let TagClass = arr ? arr : [];
         
         // 判断前面是否有空格 避免匹配到 *-class 
-        const hasClass = /\s+class=/;
+        const hasClass = new RegExp(`\\s+${classKey}\\=`);
+
         // 判断标签是否拥有class
         if( hasClass.test(tag) ){
             // 获取class属性在标签的开始位置
-            const startIndex = tag.search(/class\=[\'|\"]/)
+            const startIndex = tag.search( new RegExp(`${classKey}\\=[\\'|\\"]`) )
             // 判断开始是双引号还是单引号
-            const startMark = tag.substr(startIndex+6,1);
+            const startMark = tag.substr(startIndex+ classKey.length + 1 ,1);
             // 获得结束位置
-            const endIndex = tag.substring(startIndex + 7 ,tag.length).indexOf(startMark);
+            const endIndex = tag.substring(startIndex + classKey.length + 2 ,tag.length).indexOf(startMark);
             // 取得整段class
-            let TagClassStr = tag.substring( startIndex , startIndex + endIndex + 8 );
+            let TagClassStr = tag.substring( startIndex , startIndex + endIndex + classKey.length + 3 );
             
             //获取动态选人的class
             const dynamicClassReg = /\{\{(.*?)\}\}/
@@ -719,16 +741,16 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = { __tag_
                 TagClassStr = TagClassStr.replace(dynamicClass[0],'')
             }
 
-            TagClassStr.replace(/class=[\'|\"](.*)[\'|\"]/,function(classStr,classNames){
+            TagClassStr.replace( new RegExp(`${classKey}\\=[\\'|\\"](.*)[\\'|\\"]`) ,function(classStr,classNames){
                 TagClass = TagClass.concat( classNames.split(" ").filter(v=>v) )
             })
 
             // console.log( TagClass,'TagClass' )
 
             // 一些写法不规范的开发者 会写多个class 这里先不管
-            tag = tag.replace(/(class=[\'|\"].*?[\'|\"])/,'');
+            tag = tag.replace( new RegExp( `(${ classKey }\\=[\\'|\\"].*?[\\'|\\"])` ),'');
             if( hasClass.test(tag) ) {
-                return _getTagClass(tag,TagClass)
+                return _getTagClass('class',tag,TagClass)
             }
         }
 
@@ -830,9 +852,21 @@ const getWxmlTree =  (wxmlStr,isTemplateWxml = false ,mianSelectNodes = { __tag_
             let $1 = match[0]
             wxmlStr = wxmlStr.replace($1,'');
 
-            const tagClass = _getTagClass($1);
-            const tagId = _getId($1);
             const tagName = _getTagName($1);
+            
+            let componentClass = [];
+            let tagClass = _getTagClass('class',$1);
+            // 处理组件的 扩展class
+            if( useingComponents[tagName] && componentsClasses[tagName] && componentsClasses[tagName].length > 0 ){
+                componentsClasses[tagName].forEach( classKey => {
+                    console.log( classKey,'classKey' );
+                    componentClass = componentClass.concat( _getTagClass(classKey,$1,[],true) ) 
+                })
+                console.log( componentClass,'componentClass' )
+                tagClass = tagClass.concat(componentClass);
+            }
+
+            const tagId = _getId($1);
 
             // /\<\s?\/import/i 这段正则用来防止 </improt> 标签也会进入这块处理 
             if( isImportReg.test(tagName) && !/\<\s?\/import/i.test($1) ){
