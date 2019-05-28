@@ -299,13 +299,17 @@ gulp.task('one',async function(){
             //过滤掉伪元素伪类
             const selectQuery = classSelect.replace(pseudoClassReg,'')
             //从子节点开始查找 把选择器数组翻转
-            selectNodes = selectQuery.replace(/\s?\>\s?/,'>').split(/\s/g).filter(v=>v).reverse();
+            selectNodes = selectQuery.replace(/\s?([\>\+])\s?/,'$1').split(/\s/g).filter(v=>v).reverse();
+            console.log( selectNodes,'selectNodes' )
         }
 
         //选择器只匹配一个元素
         if( selectNodes.length == 1 ){
             if( ~selectNodes[0].indexOf('>') ){
                return checkChildSelectQuery(selectNodes[0]) 
+            }
+            if( ~selectNodes[0].indexOf('+') ){
+                return checkAdjacentSelectQuery(selectNodes[0]) 
             }
             // that.select = _checkHasSelect(selectNodes[0]) ? true : false
             return  _checkHasSelect(selectNodes[0]) ? true : false
@@ -321,10 +325,8 @@ gulp.task('one',async function(){
 
                 if( ~selectNodes[i2].indexOf('>') ){
 
-                    const checkChildSelectQueryRes = checkChildSelectQuery(
-                                                        selectNodes[i2],
-                                                        { select:i2 != 0 ? selectNodes[i2-1] : '',nodes:finds }
-                                                    )
+                    const checkChildSelectQueryRes = checkChildSelectQuery( selectNodes[i2],
+                                                     { select:i2 != 0 ? selectNodes[i2-1] : '',nodes:finds })
                     
                     
 
@@ -337,13 +339,27 @@ gulp.task('one',async function(){
                         }
                         else return false
                     }
-                }
-                
+                }            
                 if( findNodes && findNodes.select && type == 'child' && i2 == 0 ){
                     if(finds.length > 0){
                         continue
                     }else{
                         return false
+                    }
+                }
+                
+                console.log( i2,'i2' )
+                if( ~selectNodes[i2].indexOf('+') ){
+                      const checkAdjacentSelectQueryRes = checkAdjacentSelectQuery( selectNodes[i2],
+                                                          { select:i2 != 0 ? selectNodes[i2-1] : '',nodes:finds })
+                    if( i2 == selectNodes.length - 1 ){
+                        return checkAdjacentSelectQueryRes.some(v=>v)
+                    }else{
+                        if( checkAdjacentSelectQueryRes ){
+                            finds = checkAdjacentSelectQueryRes
+                            continue
+                        }
+                        else return false
                     }
                 }
 
@@ -381,6 +397,48 @@ gulp.task('one',async function(){
         }
     }
 
+    // 检查相邻兄弟选择器是否生效
+    const checkAdjacentSelectQuery = (classSelects,findNodes = null) => {
+
+        const selectNodes = classSelects.replace('+',' ').split(' ').filter(v=>v).reverse();
+        let [ firstSelect,secondSelect ] = selectNodes;
+        let newFinds = []
+
+        if( findNodes && findNodes.select ){
+            if( findNodes.nodes.length == 0 ) return false;
+            adjacentNodes = findNodes.nodes.forEach( node => newFinds.push( _findNodeParent(node,firstSelect[0]) ) )
+            adjacentNodes = newFinds.filter(v=>v);
+        }else{
+            if( firstSelect[0] == '#' || secondSelect[0] == '.' ){
+                adjacentNodes = selectNodeCache[firstSelect]
+            }else{
+                adjacentNodes = selectNodeCache.__tag__[firstSelect]
+            }
+        }
+
+        if( adjacentNodes && adjacentNodes.length > 0 ){
+
+            const secondSelectType = secondSelect[0] == '#' ? 'id' : secondSelect[0] == '.' ? 'class' : 'tag';
+
+            adjacentNodes.forEach(node=>{
+                const brothers = Object.values( node.parent.obj.childs ).map( (n,key)=> Object.values(n)[0]  )
+                const selfIndex = brothers.indexOf( node )
+                if( brothers[selfIndex+1] ){
+                    let brotherIndex = selfIndex+1;
+                    secondSelect = secondSelectType != 'tag' ? secondSelect.slice(0) : secondSelect;
+                    if( secondSelectType == 'id' && brothers[brotherIndex].id == secondSelect ) newFinds.push(brothers[brotherIndex])
+                    else if( secondSelectType == 'class' && ~brothers[brotherIndex].class.indexOf( secondSelect ) ) newFinds.push(brothers[brotherIndex])
+                    else if( secondSelectType == 'tag' && brothers[brotherIndex].tag == secondSelect ) newFinds.push(brothers[brotherIndex])
+                }
+            })
+            
+            return newFinds
+
+        }else{
+            return []
+        }
+    }    
+
     // 检查兄弟选择器是否生效
     const checkChildSelectQuery = (classSelects,findNodes = null) => {
         return checkSelectQuery(classSelects,findNodes,'child')
@@ -401,7 +459,6 @@ gulp.task('one',async function(){
 
         // 是否为逗号分隔
         let separateClassSelect = classSelects[i].split(',') 
-
         // 有逗号分隔的选择器 其中一项有被使用就返回true
         // 注意: 可以优化 在最后制作弹出的HTML 显示哪些被动 哪些没用 可以让使用者删除更多无用代码
         if( separateClassSelect.length > 1 ){
@@ -859,7 +916,6 @@ const getWxmlTree =  ( data ,isTemplateWxml = false ,mianSelectNodes = { __tag__
             // 处理组件的 扩展class
             if( useingComponents[tagName] && componentsClasses[tagName] && componentsClasses[tagName].length > 0 ){
                 componentsClasses[tagName].forEach( classKey => {
-                    console.log( classKey,'classKey' );
                     componentClass = componentClass.concat( _getTagClass(classKey,$1,[],true) ) 
                 })
                 console.log( componentClass,'componentClass' )
