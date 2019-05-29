@@ -349,6 +349,7 @@ gulp.task('one',async function(){
                 }
                 
                 console.log( i2,'i2' )
+
                 if( ~selectNodes[i2].indexOf('+') ){
                       const checkAdjacentSelectQueryRes = checkAdjacentSelectQuery( selectNodes[i2],
                                                           { select:i2 != 0 ? selectNodes[i2-1] : '',nodes:finds })
@@ -372,15 +373,15 @@ gulp.task('one',async function(){
                         return false
                     }
                 }else{
+                    console.log( i2 , selectNodes[i2] , finds.length )
                     const newFinds = []
                     finds.forEach(node=>{
                         newFinds.push(type == 'child' ?
-                                            _findNodeParent(node,selectNodes[i2],1) :
-                                            _findNodeParent(node,selectNodes[i2]) )
+                                              _findNodeParent(node,selectNodes[i2],1) :
+                                              _findNodeParent(node,selectNodes[i2]) )
                     })
 
                     finds = newFinds.filter(v=>v);
-
                     if(finds.length == 0){
                         return false
                     }
@@ -421,10 +422,25 @@ gulp.task('one',async function(){
             const secondSelectType = secondSelect[0] == '#' ? 'id' : secondSelect[0] == '.' ? 'class' : 'tag';
 
             adjacentNodes.forEach(node=>{
+                // 获取父级内的所有同级元素
                 const brothers = Object.values( node.parent.obj.childs ).map( (n,key)=> Object.values(n)[0]  )
+                // 记录遇到多少启示标签结束标签
+                let TagIndex = 0;
+                // 找到自己在同级元素中的开始标签索引位置
                 const selfIndex = brothers.indexOf( node )
-                if( brothers[selfIndex+1] ){
-                    let brotherIndex = selfIndex+1;
+                // 找到闭合标签后的位置
+                const otherBrotherNodeStartIndex = brothers.slice( selfIndex + 1 )
+                                                    .findIndex( node => { 
+                                                        node.startTag && ++TagIndex
+                                                        node.endTag && --TagIndex
+                                                        if( TagIndex == -1 ) return true
+                                                    });
+                // 得到闭合标签后的所有元素
+                const otherBrotherNode = brothers.slice( selfIndex + 1 + ( otherBrotherNodeStartIndex != -1 ? otherBrotherNodeStartIndex + 1 : 0 ) );
+                
+                // 寻找 相领选择器 对应元素
+                if( otherBrotherNode.length > 0 ){
+                    let brotherIndex = selfIndex + 1 ;
                     secondSelect = secondSelectType != 'tag' ? secondSelect.slice(0) : secondSelect;
                     if( secondSelectType == 'id' && brothers[brotherIndex].id == secondSelect ) newFinds.push(brothers[brotherIndex])
                     else if( secondSelectType == 'class' && ~brothers[brotherIndex].class.indexOf( secondSelect ) ) newFinds.push(brothers[brotherIndex])
