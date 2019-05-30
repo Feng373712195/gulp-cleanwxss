@@ -70,6 +70,10 @@ const PAGES_PATH = path.join(WX_DIR_PATH,'/pages')
 // 2019-5-25
 // 兄弟选择器还未处理
 
+//2019-5-29 
+// 选择器连用情况 a + a + a
+// 微信组件 的扩展class
+
 
 const selectMap = {};
 // 伪元素伪类匹配正则表达式
@@ -279,13 +283,14 @@ gulp.task('one',async function(){
         
         // 子元素选择器 >
         if( type == 'child' ){
-            selectNodes = classSelect.replace('>',' ').split(' ').filter(v=>v).reverse();
-
+            selectNodes = classSelect.replace(/\>/g,' ').split(' ').filter(v=>v).reverse();
             if( findNodes && findNodes.select ){
                 //如果 过上一级查找到的元素 过滤一下找到的查找到的元素
                 // findNodes.nodes = /^\.|^\#/.test(selectNodes[0]) ? 
                 //                 selectNodeCache[selectNodes[0]] : 
                 //                 selectNodeCache.__tag__[selectNodes[0]]
+                
+                // *1
                 //如果没有查找到元素 返回false
                 if( findNodes.nodes.length == 0 ) return false;
                 const newFinds = []
@@ -299,7 +304,7 @@ gulp.task('one',async function(){
             //过滤掉伪元素伪类
             const selectQuery = classSelect.replace(pseudoClassReg,'')
             //从子节点开始查找 把选择器数组翻转
-            selectNodes = selectQuery.replace(/\s?([\>\+])\s?/,'$1').split(/\s/g).filter(v=>v).reverse();
+            selectNodes = selectQuery.replace(/\s?([\>\+])\s?/g,'$1').split(/\s/g).filter(v=>v).reverse();
             console.log( selectNodes,'selectNodes' )
         }
 
@@ -339,7 +344,9 @@ gulp.task('one',async function(){
                         }
                         else return false
                     }
-                }            
+                }
+                
+                // 因为 *1位置已经做好了处理
                 if( findNodes && findNodes.select && type == 'child' && i2 == 0 ){
                     if(finds.length > 0){
                         continue
@@ -347,8 +354,6 @@ gulp.task('one',async function(){
                         return false
                     }
                 }
-                
-                console.log( i2,'i2' )
 
                 if( ~selectNodes[i2].indexOf('+') ){
                       const checkAdjacentSelectQueryRes = checkAdjacentSelectQuery( selectNodes[i2],
@@ -401,57 +406,79 @@ gulp.task('one',async function(){
     // 检查相邻兄弟选择器是否生效
     const checkAdjacentSelectQuery = (classSelects,findNodes = null) => {
 
-        const selectNodes = classSelects.replace('+',' ').split(' ').filter(v=>v).reverse();
-        let [ firstSelect,secondSelect ] = selectNodes;
+        console.log( 'checkAdjacentSelectQuery' )
+        const selectNodes = classSelects.replace(/\+/g,' ').split(' ').filter(v=>v).reverse();
+        
         let newFinds = []
 
-        if( findNodes && findNodes.select ){
-            if( findNodes.nodes.length == 0 ) return false;
-            adjacentNodes = findNodes.nodes.forEach( node => newFinds.push( _findNodeParent(node,firstSelect[0]) ) )
-            adjacentNodes = newFinds.filter(v=>v);
-        }else{
-            if( firstSelect[0] == '#' || secondSelect[0] == '.' ){
-                adjacentNodes = selectNodeCache[firstSelect]
-            }else{
-                adjacentNodes = selectNodeCache.__tag__[firstSelect]
+        for( let i = 0, l = selectNodes.length; i < l; i++ ){
+
+            // console.log( i,'i' , selectNodes.length - 1 ,'selectNodes.length' )
+            console.log( newFinds.length,'adjacentNodes' )
+
+            if( i == selectNodes.length - 1 ){
+                return newFinds;
             }
-        }
 
-        if( adjacentNodes && adjacentNodes.length > 0 ){
-
-            const secondSelectType = secondSelect[0] == '#' ? 'id' : secondSelect[0] == '.' ? 'class' : 'tag';
-
-            adjacentNodes.forEach(node=>{
-                // 获取父级内的所有同级元素
-                const brothers = Object.values( node.parent.obj.childs ).map( (n,key)=> Object.values(n)[0]  )
-                // 记录遇到多少启示标签结束标签
-                let TagIndex = 0;
-                // 找到自己在同级元素中的开始标签索引位置
-                const selfIndex = brothers.indexOf( node )
-                // 找到闭合标签后的位置
-                const otherBrotherNodeStartIndex = brothers.slice( selfIndex + 1 )
-                                                    .findIndex( node => { 
-                                                        node.startTag && ++TagIndex
-                                                        node.endTag && --TagIndex
-                                                        if( TagIndex == -1 ) return true
-                                                    });
-                // 得到闭合标签后的所有元素
-                const otherBrotherNode = brothers.slice( selfIndex + 1 + ( otherBrotherNodeStartIndex != -1 ? otherBrotherNodeStartIndex + 1 : 0 ) );
-                
-                // 寻找 相领选择器 对应元素
-                if( otherBrotherNode.length > 0 ){
-                    let brotherIndex = selfIndex + 1 ;
-                    secondSelect = secondSelectType != 'tag' ? secondSelect.slice(0) : secondSelect;
-                    if( secondSelectType == 'id' && brothers[brotherIndex].id == secondSelect ) newFinds.push(brothers[brotherIndex])
-                    else if( secondSelectType == 'class' && ~brothers[brotherIndex].class.indexOf( secondSelect ) ) newFinds.push(brothers[brotherIndex])
-                    else if( secondSelectType == 'tag' && brothers[brotherIndex].tag == secondSelect ) newFinds.push(brothers[brotherIndex])
+            if( i == 0 ){
+                if( findNodes && findNodes.select ){
+                    if( findNodes.nodes.length == 0 ) return false;
+                    adjacentNodes = findNodes.nodes.forEach( node => newFinds.push( _findNodeParent(node,selectNodes[i]) ) )
+                    adjacentNodes = newFinds.filter(v=>v);
+                }else{
+                    if( selectNodes[i][0] == '#' || selectNodes[i][0] == '.' ){
+                        adjacentNodes = selectNodeCache[selectNodes[i]]
+                    }else{
+                        console.log(2,selectNodes[i])
+                        adjacentNodes = selectNodeCache.__tag__[selectNodes[i]]
+                    }
                 }
-            })
-            
-            return newFinds
+            }
+            else{
+                adjacentNodes = newFinds;
+            }
 
-        }else{
-            return []
+            if( adjacentNodes && adjacentNodes.length > 0 ){
+                console.log('here')
+                const secondSelectType = selectNodes[i+1][0] == '#' ? 'id' : selectNodes[i+1][0] == '.' ? 'class' : 'tag';
+
+                adjacentNodes.forEach(node=>{
+                    // 获取父级内的所有同级元素
+                    const brothers = Object.values( node.parent.obj.childs ).map( (n,key)=> Object.values(n)[0]  ).reverse()
+                    
+                    // 记录遇到多少启示标签结束标签
+                    let TagIndex = 0;
+                    // 找到自己在同级元素中的开始标签索引位置
+                    const selfIndex = brothers.indexOf( node )
+
+                    // 找到闭合标签后的位置
+                    var otherBrotherNodeStartIndex;
+                    if( node.endTag && node.statrTag ){
+                        otherBrotherNodeStartIndex = -1
+                    }else{
+                        otherBrotherNodeStartIndex = brothers.slice( selfIndex + 1 )
+                        .findIndex( node => { 
+                             node.statrTag && ++TagIndex
+                             node.endTag && --TagIndex
+                             if( TagIndex == -1 ) return true
+                        });
+                    }
+
+                    // 得到闭合标签后的所有元素
+                    const otherBrotherNode = brothers.slice( selfIndex + 1 + ( otherBrotherNodeStartIndex != -1 ? otherBrotherNodeStartIndex + 1 : 0 ) );
+                    
+                    // 寻找 相领选择器 对应元素
+                    if( otherBrotherNode.length > 0 ){
+                        let brotherIndex = selfIndex + 1 ;
+                        const secondSelect = secondSelectType != 'tag' ? selectNodes[i+1].slice(1) : selectNodes[i+1];
+                        if( secondSelectType == 'id' && brothers[brotherIndex].id == secondSelect ) newFinds.push(brothers[brotherIndex])
+                        else if( secondSelectType == 'class' && ~brothers[brotherIndex].class.indexOf( secondSelect ) ) newFinds.push(brothers[brotherIndex])
+                        else if( secondSelectType == 'tag' && brothers[brotherIndex].tag == secondSelect ) newFinds.push(brothers[brotherIndex])
+                    }
+                })
+            }else{
+                return []
+            }
         }
     }    
 
