@@ -409,12 +409,10 @@ gulp.task('one',async function(){
         console.log( 'checkAdjacentSelectQuery' )
         const selectNodes = classSelects.replace(/\+/g,' ').split(' ').filter(v=>v).reverse();
         
-        let newFinds = []
+        let newFinds = [];
+        let specialFinds = [];
 
         for( let i = 0, l = selectNodes.length; i < l; i++ ){
-
-            // console.log( i,'i' , selectNodes.length - 1 ,'selectNodes.length' )
-            console.log( newFinds.length,'adjacentNodes' )
 
             if( i == selectNodes.length - 1 ){
                 return newFinds;
@@ -442,9 +440,13 @@ gulp.task('one',async function(){
                 console.log('here')
                 const secondSelectType = selectNodes[i+1][0] == '#' ? 'id' : selectNodes[i+1][0] == '.' ? 'class' : 'tag';
 
-                adjacentNodes.forEach(node=>{
+                // ( specialFinds.length ? specialFinds : adjacentNodes )
+                ( specialFinds.length ? specialFinds : adjacentNodes ).forEach(node=>{
+
+                    console.log( node,'node' )
+
                     // 获取父级内的所有同级元素
-                    const brothers = Object.values( node.parent.obj.childs ).map( (n,key)=> Object.values(n)[0]  ).reverse()
+                    const brothers = Object.values( node.parent.obj.childs ).map((n,key)=> Object.values(n)[0] ).reverse()
                     
                     // 记录遇到多少启示标签结束标签
                     let TagIndex = 0;
@@ -466,14 +468,24 @@ gulp.task('one',async function(){
 
                     // 得到闭合标签后的所有元素
                     const otherBrotherNode = brothers.slice( selfIndex + 1 + ( otherBrotherNodeStartIndex != -1 ? otherBrotherNodeStartIndex + 1 : 0 ) );
-                    
+
                     // 寻找 相领选择器 对应元素
                     if( otherBrotherNode.length > 0 ){
                         let brotherIndex = selfIndex + 1 ;
                         const secondSelect = secondSelectType != 'tag' ? selectNodes[i+1].slice(1) : selectNodes[i+1];
+                        console.log( secondSelect ,'secondSelect')
+                        let oldFindsLength = newFinds.length
                         if( secondSelectType == 'id' && brothers[brotherIndex].id == secondSelect ) newFinds.push(brothers[brotherIndex])
                         else if( secondSelectType == 'class' && ~brothers[brotherIndex].class.indexOf( secondSelect ) ) newFinds.push(brothers[brotherIndex])
                         else if( secondSelectType == 'tag' && brothers[brotherIndex].tag == secondSelect ) newFinds.push(brothers[brotherIndex])
+
+                        if( oldFindsLength != newFinds.length ){
+                            const cloneNode = Object.assign({},brothers[brotherIndex] )
+                            console.log( cloneNode,'cloneNode' )
+                            cloneNode.parent.obj.childs = [...cloneNode.parent.obj.childs].splice( brotherIndex );
+                            
+                            specialFinds.push(  cloneNode )
+                        }
                     }
                 })
             }else{
