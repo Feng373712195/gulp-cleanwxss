@@ -403,15 +403,40 @@ gulp.task('one',async function(){
         }
     }
 
+    // 寻找闭合标签的位置
+    // -1 表示自身是个单标签 <img />
+    function findCloseTagIndex(nodes,node){
+        // 找到自己在同级元素中的开始标签索引位置
+        const selfIndex = nodes.indexOf( node )
+        // 记录遇到多少启示标签结束标签
+        let TagIndex = 0;
+        // 找到闭合标签后的位置
+        var otherBrotherNodeStartIndex = 0;
+        
+        if( node.endTag && node.statrTag ){
+            otherBrotherNodeStartIndex = -1
+        }else{
+            otherBrotherNodeStartIndex = nodes.slice( selfIndex + 1 )
+            .findIndex( node => { 
+                node.statrTag && ++TagIndex;
+                node.endTag && --TagIndex;
+                if( TagIndex == -1 ) return true
+            });
+        }
+
+        return otherBrotherNodeStartIndex >= 0 ? otherBrotherNodeStartIndex + selfIndex + 1 : selfIndex
+    }
+
     // 检查相邻兄弟选择器是否生效
     const checkAdjacentSelectQuery = (classSelects,findNodes = null) => {
-
-        console.log( 'checkAdjacentSelectQuery' )
-        const selectNodes = classSelects.replace(/\+/g,' ').split(' ').filter(v=>v).reverse();
         
-        let newFinds = [];
-        let specialFinds = [];
 
+        const selectNodes = classSelects.replace(/\+/g,' ').split(' ').filter(v=>v);
+        
+        let newFinds = [],
+        adjacentNodes = [],
+        specialFinds = [];
+        
         for( let i = 0, l = selectNodes.length; i < l; i++ ){
 
             if( i == selectNodes.length - 1 ){
@@ -423,68 +448,59 @@ gulp.task('one',async function(){
                     if( findNodes.nodes.length == 0 ) return false;
                     adjacentNodes = findNodes.nodes.forEach( node => newFinds.push( _findNodeParent(node,selectNodes[i]) ) )
                     adjacentNodes = newFinds.filter(v=>v);
+                    newFinds = [];
                 }else{
                     if( selectNodes[i][0] == '#' || selectNodes[i][0] == '.' ){
                         adjacentNodes = selectNodeCache[selectNodes[i]]
                     }else{
-                        console.log(2,selectNodes[i])
                         adjacentNodes = selectNodeCache.__tag__[selectNodes[i]]
                     }
                 }
             }
             else{
-                adjacentNodes = newFinds;
+                adjacentNodes = specialFinds;
+                specialFinds = [];
+                newFinds = [];
             }
 
             if( adjacentNodes && adjacentNodes.length > 0 ){
-                console.log('here')
                 const secondSelectType = selectNodes[i+1][0] == '#' ? 'id' : selectNodes[i+1][0] == '.' ? 'class' : 'tag';
-
-                // ( specialFinds.length ? specialFinds : adjacentNodes )
-                ( specialFinds.length ? specialFinds : adjacentNodes ).forEach(node=>{
-
-                    console.log( node,'node' )
+                adjacentNodes.forEach(node=>{
 
                     // 获取父级内的所有同级元素
-                    const brothers = Object.values( node.parent.obj.childs ).map((n,key)=> Object.values(n)[0] ).reverse()
-                    
-                    // 记录遇到多少启示标签结束标签
-                    let TagIndex = 0;
+                    const brothers = Object.values( node.parent.obj.childs ).map((n,key)=> Object.values(n)[0] )
+ 
                     // 找到自己在同级元素中的开始标签索引位置
-                    const selfIndex = brothers.indexOf( node )
+                    // const selfIndex = brothers.indexOf( node )
 
-                    // 找到闭合标签后的位置
-                    var otherBrotherNodeStartIndex;
-                    if( node.endTag && node.statrTag ){
-                        otherBrotherNodeStartIndex = -1
-                    }else{
-                        otherBrotherNodeStartIndex = brothers.slice( selfIndex + 1 )
-                        .findIndex( node => { 
-                             node.statrTag && ++TagIndex
-                             node.endTag && --TagIndex
-                             if( TagIndex == -1 ) return true
-                        });
-                    }
-
+                    // 寻找此标签闭合后下一个的索引
+                    let otherBrotherNodeStartIndex = findCloseTagIndex(brothers,node)
                     // 得到闭合标签后的所有元素
-                    const otherBrotherNode = brothers.slice( selfIndex + 1 + ( otherBrotherNodeStartIndex != -1 ? otherBrotherNodeStartIndex + 1 : 0 ) );
-
+                    const otherBrotherNode = brothers.slice( otherBrotherNodeStartIndex + 1 );
                     // 寻找 相领选择器 对应元素
                     if( otherBrotherNode.length > 0 ){
-                        let brotherIndex = selfIndex + 1 ;
+                        let brotherIndex = otherBrotherNodeStartIndex + 1 ;
                         const secondSelect = secondSelectType != 'tag' ? selectNodes[i+1].slice(1) : selectNodes[i+1];
-                        console.log( secondSelect ,'secondSelect')
                         let oldFindsLength = newFinds.length
                         if( secondSelectType == 'id' && brothers[brotherIndex].id == secondSelect ) newFinds.push(brothers[brotherIndex])
                         else if( secondSelectType == 'class' && ~brothers[brotherIndex].class.indexOf( secondSelect ) ) newFinds.push(brothers[brotherIndex])
                         else if( secondSelectType == 'tag' && brothers[brotherIndex].tag == secondSelect ) newFinds.push(brothers[brotherIndex])
 
                         if( oldFindsLength != newFinds.length ){
-                            const cloneNode = Object.assign({},brothers[brotherIndex] )
-                            console.log( cloneNode,'cloneNode' )
-                            cloneNode.parent.obj.childs = [...cloneNode.parent.obj.childs].splice( brotherIndex );
-                            
-                            specialFinds.push(  cloneNode )
+                            // console.log('================= here =================')
+                            // console.log( brothers[brotherIndex] , 'brothers[brotherIndex]' )
+                            // console.log( otherBrotherNode,'otherBrotherNode' )
+                            const cloneNode = {...node}
+                            const cloneNodeParent = {...cloneNode.parent.obj};
+                            cloneNode.parent.obj = cloneNodeParent;
+                            // console.log( brothers[brotherIndex],'brothers[brotherIndex]' )
+                            // console.log( brothers, ' ===== brothers =====' )
+                            let otherBrotherNodeStartIndex = findCloseTagIndex( brothers,brothers[brotherIndex] )
+                            // console.log( otherBrotherNodeStartIndex,'otherBrotherNodeStartIndex' )
+                            // console.log( cloneNode.parent.obj.childs , 'after' )
+                            cloneNode.parent.obj.childs = [...cloneNode.parent.obj.childs].slice( otherBrotherNodeStartIndex + 1 );
+                            // console.log( cloneNode.parent.obj.childs , 'before' )
+                            specialFinds.push( cloneNode )
                         }
                     }
                 })
