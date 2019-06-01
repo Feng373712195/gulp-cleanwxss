@@ -71,9 +71,11 @@ const PAGES_PATH = path.join(WX_DIR_PATH,'/pages')
 // 兄弟选择器还未处理
 
 //2019-5-29 
-// 选择器连用情况 a + a + a
+// 选择器连用情况 a + a + a 解决
 // 微信组件 的扩展class
 
+// 2019-6-1
+// app.json 组件引用
 
 const selectMap = {};
 // 伪元素伪类匹配正则表达式
@@ -113,11 +115,22 @@ const peerSelectReg = /(?=\.)|(?=\#)/g;
  * ‘/myscore’ 检查完毕 没有问题
  * ‘/navBrands’ 检查完毕 没有问题
  * '/navToMiniProgran' 检查完毕 没有问题
- * 
- * 
+ * ‘/news/detail’ 检查完毕 没有问题
+ * '/news/list' 检查完毕 没有问题
+ * '/participate' 检查完毕 没有问题
+ * '/personal_information' 检查完毕 没有问题
+ * '/pic' 检查完毕 没有问题
+ * '/pkConfig' 检查完毕 没有问题
+ * '/promotion' 检查完毕 没有问题
+ * '/rank' 检查完毕 没有问题
+ * '/rating/list' 检查完毕 没有问题
+ * '/rating/post' 检查完毕 没有问题
+ * '/receive_preferential' 检查完毕 没有问题
+ * '/releaseHeadine' 检查完毕 没有问题
+ * 'replybar' 检查完毕 没有问题
  */
 
-const PAGE_DIR_PATH = '/news/detail'
+const PAGE_DIR_PATH = '/scoreDetail/koubeidetail'
 // 用来收集css变量 开发时使用
 const _cssVariable = new Set()
 
@@ -147,7 +160,8 @@ const cssVariable = {
 }
 // 未来 config 参数 
 const componentsClasses = {
-    'c-bottom-nav':['bottomnav-button-class','bottomnav-icon-animated','bottomnav-icon-text-class','bottomnav-icon-class']
+    'c-bottom-nav':['bottomnav-button-class','bottomnav-icon-animated','bottomnav-icon-text-class','bottomnav-icon-class'],
+    'c-model':['model-class','model-content-class','model-success-btn-class','model-cancel-btn-class']
 }
 
 
@@ -172,7 +186,11 @@ gulp.task('one',async function(){
     //获取Wxml树
     const { WxmlTree,selectNodeCache } = await getWxmlTree({ pageWxml,pageJson });
 
-    console.log( _cssVariable,'_cssVariable' )
+    console.log( selectNodeCache['.star-item'].length )
+    selectNodeCache['.star-item'].forEach(node=>{
+        console.log('================')
+        console.log(  node.parent )
+    })
 
     //检查同级元素
     const _checkHasSelect = (select) => {
@@ -236,9 +254,11 @@ gulp.task('one',async function(){
                                   _findNodeParent(node.parent.obj,select)
             }
         }else{
+            // console.log('findNodeParent','here',select)
             let isParent = false
 
             if( select[0] == '.' ){
+                // console.log( node.parent.obj.class ,'show Parent class' )
                 isParent = node.parent.obj.class.findIndex(v2=> `.${v2}` == select) != -1 ? true : false
             }else if( select[1] == '#' ){
                 isParent = node.parent.obj.id == select
@@ -305,7 +325,6 @@ gulp.task('one',async function(){
             const selectQuery = classSelect.replace(pseudoClassReg,'')
             //从子节点开始查找 把选择器数组翻转
             selectNodes = selectQuery.replace(/\s?([\>\+])\s?/g,'$1').split(/\s/g).filter(v=>v).reverse();
-            console.log( selectNodes,'selectNodes' )
         }
 
         //选择器只匹配一个元素
@@ -325,9 +344,9 @@ gulp.task('one',async function(){
            let finds = findNodes ? findNodes.nodes : []; 
            // 把选择器转化成数组 如 .search-block .search-list .tag 转为 [.tag,.search-list,.search-block]
            for( let i2 = 0,len = selectNodes.length; i2 < len; i2++ ){
-            
-                // console.log( selectNodes[i2],'selectNodes[i2]',i2,selectNodes.length-1 )
 
+                // console.log( selectNodes[i2],'selectNodes[i2]',i2,selectNodes.length-1 )
+                
                 if( ~selectNodes[i2].indexOf('>') ){
 
                     const checkChildSelectQueryRes = checkChildSelectQuery( selectNodes[i2],
@@ -378,7 +397,6 @@ gulp.task('one',async function(){
                         return false
                     }
                 }else{
-                    console.log( i2 , selectNodes[i2] , finds.length )
                     const newFinds = []
                     finds.forEach(node=>{
                         newFinds.push(type == 'child' ?
@@ -630,6 +648,7 @@ const getAttr = (tag,attr) => {
     }
 }
 
+
 // 把Wxml字符串转为树结构
 // 在转成树结构的过程中就可以把所有节点存储起来
 // 标签不会被覆盖 这个核实过了
@@ -677,7 +696,7 @@ const getWxmlTree =  ( data ,isTemplateWxml = false ,mianSelectNodes = { __tag__
     let templateCount = 0;
 
     // 解析模版wxmlTree时 会存在这个对象
-    let templateNode = { }
+    let templateNode = {}
     // 当前处理模板名称
     let currentTemplateName = ''
 
@@ -873,8 +892,6 @@ const getWxmlTree =  ( data ,isTemplateWxml = false ,mianSelectNodes = { __tag__
                 TagClass = TagClass.concat( classNames.split(" ").filter(v=>v) )
             })
 
-            // console.log( TagClass,'TagClass' )
-
             // 一些写法不规范的开发者 会写多个class 这里先不管
             tag = tag.replace( new RegExp( `(${ classKey }\\=[\\'|\\"].*?[\\'|\\"])` ),'');
             if( hasClass.test(tag) ) {
@@ -960,7 +977,7 @@ const getWxmlTree =  ( data ,isTemplateWxml = false ,mianSelectNodes = { __tag__
         })    
         return nodes1
     }
-                    
+
     const isSingeTagReg = /\<(.*)\/\>/;
     const isCloseTagReg = /\<\/(.*)\>/;
     const isCompleteTagReg = /\<.*\>.*\<.*\>/
@@ -1192,9 +1209,16 @@ const getWxmlTree =  ( data ,isTemplateWxml = false ,mianSelectNodes = { __tag__
         for( const name in findTemplates ){
             templateCache[name] = await findTemplates[name]()
         }
-        
+
+        var uuu = false
+
         // 遍历在wxml中找到 带有is属性的template标签 
         findUseTemplates.forEach(usetml=>{
+            // console.log( usetml,'usetml' )
+
+            if( Object.keys(usetml)[0] == 'star'){ uuu = true }
+            else{ uuu = false }
+
             // 准备被替换的模版
             let replaceTml = null;
             const useTemplateName = Object.keys(usetml)[0];
@@ -1208,28 +1232,54 @@ const getWxmlTree =  ( data ,isTemplateWxml = false ,mianSelectNodes = { __tag__
             }
 
             if( replaceTml ){
-                const { templateWxmlTree,selectNode } = replaceTml
+                
+                const { templateWxmlTree,selectNode } = replaceTml;
+
                 // 找到要被替换模版在父组件的位置
                 const useTemplateStr = Object.keys(usetml[useTemplateName])[0]
                 let templateParent = usetml[useTemplateName][useTemplateStr].parent;
                 let templateParentTheChilren = usetml[useTemplateName][useTemplateStr].parent.obj.childs;
                 let templatehaschildrenNodeIndex = templateParentTheChilren.indexOf(usetml[useTemplateName])    
-                
+
                 // 替换模板的父节点        
                 // 注意：这里要做浅拷贝
-                templateWxmlTree.forEach(node=>{
-                    const key = Object.keys(node)[0]
-                    node[key].parent = templateParent
+                let _templateWxmlTree = [...templateWxmlTree];
+                cloneNodeSelectNode = {}
+                // uuu && console.log( templateParent )
+                // uuu && console.log( _templateWxmlTree.length )
+                _templateWxmlTree.map(node=>{
+                    const nodeKey = Object.keys(node);
+                    node = node[nodeKey]; 
+                    const cloneNode = {...node};
+                    cloneNode.parent = templateParent
+                    cloneNode.childs = [...cloneNode.childs].map(childNode=>{
+                        // const cloneChildNodeKey = Object.keys(childNode)[0]
+                        // const cloneChildNode =  {...childNode}
+                        // const cloneChildNodeParent = {...cloneChildNode[cloneChildNodeKey].parent}
+                        // cloneChildNode.parent = cloneChildNodeParent
+                        // cloneChildNodeParent.obj = cloneNode;
+                        return cloneChildNode;
+                    })
+                    cloneNode.class.forEach(className=>{
+                        !cloneNodeSelectNode[`.${className}`] && (cloneNodeSelectNode[`.${className}`] = [])
+                        cloneNodeSelectNode[`.${className}`].push( cloneNode )
+                    })                    
+                    return { [nodeKey]:cloneNode }
+                })
+
+
+                Object.keys(cloneNodeSelectNode).forEach(selectClass=>{
+                    selectNode[selectClass] = cloneNodeSelectNode[selectClass]
                 })
 
                 // 进行替换 
-                Array.prototype.splice.apply( templateParentTheChilren,[templatehaschildrenNodeIndex,1,...templateWxmlTree] )
+                Array.prototype.splice.apply( templateParentTheChilren,[templatehaschildrenNodeIndex,1,..._templateWxmlTree] )
 
                 // 发现找到的第一次找到时合并 后面就没必要合并了 因为都一样 会造成重复
-                if( replaceTml.count == 1 ){
+                // if( replaceTml.count == 1 ){
                     // 使用它模板或者页面的selectNode 合并和 组件的selectNode
                     mergeSelectNode( mianSelectNodes,selectNode )
-                }
+                // }
             }
         })
 
@@ -1243,6 +1293,7 @@ const getWxmlTree =  ( data ,isTemplateWxml = false ,mianSelectNodes = { __tag__
 
 // 把Wxml字符串转为树结构
 const getTemplateWxmlTree = async (temkey,wxmlStr,selectNodes,templatePath) => {
+
     // const templates = {};
     // const templateStartRegExp = /\<template.*\>/
     // const templateEndRegExp = /\<\/template.*\>/
