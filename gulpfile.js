@@ -128,9 +128,12 @@ const peerSelectReg = /(?=\.)|(?=\#)/g;
  * '/receive_preferential' 检查完毕 没有问题
  * '/releaseHeadine' 检查完毕 没有问题
  * 'replybar' 检查完毕 没有问题
+ * ‘/scoreDetail/koubeidetail’ 检查完毕 没有问题
+ * '/scoreDetail/livedetail'  检查完毕 没有问题
+ * 
  */
 
-const PAGE_DIR_PATH = '/scoreDetail/koubeidetail'
+const PAGE_DIR_PATH = '/scoreDetail/longdetail'
 // 用来收集css变量 开发时使用
 const _cssVariable = new Set()
 
@@ -185,7 +188,7 @@ gulp.task('one',async function(){
 
     //获取Wxml树
     const { WxmlTree,selectNodeCache } = await getWxmlTree({ pageWxml,pageJson });
-    
+
     //检查同级元素
     const _checkHasSelect = (select) => {
         const peerSelect = select.split( peerSelectReg )
@@ -574,7 +577,6 @@ const getWxss = (str) => {
 
     // 过滤掉wxss中的注释
     str = str.replace(/\/\*([\s\S]*?)\*\//g,'')
-
     // 过滤掉keyframes
     str = str.replace(/\s?@keyframes.*\{([\s\S]*?)\n\}/g,'')
     // 过滤掉font-face
@@ -584,7 +586,8 @@ const getWxss = (str) => {
     // 2019-05-04
     // 如果文件中还有improt呢 需要处理这种情况
     str.replace(/@import\s?[\'|\"](.*)[\'|\"]\;/g,($1,$2)=>{
-        improts.push($2)
+        //如果没有后缀 wxss则添加上
+        improts.push( /\.wxss$/.test($2) ? $2 : `${$2}.wxss` )
     });
 
     if( improts.length == 0 ) return str 
@@ -1279,28 +1282,6 @@ const getWxmlTree =  ( data ,isTemplateWxml = false ,mianSelectNodes = { __tag__
 
                 // 替换模板的父节点        
                 // 注意：这里要做浅拷贝
-
-                // let _templateWxmlTree = [...templateWxmlTree];
-                // cloneNodeSelectNode = {}
-                // _templateWxmlTree.map(node=>{
-                //     const nodeKey = Object.keys(node);
-                //     node = node[nodeKey]; 
-                //     const cloneNode = shallow(node);
-                //     cloneNode.parent = templateParent
-                //     uuu && cloneNode.childs.map(node=>{
-                //         const nodeKey = Object.keys(node)
-                //         // console.log( node[nodeKey].parent )
-                //     })
-                //     cloneNode.class.forEach(className=>{
-                //         !cloneNodeSelectNode[`.${className}`] && (cloneNodeSelectNode[`.${className}`] = [])
-                //         cloneNodeSelectNode[`.${className}`].push( cloneNode )
-                //     })                    
-                //     return { [nodeKey]:cloneNode }
-                // })
-                // Object.keys(cloneNodeSelectNode).forEach(selectClass=>{
-                //     selectNode[selectClass] = cloneNodeSelectNode[selectClass]
-                // })
-
                 const tmpSelectNode = { __tag__:{} }
                 const tmpClone = cloneWxmlTree(templateWxmlTree,templateParent,tmpSelectNode)
                 // 进行替换 
