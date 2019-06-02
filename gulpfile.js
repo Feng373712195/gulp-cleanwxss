@@ -185,13 +185,7 @@ gulp.task('one',async function(){
 
     //获取Wxml树
     const { WxmlTree,selectNodeCache } = await getWxmlTree({ pageWxml,pageJson });
-
-    console.log( selectNodeCache['.star-item'].length )
-    selectNodeCache['.star-item'].forEach(node=>{
-        console.log('================')
-        console.log(  node.parent )
-    })
-
+    
     //检查同级元素
     const _checkHasSelect = (select) => {
         const peerSelect = select.split( peerSelectReg )
@@ -228,6 +222,7 @@ gulp.task('one',async function(){
 
     //寻找子元素的父级元素
     const _findNodeParent = (node,select,deep = 9999) => {        
+        
         --deep;
         // 已经到达root节点 寻找不到节点
         if( node.parent.key == 'root' ) return null;
@@ -254,11 +249,9 @@ gulp.task('one',async function(){
                                   _findNodeParent(node.parent.obj,select)
             }
         }else{
-            // console.log('findNodeParent','here',select)
             let isParent = false
 
             if( select[0] == '.' ){
-                // console.log( node.parent.obj.class ,'show Parent class' )
                 isParent = node.parent.obj.class.findIndex(v2=> `.${v2}` == select) != -1 ? true : false
             }else if( select[1] == '#' ){
                 isParent = node.parent.obj.id == select
@@ -978,6 +971,49 @@ const getWxmlTree =  ( data ,isTemplateWxml = false ,mianSelectNodes = { __tag__
         return nodes1
     }
 
+    const isArray = obj => ([].isArray && [].isArray(obj)) || Object.prototype.toString.call(obj) == '[object Array]';
+    const isObject = obj => typeof obj === 'object' && Object.prototype.toString.call(obj) === '[object Object]';
+    //浅拷贝函数
+    const shallow = (data)=>{
+        let o;
+        if( isArray(data) ){
+            o = [];
+            data.forEach((val,index)=>{
+                if(isArray(val)) o[index] = [...val];
+                else if(isObject(val)) o[index] = {...val};
+                else o[index] = val
+            })
+        }
+        if( isObject(data) ){
+            o = {};
+            for( let x in data ){
+                if(isArray(data[x])) o[x] = [...data[x]];
+                else if(isObject(data[x])) o[x] = {...data[x]};
+                else o[x] = data[x]
+            }
+        }
+        return o
+    }
+
+    //拷贝wxmlTree
+    const cloneWxmlTree = (nodes,parent = null,selectNode) => {
+        const clone = [];
+        nodes.forEach(node=>{       
+            const nodeKey = Object.keys(node)[0]
+            // 浅拷贝
+            let cloneNode = shallow(node[nodeKey]);
+            // 拷贝node指向新的parent
+            cloneNode.parent = parent;
+            if( cloneNode.childs.length ){ 
+                // 把node的子node父级指向拷贝的node 
+                cloneNode.childs = cloneWxmlTree(cloneNode.childs,{ key:nodeKey,obj:cloneNode },selectNode)
+            }
+            selectNode && _setNodeCache(cloneNode,cloneNode.class,cloneNode.id,selectNode)
+            clone.push({ [nodeKey]:cloneNode });
+        })
+        return clone;
+    }
+
     const isSingeTagReg = /\<(.*)\/\>/;
     const isCloseTagReg = /\<\/(.*)\>/;
     const isCompleteTagReg = /\<.*\>.*\<.*\>/
@@ -1243,43 +1279,34 @@ const getWxmlTree =  ( data ,isTemplateWxml = false ,mianSelectNodes = { __tag__
 
                 // 替换模板的父节点        
                 // 注意：这里要做浅拷贝
-                let _templateWxmlTree = [...templateWxmlTree];
-                cloneNodeSelectNode = {}
-                // uuu && console.log( templateParent )
-                // uuu && console.log( _templateWxmlTree.length )
-                _templateWxmlTree.map(node=>{
-                    const nodeKey = Object.keys(node);
-                    node = node[nodeKey]; 
-                    const cloneNode = {...node};
-                    cloneNode.parent = templateParent
-                    cloneNode.childs = [...cloneNode.childs].map(childNode=>{
-                        // const cloneChildNodeKey = Object.keys(childNode)[0]
-                        // const cloneChildNode =  {...childNode}
-                        // const cloneChildNodeParent = {...cloneChildNode[cloneChildNodeKey].parent}
-                        // cloneChildNode.parent = cloneChildNodeParent
-                        // cloneChildNodeParent.obj = cloneNode;
-                        return cloneChildNode;
-                    })
-                    cloneNode.class.forEach(className=>{
-                        !cloneNodeSelectNode[`.${className}`] && (cloneNodeSelectNode[`.${className}`] = [])
-                        cloneNodeSelectNode[`.${className}`].push( cloneNode )
-                    })                    
-                    return { [nodeKey]:cloneNode }
-                })
 
+                // let _templateWxmlTree = [...templateWxmlTree];
+                // cloneNodeSelectNode = {}
+                // _templateWxmlTree.map(node=>{
+                //     const nodeKey = Object.keys(node);
+                //     node = node[nodeKey]; 
+                //     const cloneNode = shallow(node);
+                //     cloneNode.parent = templateParent
+                //     uuu && cloneNode.childs.map(node=>{
+                //         const nodeKey = Object.keys(node)
+                //         // console.log( node[nodeKey].parent )
+                //     })
+                //     cloneNode.class.forEach(className=>{
+                //         !cloneNodeSelectNode[`.${className}`] && (cloneNodeSelectNode[`.${className}`] = [])
+                //         cloneNodeSelectNode[`.${className}`].push( cloneNode )
+                //     })                    
+                //     return { [nodeKey]:cloneNode }
+                // })
+                // Object.keys(cloneNodeSelectNode).forEach(selectClass=>{
+                //     selectNode[selectClass] = cloneNodeSelectNode[selectClass]
+                // })
 
-                Object.keys(cloneNodeSelectNode).forEach(selectClass=>{
-                    selectNode[selectClass] = cloneNodeSelectNode[selectClass]
-                })
-
+                const tmpSelectNode = { __tag__:{} }
+                const tmpClone = cloneWxmlTree(templateWxmlTree,templateParent,tmpSelectNode)
                 // 进行替换 
-                Array.prototype.splice.apply( templateParentTheChilren,[templatehaschildrenNodeIndex,1,..._templateWxmlTree] )
-
+                Array.prototype.splice.apply( templateParentTheChilren,[templatehaschildrenNodeIndex,1,...tmpClone] )
                 // 发现找到的第一次找到时合并 后面就没必要合并了 因为都一样 会造成重复
-                // if( replaceTml.count == 1 ){
-                    // 使用它模板或者页面的selectNode 合并和 组件的selectNode
-                    mergeSelectNode( mianSelectNodes,selectNode )
-                // }
+                mergeSelectNode( mianSelectNodes,tmpSelectNode )
             }
         })
 
