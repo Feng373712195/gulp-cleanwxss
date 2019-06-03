@@ -891,12 +891,6 @@ const getWxmlTree =  ( data ,isTemplateWxml = false ,mianSelectNodes = { __tag__
             let dynamicClass = '';
 
             while( dynamicClass = dynamicClassReg.exec(TagClassStr) ){
-
-                // console.log( dynamicClass[0],'dynamicClass' )
-
-                // A == A ? A1 == A1 ? A1 : A2 == A2 ? A2 : A2 : A
-                // 1+1 ? index == 1 ? '' : 'small' : ''
-
                 if( ternaryExpressionReg.test(dynamicClass[1]) ){
                     const res = getTernaryExpressionClass(dynamicClass[1])
                     TagClass = TagClass.concat(res)
@@ -910,7 +904,6 @@ const getWxmlTree =  ( data ,isTemplateWxml = false ,mianSelectNodes = { __tag__
                         }
                     }
                 }
-
                 TagClassStr = TagClassStr.replace(dynamicClass[0],'')
             }
 
