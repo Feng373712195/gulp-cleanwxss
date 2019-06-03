@@ -77,6 +77,12 @@ const PAGES_PATH = path.join(WX_DIR_PATH,'/pages')
 // 2019-6-1
 // app.json 组件引用
 
+// 2019-6-2
+// getDynamicClass 发现未处理的情况
+// 1、 class="lll{{  }}" 字符串 模版class拼接
+// 2、 class="{{ 1 ?  1 ? 1 : 2 : 3 }}" 多个三元
+// 3   class="{{ 1 || 2 }}" class="{{ 1 && 2 }}" 
+
 const selectMap = {};
 // 伪元素伪类匹配正则表达式
 const pseudoClassReg = /\:link|\:visited|\:active|\:hover|\:focus|\:before|\:\:before|\:after|\:\:after|\:first-letter|\:first-line|\:first-child|\:lang\(.*\)|\:lang|\:first-of-type|\:last-of-type|\:only-child|:nth-child\(.*\)|:nth-last-child\(.*\)|\:nth-of-type\(.*\)|\:nth-last-of-type\(.*\)|\:last-child|\:root|\:empty|\:target|\:enabled|\:disabled|\:checked|\:not\(.*\)|\:\:selection/g;
@@ -130,6 +136,7 @@ const peerSelectReg = /(?=\.)|(?=\#)/g;
  * 'replybar' 检查完毕 没有问题
  * ‘/scoreDetail/koubeidetail’ 检查完毕 没有问题
  * '/scoreDetail/livedetail'  检查完毕 没有问题
+ * 
  * 
  */
 
@@ -188,6 +195,8 @@ gulp.task('one',async function(){
 
     //获取Wxml树
     const { WxmlTree,selectNodeCache } = await getWxmlTree({ pageWxml,pageJson });
+
+    console.log( _cssVariable,'_cssVariable' )
 
     //检查同级元素
     const _checkHasSelect = (select) => {
@@ -560,7 +569,7 @@ gulp.task('one',async function(){
     // console.log( '==================' )
     // 检查没有被选中的元素
     for( let x in selectMap ) {
-        !selectMap[x].select && console.log(x,selectMap[x])
+        // !selectMap[x].select && console.log(x,selectMap[x])
     }
 })
 
@@ -706,6 +715,9 @@ const getWxmlTree =  ( data ,isTemplateWxml = false ,mianSelectNodes = { __tag__
     // 过滤调pageWxml中的注释 
     wxmlStr = wxmlStr.replace(/\<!--([\s\S]*?)-->/g,'')
 
+    // 是否为三元表达式
+    const ternaryExpressionReg = /(.*?)\?(.*)\:(.*)/
+
     //Wxml树结构
     let WxmlTree = {
         root:{
@@ -799,6 +811,7 @@ const getWxmlTree =  ( data ,isTemplateWxml = false ,mianSelectNodes = { __tag__
     }
 
     const getDynamicClass = (str) => {
+
         if( str != ''  ){
             if( isStringReg.test(str) ){
                 let classes = getJoinClass(str);
@@ -808,14 +821,48 @@ const getWxmlTree =  ( data ,isTemplateWxml = false ,mianSelectNodes = { __tag__
                   res = classes.map( item=>item.replace(isStringReg,'$1') )
                 }else{
                   res = ~str.indexOf(' ') ? str.replace(isStringReg,'$1').split(' ') : [str.replace(isStringReg,'$1')]
-                  
                 }
                 return res.filter(v=>v)
             }else if( cssVariable[str] ){
                 return cssVariable[str]
+            }else{
+                return []
             }
+        }else{
+            return []
         }
 
+    }
+
+    //处理三元表达式模版渲染Class
+    const getTernaryExpressionClass = (dynamicClass)=>{
+        let TagClass = [];
+        dynamicClass.replace(ternaryExpressionReg,($1,$2,$3,$4)=>{
+            
+            if( ternaryExpressionReg.test($3) ){
+                TagClass = TagClass.concat( getTernaryExpressionClass($3) )
+                $3 = '';
+            }
+            if( ternaryExpressionReg.test($4) ){
+                TagClass = TagClass.concat( getTernaryExpressionClass($4) )
+                $4 = '';
+            }
+
+            $3 = $3.trimLeft().trimRight()
+            $4 = $4.trimLeft().trimRight()
+            let = res = null
+            res = getDynamicClass($3)
+            TagClass = TagClass.concat( res )
+            if( !isStringReg.test($3) ){
+                _cssVariable.add($3)
+            }
+            res = getDynamicClass($4)
+            TagClass = TagClass.concat( res )
+            if( !isStringReg.test($4) ){
+                _cssVariable.add($4)
+            }
+        })
+        return TagClass;
     }
 
     // 取得标签内的Class
@@ -840,41 +887,24 @@ const getWxmlTree =  ( data ,isTemplateWxml = false ,mianSelectNodes = { __tag__
             
             //获取动态选人的class
             const dynamicClassReg = /\{\{(.*?)\}\}/
-            // 是否为三元表达式
-            const ternaryExpressionReg = /(.*)\?(.*)\:(.*)/
 
             let dynamicClass = '';
 
             while( dynamicClass = dynamicClassReg.exec(TagClassStr) ){
+
+                // console.log( dynamicClass[0],'dynamicClass' )
+
+                // A == A ? A1 == A1 ? A1 : A2 == A2 ? A2 : A2 : A
+                // 1+1 ? index == 1 ? '' : 'small' : ''
+
                 if( ternaryExpressionReg.test(dynamicClass[1]) ){
-                    dynamicClass[1].replace(ternaryExpressionReg,($1,$2,$3,$4)=>{
-
-                        $3 = $3.trimLeft().trimRight()
-                        $4 = $4.trimLeft().trimRight()
-                        let = res = null
-                        
-                        res = getDynamicClass($3)
-
-                        TagClass = TagClass.concat( res )
-
-                        if( !isStringReg.test($3) ){
-                            _cssVariable.add($3)
-                        }
-
-                        res = getDynamicClass($4)
-                        TagClass = TagClass.concat( res )
-
-                        if( !isStringReg.test($4) ){
-                            _cssVariable.add($4)
-                        }
-                    })
-                }else{
+                    const res = getTernaryExpressionClass(dynamicClass[1])
+                    TagClass = TagClass.concat(res)
+                }
+                else{
                     if( dynamicClass[1] != '' ){
-
                         dynamicClass[1] = dynamicClass[1].trimLeft().trimRight()
-
                         TagClass = TagClass.concat( getDynamicClass(dynamicClass[1]) )
-
                         if( !isStringReg.test(dynamicClass[1]) ){
                             _cssVariable.add( dynamicClass[1] )
                         }
@@ -883,6 +913,8 @@ const getWxmlTree =  ( data ,isTemplateWxml = false ,mianSelectNodes = { __tag__
 
                 TagClassStr = TagClassStr.replace(dynamicClass[0],'')
             }
+
+
 
             TagClassStr.replace( new RegExp(`${classKey}\\=[\\'|\\"](.*)[\\'|\\"]`) ,function(classStr,classNames){
                 TagClass = TagClass.concat( classNames.split(" ").filter(v=>v) )
