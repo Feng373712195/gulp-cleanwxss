@@ -80,7 +80,7 @@ const PAGES_PATH = path.join(WX_DIR_PATH,'/pages')
 // 2019-6-2
 // getDynamicClass 发现未处理的情况
 // 1、 class="lll{{  }}" 字符串 模版class拼接
-// 2、 class="{{ 1 ?  1 ? 1 : 2 : 3 }}" 多个三元
+// 2、 class="{{ 1 ?  1 ? 1 : 2 : 3 }}" 多个三元 ok
 // 3   class="{{ 1 || 2 }}" class="{{ 1 && 2 }}" 
 
 const selectMap = {};
@@ -837,17 +837,23 @@ const getWxmlTree =  ( data ,isTemplateWxml = false ,mianSelectNodes = { __tag__
     //处理三元表达式模版渲染Class
     const getTernaryExpressionClass = (dynamicClass)=>{
         let TagClass = [];
-        dynamicClass.replace(ternaryExpressionReg,($1,$2,$3,$4)=>{
-            
-            if( ternaryExpressionReg.test($3) ){
-                TagClass = TagClass.concat( getTernaryExpressionClass($3) )
-                $3 = '';
-            }
-            if( ternaryExpressionReg.test($4) ){
-                TagClass = TagClass.concat( getTernaryExpressionClass($4) )
-                $4 = '';
-            }
 
+        let ternaryExpression = null;
+        let i = 0;
+        console.log( dynamicClass,'dynamicClass' )
+        const ternaryExpressions = [];
+        while( ternaryExpression = ternaryExpressionReg.exec(dynamicClass) ){
+            console.log( ternaryExpression )
+            // if(ternaryExpression[2]){
+                
+            // } 
+            // if(ternaryExpression[3]){
+
+            // }  
+            return
+        }
+        
+        dynamicClass.replace(ternaryExpressionReg,($1,$2,$3,$4)=>{
             $3 = $3.trimLeft().trimRight()
             $4 = $4.trimLeft().trimRight()
             let = res = null
@@ -861,6 +867,7 @@ const getWxmlTree =  ( data ,isTemplateWxml = false ,mianSelectNodes = { __tag__
             if( !isStringReg.test($4) ){
                 _cssVariable.add($4)
             }
+
         })
         return TagClass;
     }
@@ -892,7 +899,9 @@ const getWxmlTree =  ( data ,isTemplateWxml = false ,mianSelectNodes = { __tag__
 
             while( dynamicClass = dynamicClassReg.exec(TagClassStr) ){
                 if( ternaryExpressionReg.test(dynamicClass[1]) ){
+                    console.log( dynamicClass[1] )
                     const res = getTernaryExpressionClass(dynamicClass[1])
+                    console.log(res)
                     TagClass = TagClass.concat(res)
                 }
                 else{
@@ -1070,7 +1079,6 @@ const getWxmlTree =  ( data ,isTemplateWxml = false ,mianSelectNodes = { __tag__
                 componentsClasses[tagName].forEach( classKey => {
                     componentClass = componentClass.concat( _getTagClass(classKey,$1,[],true) ) 
                 })
-                console.log( componentClass,'componentClass' )
                 tagClass = tagClass.concat(componentClass);
             }
 
