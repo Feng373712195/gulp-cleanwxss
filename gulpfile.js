@@ -842,8 +842,8 @@ const getWxmlTree =  ( data ,isTemplateWxml = false ,mianSelectNodes = { __tag__
         let i = 0;
         console.log( dynamicClass,'dynamicClass' )
         const ternaryExpressions = [];
-        while( ternaryExpression = ternaryExpressionReg.exec(dynamicClass) ){
-            console.log( ternaryExpression )
+        while( ternaryExpression = /(.*?)\?(.*)/.exec(dynamicClass) ){
+            console.log( /(.*?)\:(.*)/.exec(ternaryExpression[2]) , 'next' )
             // if(ternaryExpression[2]){
                 
             // } 
