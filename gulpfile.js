@@ -79,9 +79,9 @@ const PAGES_PATH = path.join(WX_DIR_PATH,'/pages')
 
 // 2019-6-2
 // getDynamicClass 发现未处理的情况
-// 1、 class="lll{{  }}" 字符串 模版class拼接
+// 1、 class="lll{{  }}" 字符串 模版class拼接 ok
 // 2、 class="{{ 1 ?  1 ? 1 : 2 : 3 }}" 多个三元 ok
-// 3   class="{{ 1 || 2 }}" class="{{ 1 && 2 }}" 
+// 3   class="{{ 1 || 2 }}" class="{{ 1 && 2 }}" ok
 
 const selectMap = {};
 // 伪元素伪类匹配正则表达式
@@ -136,12 +136,26 @@ const peerSelectReg = /(?=\.)|(?=\#)/g;
  * 'replybar' 检查完毕 没有问题
  * ‘/scoreDetail/koubeidetail’ 检查完毕 没有问题
  * '/scoreDetail/livedetail'  检查完毕 没有问题
- * 
+ * '/scoreDetail/longdetail'  检查完毕 没有问题
+ * '/scoreDetail/shortdetail' 检查完毕 没有问题
+ * '/search'  检查完毕 没有问题
+ * '/search-lists' 检查完毕 没有问题
+ * '/smallHeadBand' 检查完毕 没有问题
+ * '/specialColumn' 检查完毕 没有问题
+ * '/style' 检查完毕 没有问题
+ * '/styleConfig' 检查完毕 没有问题
+ * '/styleDetail' 检查完毕 没有问题
+ * '/topSellCars' 检查完毕 没有问题
+ * 'updatePhone' 检查完毕 没有问题
+ * '/user/center' 检查完毕 没有问题
+ * '/user/detail' 检查完毕 没有问题
+ * '/video' 检查完毕 没有问题
  * 
  */
 
-// const PAGE_DIR_PATH = '/scoreDetail/longdetail'
-const PAGE_DIR_PATH = '/test'
+const PAGE_DIR_PATH = '/videoDetail'
+// const PAGE_DIR_PATH = '/video'
+// const PAGE_DIR_PATH = '/test'
 // 用来收集css变量 开发时使用
 const _cssVariable = new Set()
 
@@ -168,9 +182,22 @@ const cssVariable = {
     // discussion
     // 'item.colorCls':['themered']
 
+    // /scoreDetail/shortdetail
+    // 'shortComments[0].colorCls':['themered']
+
+    // /search-lists
+    // 'android':['android']
+
+    // /styleConfig
+    // 'innerItem.cls':['same']
+
+    // /topSellCars
+    // 'index+1':[1,2,3]
+
 }
 // 未来 config 参数 
 const componentsClasses = {
+    'c-tab-item':['tab-item-class','tab-item-active-class'],
     'c-bottom-nav':['bottomnav-button-class','bottomnav-icon-animated','bottomnav-icon-text-class','bottomnav-icon-class'],
     'c-model':['model-class','model-content-class','model-success-btn-class','model-cancel-btn-class']
 }
@@ -570,7 +597,7 @@ gulp.task('one',async function(){
     // console.log( '==================' )
     // 检查没有被选中的元素
     for( let x in selectMap ) {
-        // !selectMap[x].select && console.log(x,selectMap[x])
+        !selectMap[x].select && console.log(x,selectMap[x])
     }
 })
 
@@ -815,7 +842,7 @@ const getWxmlTree =  ( data ,isTemplateWxml = false ,mianSelectNodes = { __tag__
     const getDynamicClass = (str) => {  
         let res = [];
         const classes = str.split(/\|\||\&\&/g)
-        
+
         classes.forEach(classStr=>{
             if( classStr != ''  ){
                 if( isStringReg.test(classStr) ){
@@ -917,7 +944,6 @@ const getWxmlTree =  ( data ,isTemplateWxml = false ,mianSelectNodes = { __tag__
                     res = res.map(className=>{
                       return `${ dynamicClass[1]? dynamicClass[1] : '' }${ className }${ dynamicClass[3] ? dynamicClass[3] : ''  }`
                     })
-                    console.log( res,'res' )
                     TagClass = TagClass.concat(res)
                 }
                 else{
@@ -1108,16 +1134,18 @@ const getWxmlTree =  ( data ,isTemplateWxml = false ,mianSelectNodes = { __tag__
                 importSrc = /.*\.wxml$/i.test(importSrc) ? importSrc : importSrc + '.wxml'
                 
                 findTemplates[importSrc] =  () => new Promise( async (_resolve,_reject)=>{
+                    
                     let _templatePath = '';
                     // 查找模版规则 首先查找相对路径 如果相对路径没有 则尝试绝对路径 如果都没有则弹出错误 当时不印象继续往下执行
                     _templatePath = path.join( isTemplateWxml ? 
                                                templatePath.replace(/\/\w+\.wxml$/,'') : 
                                                path.join( PAGES_PATH,PAGE_DIR_PATH ), importSrc );
+                    
 
                     fsp.readFile( _templatePath,'utf-8')
                     .catch(err=>{
-                        templatePath = path.join( WX_DIR_PATH,importSrc )
-                        return fsp.readFile(templatePath,'utf-8')
+                        _templatePath = path.join( WX_DIR_PATH,importSrc )
+                        return fsp.readFile(_templatePath,'utf-8')
                     })
                     .catch(err=>{
                         console.log(err,'err')
