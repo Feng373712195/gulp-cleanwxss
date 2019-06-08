@@ -140,7 +140,8 @@ const peerSelectReg = /(?=\.)|(?=\#)/g;
  * 
  */
 
-const PAGE_DIR_PATH = '/scoreDetail/longdetail'
+// const PAGE_DIR_PATH = '/scoreDetail/longdetail'
+const PAGE_DIR_PATH = '/test'
 // 用来收集css变量 开发时使用
 const _cssVariable = new Set()
 
@@ -811,27 +812,28 @@ const getWxmlTree =  ( data ,isTemplateWxml = false ,mianSelectNodes = { __tag__
 
     }
 
-    const getDynamicClass = (str) => {
-
-        if( str != ''  ){
-            if( isStringReg.test(str) ){
-                let classes = getJoinClass(str);
-                let res = [] 
-                // 解决字符串class 导致存入‘/‘classname/’’这样的class名
-                if( classes ){
-                  res = classes.map( item=>item.replace(isStringReg,'$1') )
-                }else{
-                  res = ~str.indexOf(' ') ? str.replace(isStringReg,'$1').split(' ') : [str.replace(isStringReg,'$1')]
+    const getDynamicClass = (str) => {  
+        let res = [];
+        const classes = str.split(/\|\||\&\&/g)
+        
+        classes.forEach(classStr=>{
+            if( classStr != ''  ){
+                if( isStringReg.test(classStr) ){
+                    let _classes = getJoinClass(classStr);
+                    // 解决字符串class 导致存入‘/‘classname/’’这样的class名
+                    if( _classes ){
+                       _classes = _classes.map( item=>item.replace(isStringReg,'$1') )
+                    }else{
+                       _classes = ~classStr.indexOf(' ') ? classStr.replace(isStringReg,'$1').split(' ') : [classStr.replace(isStringReg,'$1')]
+                    }
+                    return res.push(..._classes.filter(v=>v))
+                }else if( cssVariable[classStr] ){
+                    return res.push(...cssVariable[classStr])
                 }
-                return res.filter(v=>v)
-            }else if( cssVariable[str] ){
-                return cssVariable[str]
-            }else{
-                return []
             }
-        }else{
-            return []
-        }
+        })
+
+        return res
 
     }
 
@@ -851,7 +853,7 @@ const getWxmlTree =  ( data ,isTemplateWxml = false ,mianSelectNodes = { __tag__
             return ret
         }
         while( hasExpression = getExpression(hasExpression,expressions) ){} 
-
+        
         expressions.reverse().forEach((expression,index)=>{
             const expressionValue = expression.replace(/(.*\?)/,'').split(':');
             if( expressionValue.length > 2 ){
@@ -915,6 +917,7 @@ const getWxmlTree =  ( data ,isTemplateWxml = false ,mianSelectNodes = { __tag__
                     res = res.map(className=>{
                       return `${ dynamicClass[1]? dynamicClass[1] : '' }${ className }${ dynamicClass[3] ? dynamicClass[3] : ''  }`
                     })
+                    console.log( res,'res' )
                     TagClass = TagClass.concat(res)
                 }
                 else{
@@ -932,8 +935,6 @@ const getWxmlTree =  ( data ,isTemplateWxml = false ,mianSelectNodes = { __tag__
                 }
                 TagClassStr = TagClassStr.replace(dynamicClass[0],'')
             }
-
-
 
             TagClassStr.replace( new RegExp(`${classKey}\\=[\\'|\\"](.*)[\\'|\\"]`) ,function(classStr,classNames){
                 TagClass = TagClass.concat( classNames.split(" ").filter(v=>v) )
