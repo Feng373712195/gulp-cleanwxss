@@ -653,7 +653,6 @@ const getAttr = (tag,attr) => {
     }
 }
 
-
 // 把Wxml字符串转为树结构
 // 在转成树结构的过程中就可以把所有节点存储起来
 // 标签不会被覆盖 这个核实过了
@@ -852,7 +851,7 @@ const getWxmlTree =  ( data ,isTemplateWxml = false ,mianSelectNodes = { __tag__
             return ret
         }
         while( hasExpression = getExpression(hasExpression,expressions) ){} 
-           
+
         expressions.reverse().forEach((expression,index)=>{
             const expressionValue = expression.replace(/(.*\?)/,'').split(':');
             if( expressionValue.length > 2 ){
@@ -905,23 +904,29 @@ const getWxmlTree =  ( data ,isTemplateWxml = false ,mianSelectNodes = { __tag__
             let TagClassStr = tag.substring( startIndex , startIndex + endIndex + classKey.length + 3 );
             
             //获取动态选人的class
-            const dynamicClassReg = /\{\{(.*?)\}\}/
+            const dynamicClassReg = /([\-\_\w]+)?\{\{(.*?)\}\}([\-\_\w]+)?/
 
             let dynamicClass = '';
 
             while( dynamicClass = dynamicClassReg.exec(TagClassStr) ){
-                if( ternaryExpressionReg.test(dynamicClass[1]) ){
-                    console.log( dynamicClass[1] )
-                    const res = getTernaryExpressionClass(dynamicClass[1])
-                    console.log(res)
+                // console.log( dynamicClass,'dynamicClass' )
+                if( ternaryExpressionReg.test(dynamicClass[2]) ){
+                    let res = getTernaryExpressionClass(dynamicClass[2])
+                    res = res.map(className=>{
+                      return `${ dynamicClass[1]? dynamicClass[1] : '' }${ className }${ dynamicClass[3] ? dynamicClass[3] : ''  }`
+                    })
                     TagClass = TagClass.concat(res)
                 }
                 else{
-                    if( dynamicClass[1] != '' ){
-                        dynamicClass[1] = dynamicClass[1].trimLeft().trimRight()
-                        TagClass = TagClass.concat( getDynamicClass(dynamicClass[1]) )
-                        if( !isStringReg.test(dynamicClass[1]) ){
-                            _cssVariable.add( dynamicClass[1] )
+                    if( dynamicClass[2] != '' ){
+                        dynamicClass[2] = dynamicClass[2].trimLeft().trimRight()
+                        let res = getDynamicClass(dynamicClass[2])
+                        res = res.map(className=>{
+                            return `${ dynamicClass[1]? dynamicClass[1] : '' }${ className }${ dynamicClass[3] ? dynamicClass[3] : ''  }`
+                        })
+                        TagClass = TagClass.concat( res )
+                        if( !isStringReg.test(dynamicClass[2]) ){
+                            _cssVariable.add( dynamicClass[2] )
                         }
                     }
                 }
