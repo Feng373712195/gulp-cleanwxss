@@ -718,6 +718,8 @@ const getWxmlTree =  ( data ,isTemplateWxml = false ,mianSelectNodes = { __tag__
     // 是否为三元表达式
     const ternaryExpressionReg = /(.*?)\?(.*)\:(.*)/
 
+    const trimLeftAndRight = /^\\s+(.*)\\s?$/
+
     //Wxml树结构
     let WxmlTree = {
         root:{
@@ -836,39 +838,49 @@ const getWxmlTree =  ( data ,isTemplateWxml = false ,mianSelectNodes = { __tag__
 
     //处理三元表达式模版渲染Class
     const getTernaryExpressionClass = (dynamicClass)=>{
-        let TagClass = [];
+        let TagClass = []; 
 
-        let ternaryExpression = null;
-        let i = 0;
-        console.log( dynamicClass,'dynamicClass' )
-        const ternaryExpressions = [];
-        while( ternaryExpression = /(.*?)\?(.*)/.exec(dynamicClass) ){
-            console.log( /(.*?)\:(.*)/.exec(ternaryExpression[2]) , 'next' )
-            // if(ternaryExpression[2]){
-                
-            // } 
-            // if(ternaryExpression[3]){
+        let hasExpression = dynamicClass , expressions = [];
 
-            // }  
-            return
+        const getExpression = (classStr,expressions = [])=>{
+            let ret = ''
+            classStr.replace(/(.*?)\?(.*)\:(.*)/,(...arg)=>{
+                const expressionsHeader = arg[1].split(':');
+                expressions.push( `${expressionsHeader.length > 1 ? expressionsHeader[expressionsHeader.length-1] : arg[1]}?${arg[2]}:${arg[3]}` )
+                ret = `${arg[2]}:${arg[3]}`
+            })
+            return ret
         }
-        
-        dynamicClass.replace(ternaryExpressionReg,($1,$2,$3,$4)=>{
-            $3 = $3.trimLeft().trimRight()
-            $4 = $4.trimLeft().trimRight()
-            let = res = null
-            res = getDynamicClass($3)
-            TagClass = TagClass.concat( res )
-            if( !isStringReg.test($3) ){
-                _cssVariable.add($3)
+        while( hasExpression = getExpression(hasExpression,expressions) ){} 
+           
+        expressions.reverse().forEach((expression,index)=>{
+            const expressionValue = expression.replace(/(.*\?)/,'').split(':');
+            if( expressionValue.length > 2 ){
+                expression = expression.replace(new RegExp(`\s?\\:\s?${expressionValue[2]}`),'')
             }
-            res = getDynamicClass($4)
+            let [  , ,leftValue,rightValue ] = ternaryExpressionReg.exec(expression)
+
+            leftValue = leftValue.trimLeft().trimRight()
+            rightValue = rightValue.trimLeft().trimRight()
+            let res = null
+            res = getDynamicClass(leftValue)
             TagClass = TagClass.concat( res )
-            if( !isStringReg.test($4) ){
-                _cssVariable.add($4)
+            if( !isStringReg.test(leftValue) ){
+                _cssVariable.add(leftValue)
+            }
+            res = getDynamicClass(rightValue)
+            TagClass = TagClass.concat( res )
+            if( !isStringReg.test(rightValue) ){
+                _cssVariable.add(rightValue)
             }
 
+            if(index != expressions.length){
+                expressions.slice(index + 1,expressions.length).forEach((val,index2)=>{
+                    expressions[index + index2 + 1] = expressions[index + index2 + 1].replace(expression,"''")
+                })
+            }
         })
+
         return TagClass;
     }
 
