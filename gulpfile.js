@@ -83,11 +83,15 @@ const PAGES_PATH = path.join(WX_DIR_PATH,'/pages')
 // 2、 class="{{ 1 ?  1 ? 1 : 2 : 3 }}" 多个三元 ok
 // 3   class="{{ 1 || 2 }}" class="{{ 1 && 2 }}" ok
 
+
+
 const selectMap = {};
 // 伪元素伪类匹配正则表达式
 const pseudoClassReg = /\:link|\:visited|\:active|\:hover|\:focus|\:before|\:\:before|\:after|\:\:after|\:first-letter|\:first-line|\:first-child|\:lang\(.*\)|\:lang|\:first-of-type|\:last-of-type|\:only-child|:nth-child\(.*\)|:nth-last-child\(.*\)|\:nth-of-type\(.*\)|\:nth-last-of-type\(.*\)|\:last-child|\:root|\:empty|\:target|\:enabled|\:disabled|\:checked|\:not\(.*\)|\:\:selection/g;
 //是否有同级选择器正则表达式 如： .a.b .a#b 
 const peerSelectReg = /(?=\.)|(?=\#)/g;
+
+const hasSelectorReg = /(\~|\+|\>)/;
 
 /**
  * '/addtoptics' 
@@ -105,15 +109,12 @@ const peerSelectReg = /(?=\.)|(?=\#)/g;
  * ‘/columns' 检查完毕 没有问题
  * '/commentDetail' 检查完毕 没有问题
  * '/config' 检查完毕 没有问题
- * '/configuration' 太复杂 优先级放到最后 不过应该是没问题
  * ‘/customer_chat’ 检查完毕 没有问题
- * ‘/detail’太复杂 优先级放到最后
  * '/discussion' 检查完毕 没有问题
  * '/expertComment' 检查完毕 没有问题
  * ‘/filterCar' 检查完毕 没有问题
  * ’/goPublic‘ 检查完毕 没有问题
  * ’/hotComment‘ 检查完毕 没有问题
- * ’/index‘ 太复杂 优先级放到最后
  * ’/inquiry‘ 检查完毕 没有问题
  * '/jumpToAsk' 检查完毕 没有问题
  * ‘/locationBrands’ 检查完毕 没有问题
@@ -150,10 +151,19 @@ const peerSelectReg = /(?=\.)|(?=\#)/g;
  * '/user/center' 检查完毕 没有问题
  * '/user/detail' 检查完毕 没有问题
  * '/video' 检查完毕 没有问题
+ * ‘/videoDetail’ 检查完毕 没有问题
+ * ‘/videoTags’ 检查完毕 没有问题
+ * '/webView' 检查完毕 没有问题
+ * '/weInquiry' 检查完毕 没有问题
+ * 
+ * ’/index‘ 检查完毕 没有问题
+ * ‘/detail’太复杂 优先级放到最后
+ * '/configuration' 太复杂 优先级放到最后 不过应该是没问题
  * 
  */
 
-const PAGE_DIR_PATH = '/videoDetail'
+// .wenwen-block .ask-list .ask-item .reward ~ text
+const PAGE_DIR_PATH = '/test'
 // const PAGE_DIR_PATH = '/video'
 // const PAGE_DIR_PATH = '/test'
 // 用来收集css变量 开发时使用
@@ -334,40 +344,32 @@ gulp.task('one',async function(){
 
         let selectNodes = null
         
-        // 子元素选择器 >
-        if( type == 'child' ){
-            selectNodes = classSelect.replace(/\>/g,' ').split(' ').filter(v=>v).reverse();
-            if( findNodes && findNodes.select ){
-                //如果 过上一级查找到的元素 过滤一下找到的查找到的元素
-                // findNodes.nodes = /^\.|^\#/.test(selectNodes[0]) ? 
-                //                 selectNodeCache[selectNodes[0]] : 
-                //                 selectNodeCache.__tag__[selectNodes[0]]
-                
-                // *1
-                //如果没有查找到元素 返回false
-                if( findNodes.nodes.length == 0 ) return false;
-                const newFinds = []
-                findNodes.nodes.forEach( node => newFinds.push( _findNodeParent(node,selectNodes[0]) ) )
-                findNodes.nodes = newFinds.filter(v=>v);
-            }
-        }
-        // 后代选择器 
-        else
-        {
-            //过滤掉伪元素伪类
-            const selectQuery = classSelect.replace(pseudoClassReg,'')
-            //从子节点开始查找 把选择器数组翻转
-            selectNodes = selectQuery.replace(/\s?([\>\+])\s?/g,'$1').split(/\s/g).filter(v=>v).reverse();
-        }
+        //过滤掉伪元素伪类
+        const selectQuery = classSelect.replace(pseudoClassReg,'')
+        //从子节点开始查找 把选择器数组翻转
+
+        selectNodes = selectQuery
+        .replace(/\s?([\>\+\~])\s?/g,'$1')
+        .split(/\s/g)
+        .filter(v=>v)
+        .reduce((prev,curt)=>{  
+            curt = hasSelectorReg.test(curt) ? 
+                curt.match(/(\.|\#)?\w+(\~|\+|\>)?/g)
+                .map(select=> select.replace(/(.*)(\~|\+|\>)/,'$2$1') )
+                : 
+                [curt]
+            prev.push( ...curt )
+            return prev }, [])
+        .reverse()
 
         //选择器只匹配一个元素
         if( selectNodes.length == 1 ){
-            if( ~selectNodes[0].indexOf('>') ){
-               return checkChildSelectQuery(selectNodes[0]) 
-            }
-            if( ~selectNodes[0].indexOf('+') ){
-                return checkAdjacentSelectQuery(selectNodes[0]) 
-            }
+            // if( ~selectNodes[0].indexOf('>') ){
+            //    return checkChildSelectQuery(selectNodes[0]) 
+            // }
+            // if( ~selectNodes[0].indexOf('+') ){
+            //     return checkAdjacentSelectQuery(selectNodes[0]) 
+            // }
             // that.select = _checkHasSelect(selectNodes[0]) ? true : false
             return  _checkHasSelect(selectNodes[0]) ? true : false
         }
@@ -378,43 +380,25 @@ gulp.task('one',async function(){
            // 把选择器转化成数组 如 .search-block .search-list .tag 转为 [.tag,.search-list,.search-block]
            for( let i2 = 0,len = selectNodes.length; i2 < len; i2++ ){
 
-                // console.log( selectNodes[i2],'selectNodes[i2]',i2,selectNodes.length-1 )
-                
-                if( ~selectNodes[i2].indexOf('>') ){
-
-                    const checkChildSelectQueryRes = checkChildSelectQuery( selectNodes[i2],
-                                                     { select:i2 != 0 ? selectNodes[i2-1] : '',nodes:finds })
-                    
-                    
-
-                    if( i2 == selectNodes.length - 1 ){
-                        return checkChildSelectQueryRes.some(v=>v)
-                    }else{
-                        if( checkChildSelectQueryRes ){
-                            finds = checkChildSelectQueryRes
-                            continue
-                        }
-                        else return false
+                if( hasSelectorReg.test(selectNodes[i2]) ){
+                    const selectQueryHandles = {
+                        '>':checkChildSelectQuery,
+                        '+':checkAdjacentSelectQuery,
+                        '~':function(){}
                     }
-                }
-                
-                // 因为 *1位置已经做好了处理
-                if( findNodes && findNodes.select && type == 'child' && i2 == 0 ){
-                    if(finds.length > 0){
-                        continue
-                    }else{
-                        return false
-                    }
-                }
-
-                if( ~selectNodes[i2].indexOf('+') ){
-                      const checkAdjacentSelectQueryRes = checkAdjacentSelectQuery( selectNodes[i2],
-                                                          { select:i2 != 0 ? selectNodes[i2-1] : '',nodes:finds })
+                    let selectQueryType = selectNodes[i2][0]
+                    let classSelect = selectNodes[i2].slice(1);
+                    let selectQueryParam = [classSelect,
+                                            { select:i2 != 0 ? hasSelectorReg.test(selectNodes[i2-1]) ? selectNodes[i2-1].slice(1) : selectNodes[i2-1] : '' ,
+                                              nodes:finds }
+                                           ]
+                    // console.log( selectQueryParam,'selectQueryParam' )
+                    let checkSelectQueryRes = selectQueryHandles[selectQueryType](...selectQueryParam)
                     if( i2 == selectNodes.length - 1 ){
-                        return checkAdjacentSelectQueryRes.some(v=>v)
+                        return checkSelectQueryRes.some(v=>v)
                     }else{
-                        if( checkAdjacentSelectQueryRes ){
-                            finds = checkAdjacentSelectQueryRes
+                        if( checkSelectQueryRes ){
+                            finds = checkSelectQueryRes
                             continue
                         }
                         else return false
@@ -432,9 +416,7 @@ gulp.task('one',async function(){
                 }else{
                     const newFinds = []
                     finds.forEach(node=>{
-                        newFinds.push(type == 'child' ?
-                                              _findNodeParent(node,selectNodes[i2],1) :
-                                              _findNodeParent(node,selectNodes[i2]) )
+                        newFinds.push( _findNodeParent(node,selectNodes[i2]) )
                     })
 
                     finds = newFinds.filter(v=>v);
@@ -444,7 +426,6 @@ gulp.task('one',async function(){
                 }
 
                 if( i2 == selectNodes.length-1 ){
-                    if( type == 'child' ) return finds
                     return finds.some(v=>v)
                 }else{
                     continue;
@@ -479,91 +460,50 @@ gulp.task('one',async function(){
     }
 
     // 检查相邻兄弟选择器是否生效
-    const checkAdjacentSelectQuery = (classSelects,findNodes = null) => {
-        
-
-        const selectNodes = classSelects.replace(/\+/g,' ').split(' ').filter(v=>v);
-        
-        let newFinds = [],
-        adjacentNodes = [],
-        specialFinds = [];
-        
-        for( let i = 0, l = selectNodes.length; i < l; i++ ){
-
-            if( i == selectNodes.length - 1 ){
-                return newFinds;
-            }
-
-            if( i == 0 ){
-                if( findNodes && findNodes.select ){
-                    if( findNodes.nodes.length == 0 ) return false;
-                    adjacentNodes = findNodes.nodes.forEach( node => newFinds.push( _findNodeParent(node,selectNodes[i]) ) )
-                    adjacentNodes = newFinds.filter(v=>v);
-                    newFinds = [];
-                }else{
-                    if( selectNodes[i][0] == '#' || selectNodes[i][0] == '.' ){
-                        adjacentNodes = selectNodeCache[selectNodes[i]]
-                    }else{
-                        adjacentNodes = selectNodeCache.__tag__[selectNodes[i]]
-                    }
+    const checkAdjacentSelectQuery = (classSelect,findNodes = null) => {
+        const newFinds = [];
+        if( findNodes ){
+            const secondSelectType = classSelect[0] == '#' ? 'id' : classSelect[0] == '.' ? 'class' : 'tag';
+            findNodes.nodes.forEach((node,index)=>{
+                // 获取父级内的所有同级元素
+                const brothers = Object.values( node.parent.obj.childs ).map((n,key)=> Object.values(n)[0] )
+                //  找到自己在同级元素中的开始标签索引位置
+                const selfIndex = brothers.indexOf( node )
+                // 寻找此标签闭合后下一个的索引
+                // let otherBrotherNodeStartIndex = findCloseTagIndex(brothers,node)
+                // 得到闭合标签后的所有元素
+                const otherBrotherNode = brothers.slice( 0,selfIndex );
+                // 寻找 相领选择器 对应元素
+                if( otherBrotherNode.length > 0 ){
+                    let brotherNode = otherBrotherNode.reverse().find(node=> (node.statrTag && node.endTag) || node.statrTag );
+                    const secondSelect = secondSelectType != 'tag' ? classSelect.slice(1) : classSelect;
+                    if( secondSelectType == 'id' && brotherNode.id == secondSelect ) newFinds.push(brotherNode)
+                    else if( secondSelectType == 'class' && ~brotherNode.class.indexOf( secondSelect ) ) newFinds.push(brotherNode)
+                    else if( secondSelectType == 'tag' && brotherNode.tag == secondSelect ) newFinds.push(brotherNode)
                 }
-            }
-            else{
-                adjacentNodes = specialFinds;
-                specialFinds = [];
-                newFinds = [];
-            }
-
-            if( adjacentNodes && adjacentNodes.length > 0 ){
-                const secondSelectType = selectNodes[i+1][0] == '#' ? 'id' : selectNodes[i+1][0] == '.' ? 'class' : 'tag';
-                adjacentNodes.forEach(node=>{
-
-                    // 获取父级内的所有同级元素
-                    const brothers = Object.values( node.parent.obj.childs ).map((n,key)=> Object.values(n)[0] )
- 
-                    // 找到自己在同级元素中的开始标签索引位置
-                    // const selfIndex = brothers.indexOf( node )
-
-                    // 寻找此标签闭合后下一个的索引
-                    let otherBrotherNodeStartIndex = findCloseTagIndex(brothers,node)
-                    // 得到闭合标签后的所有元素
-                    const otherBrotherNode = brothers.slice( otherBrotherNodeStartIndex + 1 );
-                    // 寻找 相领选择器 对应元素
-                    if( otherBrotherNode.length > 0 ){
-                        let brotherIndex = otherBrotherNodeStartIndex + 1 ;
-                        const secondSelect = secondSelectType != 'tag' ? selectNodes[i+1].slice(1) : selectNodes[i+1];
-                        let oldFindsLength = newFinds.length
-                        if( secondSelectType == 'id' && brothers[brotherIndex].id == secondSelect ) newFinds.push(brothers[brotherIndex])
-                        else if( secondSelectType == 'class' && ~brothers[brotherIndex].class.indexOf( secondSelect ) ) newFinds.push(brothers[brotherIndex])
-                        else if( secondSelectType == 'tag' && brothers[brotherIndex].tag == secondSelect ) newFinds.push(brothers[brotherIndex])
-
-                        if( oldFindsLength != newFinds.length ){
-                            // console.log('================= here =================')
-                            // console.log( brothers[brotherIndex] , 'brothers[brotherIndex]' )
-                            // console.log( otherBrotherNode,'otherBrotherNode' )
-                            const cloneNode = {...node}
-                            const cloneNodeParent = {...cloneNode.parent.obj};
-                            cloneNode.parent.obj = cloneNodeParent;
-                            // console.log( brothers[brotherIndex],'brothers[brotherIndex]' )
-                            // console.log( brothers, ' ===== brothers =====' )
-                            let otherBrotherNodeStartIndex = findCloseTagIndex( brothers,brothers[brotherIndex] )
-                            // console.log( otherBrotherNodeStartIndex,'otherBrotherNodeStartIndex' )
-                            // console.log( cloneNode.parent.obj.childs , 'after' )
-                            cloneNode.parent.obj.childs = [...cloneNode.parent.obj.childs].slice( otherBrotherNodeStartIndex + 1 );
-                            // console.log( cloneNode.parent.obj.childs , 'before' )
-                            specialFinds.push( cloneNode )
-                        }
-                    }
-                })
-            }else{
-                return []
-            }
+            })
+        }else{
+            console.err('checkAdjacentSelectQuery not findNodes')
         }
+        
+        // console.log( newFinds.length,'checkAdjacent',classSelect,findNodes )
+        return newFinds; 
     }    
 
     // 检查兄弟选择器是否生效
     const checkChildSelectQuery = (classSelects,findNodes = null) => {
-        return checkSelectQuery(classSelects,findNodes,'child')
+        const newFinds = [];
+
+        findNodes.nodes.forEach(node=>{
+            newFinds.push( _findNodeParent(node,classSelects,1) )
+        })
+
+        const finds = newFinds.filter(v=>v);
+        if(finds.length == 0){
+            return []
+        }else{
+            return finds
+        }
     }
 
     //从子节点开始查找
@@ -1380,42 +1320,6 @@ const getWxmlTree =  ( data ,isTemplateWxml = false ,mianSelectNodes = { __tag__
 
 // 把Wxml字符串转为树结构
 const getTemplateWxmlTree = async (temkey,wxmlStr,selectNodes,templatePath) => {
-
-    // const templates = {};
-    // const templateStartRegExp = /\<template.*\>/
-    // const templateEndRegExp = /\<\/template.*\>/
-    
-    // const wxmlStrFindTemplate = (str,finds) => {
-    //     finds = finds || [];
-    //     let templateName = ''
-    //     const templateStartIndex = str.search(templateStartRegExp)
-    //     const templateEndIndex = str.search(templateEndRegExp) 
-
-    //     if( templateStartIndex!= -1 && templateEndIndex != -1 ){
-    //       let tpl = str.substr(templateStartIndex,templateEndIndex + 11)
-    //       str = str.replace(tpl,'')
-    //       finds.push({ name:'',tpl:tpl.replace(templateStartRegExp,($1,$2)=>{
-    //             templateName = getAttr($1,'name')
-    //             return ''
-    //       })
-    //       .replace(templateEndRegExp,'') })
-    //       finds[finds.length-1].name = templateName;
-    //       return wxmlStrFindTemplate(str,finds)
-    //     }
-    //     return finds;
-    // }
-
-    // const templateStrArr = wxmlStrFindTemplate(wxmlStr)
-    // for( let index = 0,len = templateStrArr.length; index < len ; index++ ){
-    //     const templateName = templateStrArr[index].name
-    //     debug( templateStrArr[index].name,'<<<<<<<<<<<<<<<<<<<<< templateName >>>>>>>>>>>>>>>>>>>>>' )
-    //     const { WxmlTree:templateWxmlTree,selectNodeCache } = await getWxmlTree(templateStrArr[index].tpl,true)
-    //     templates[templateName] = {
-    //         templateWxmlTree:templateWxmlTree.root.childs,
-    //         selectNodeCache
-    //     }
-    // }
-
     return await getWxmlTree(wxmlStr,true,selectNodes,templatePath)
     
 }
