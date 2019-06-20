@@ -8,14 +8,25 @@ import getTagClass from '../parseWxml/getTagClass';
 import getId from '../parseWxml/getId';
 import getAttr from '../parseWxml/getAttr';
 import cloneWxmlTree from './cloneWxmlTree';
+import setSelectNodeCache from './setSelectNodeCache';
 
 const fsp = require('fs-promise');
 
 const componentsClasses = {};
 
+const WX_DIR_PATH = path.join(__dirname, 'wx/wcjs_wx_miniprogram');
+const PAGES_PATH = path.join(WX_DIR_PATH, '/pages');
+const PAGE_DIR_PATH = '/test';
+
+
+async function getTemplateWxmlTree(temkey, wxmlStr, selectNodes, templatePath) {
+  const wxmlTree = await getWxmlTree(wxmlStr, true, selectNodes, templatePath);
+  return wxmlTree;
+}
+
 // 2019-03-21
 // selectNodeCache不再作为全局变量 而作为getWxmlTree的返回值
-export default (data, isTemplateWxml = false, mianSelectNodes = { __tag__: {} }, templatePath) => {
+export default function getWxmlTree(data, isTemplateWxml = false, mianSelectNodes = { __tag__: {} }, templatePath) {
   let pageJson = null;
   let useingComponents = {};
   let wxmlStr = '';
@@ -116,6 +127,36 @@ export default (data, isTemplateWxml = false, mianSelectNodes = { __tag__: {} },
     // 注意标签连写情况 如：<view>A</view><view>B</view><view>C</view>
     let match = null;
 
+
+    const findTemplateWxml = importSrc => new Promise(async (_resolve) => {
+      let _templatePath = '';
+      // 查找模版规则 首先查找相对路径 如果相对路径没有 则尝试绝对路径 如果都没有则弹出错误 当时不印象继续往下执行
+      _templatePath = path.join(isTemplateWxml
+        ? templatePath.replace(/\/\w+\.wxml$/, '')
+        : path.join(PAGES_PATH, PAGE_DIR_PATH), importSrc);
+
+      fsp.readFile(_templatePath, 'utf-8')
+        .catch(() => {
+          _templatePath = path.join(WX_DIR_PATH, importSrc);
+          return fsp.readFile(_templatePath, 'utf-8');
+        })
+        .catch((err) => {
+          console.log(err, 'err');
+          console.log('没有找到模版文件 模版地址:', importSrc);
+          reject();
+        })
+        .then(tmp => getTemplateWxmlTree(importSrc, tmp, mianSelectNodes, _templatePath))
+        .then((res) => {
+          _resolve(res);
+        })
+        .catch((err) => {
+          console.log('getTemplateWxmlTree执行时遇到错误');
+          console.log(err);
+          reject();
+        });
+    });
+
+
     while (match = /<[\s\S]*?>/.exec(wxmlStr)) {
       const $1 = match[0];
       wxmlStr = wxmlStr.replace($1, '');
@@ -140,36 +181,7 @@ export default (data, isTemplateWxml = false, mianSelectNodes = { __tag__: {} },
       if (isImportReg.test(tagName) && !/<\s?\/import/i.test($1)) {
         let importSrc = getAttr($1, 'src');
         importSrc = /.*\.wxml$/i.test(importSrc) ? importSrc : `${importSrc}.wxml`;
-
-        findTemplates[importSrc] = () => new Promise(async (_resolve) => {
-          let _templatePath = '';
-          // 查找模版规则 首先查找相对路径 如果相对路径没有 则尝试绝对路径 如果都没有则弹出错误 当时不印象继续往下执行
-          _templatePath = path.join(isTemplateWxml
-            ? templatePath.replace(/\/\w+\.wxml$/, '')
-            : path.join(PAGES_PATH, PAGE_DIR_PATH), importSrc);
-
-
-          fsp.readFile(_templatePath, 'utf-8')
-            .catch(() => {
-              _templatePath = path.join(WX_DIR_PATH, importSrc);
-              return fsp.readFile(_templatePath, 'utf-8');
-            })
-            .catch((err) => {
-              console.log(err, 'err');
-              console.log('没有找到模版文件 模版地址:', importSrc);
-              reject();
-            })
-            .then(tmp => getTemplateWxmlTree(importSrc, tmp, mianSelectNodes, _templatePath))
-            .then((res) => {
-              // console.log( 'resolve ===========' )
-              _resolve(res);
-            })
-            .catch((err) => {
-              console.log('getTemplateWxmlTree执行时遇到错误');
-              console.log(err);
-              reject();
-            });
-        });
+        findTemplates[importSrc] = findTemplateWxml(importSrc);
       }
 
       if (isTemplateWxml && isTemplateReg.test(tagName)) {
@@ -208,7 +220,7 @@ export default (data, isTemplateWxml = false, mianSelectNodes = { __tag__: {} },
         if (useTemplateTagReg.test($1)) {
           findUseTemplates.push({ [getAttr($1, 'is')]: self });
         }
-        _setNodeCache(self[$1], tagClass, tagId, selectNodes);
+        setSelectNodeCache(self[$1], tagClass, tagId, selectNodes);
 
         head.childs.push(self);
 
@@ -222,7 +234,7 @@ export default (data, isTemplateWxml = false, mianSelectNodes = { __tag__: {} },
         if (isTemplateWxml && isTemplateReg.test(tagName)) {
           --templateCount;
           // 模板包裹 的闭合template标签找到
-          if (templateCount == 0) {
+          if (templateCount === 0) {
             templateNode[currentTemplateName].templateWxmlTree = WxmlTree.root.childs;
             templateNode[currentTemplateName].selectNode = selectNodes;
             WxmlTree = resetWxmlTree();
@@ -267,7 +279,7 @@ export default (data, isTemplateWxml = false, mianSelectNodes = { __tag__: {} },
 
         if (isCompleteTag) {
           // console.log( selectNodes,'selectNodes' )
-          _setNodeCache(self[$1], tagClass, tagId, selectNodes);
+          setSelectNodeCache(self[$1], tagClass, tagId, selectNodes);
         }
 
         try {
@@ -310,7 +322,7 @@ export default (data, isTemplateWxml = false, mianSelectNodes = { __tag__: {} },
       }
 
       // console.log( selectNodes,'selectNodes' )
-      _setNodeCache(self[$1], tagClass, tagId, selectNodes);
+      setSelectNodeCache(self[$1], tagClass, tagId, selectNodes);
 
       try {
         // console.log(head)
@@ -331,14 +343,8 @@ export default (data, isTemplateWxml = false, mianSelectNodes = { __tag__: {} },
       templateCache[name] = await findTemplates[name]();
     }
 
-    let uuu = false;
-
     // 遍历在wxml中找到 带有is属性的template标签
     findUseTemplates.forEach((usetml) => {
-      // console.log( usetml,'usetml' )
-
-      if (Object.keys(usetml)[0] == 'star') { uuu = true; } else { uuu = false; }
-
       // 准备被替换的模版
       let replaceTml = null;
       const useTemplateName = Object.keys(usetml)[0];
@@ -352,7 +358,7 @@ export default (data, isTemplateWxml = false, mianSelectNodes = { __tag__: {} },
       }
 
       if (replaceTml) {
-        const { templateWxmlTree, selectNode } = replaceTml;
+        const { templateWxmlTree } = replaceTml;
 
         // 找到要被替换模版在父组件的位置
         const useTemplateStr = Object.keys(usetml[useTemplateName])[0];
@@ -380,4 +386,4 @@ export default (data, isTemplateWxml = false, mianSelectNodes = { __tag__: {} },
 
     resolve(isTemplateWxml ? templateNode : { WxmlTree, selectNodeCache: mianSelectNodes });
   });
-};
+}

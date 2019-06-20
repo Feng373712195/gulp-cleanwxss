@@ -1,10 +1,13 @@
 
+import getTernaryExpressionClass from './getTernaryExpressionClass';
+import getDynamicClass from './getDynamicClass';
+
 // 是否为三元表达式
 const ternaryExpressionReg = /(.*?)\?(.*):(.*)/;
 
 // 取得标签内的Class
 // 注意还有hover-class 之类的情况
-export default (classKey, tag, arr) => {
+export default function getTagClass(classKey, tag, arr) {
   let TagClass = arr || [];
 
   // 判断前面是否有空格 避免匹配到 *-class
@@ -51,9 +54,9 @@ export default (classKey, tag, arr) => {
     // 一些写法不规范的开发者 会写多个class 这里先不管
     tag = tag.replace(new RegExp(`(${classKey}\\=[\\'|\\"].*?[\\'|\\"])`), '');
     if (hasClass.test(tag)) {
-      return _getTagClass('class', tag, TagClass);
+      return getTagClass('class', tag, TagClass);
     }
   }
 
   return TagClass;
-};
+}

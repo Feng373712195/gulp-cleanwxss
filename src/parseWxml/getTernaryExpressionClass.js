@@ -1,5 +1,7 @@
 
 // 是否为三元表达式
+import getDynamicClass from './getDynamicClass';
+
 const ternaryExpressionReg = /(.*?)\?(.*):(.*)/;
 
 // 处理三元表达式模版渲染Class

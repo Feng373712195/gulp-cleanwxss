@@ -1,5 +1,5 @@
 
-//寻找子元素的父级元素
+// 寻找子元素的父级元素
 export const findNodeParent = (node,select,deep = 9999) => {        
     
     --deep;
@@ -23,10 +23,10 @@ export const findNodeParent = (node,select,deep = 9999) => {
         const isParent = finds.every(v=> v!=-1 )
         if( deep == 0 ){
             return isParent ? node.parent.obj : null
-        }else{
+        }
             return isParent ? node.parent.obj : 
                                 _findNodeParent(node.parent.obj,select)
-        }
+        
     }else{
         let isParent = false
 
@@ -45,4 +45,4 @@ export const findNodeParent = (node,select,deep = 9999) => {
                     _findNodeParent(node.parent.obj,select)
         }
     }
-}
+};
