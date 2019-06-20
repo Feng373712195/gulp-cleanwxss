@@ -9,5 +9,6 @@ module.exports = {
         "sourceType": "module"
     },
     "rules":{
+        "no-cond-assign":"off"
     }
 };

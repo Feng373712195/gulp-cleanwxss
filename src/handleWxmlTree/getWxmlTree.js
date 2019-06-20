@@ -1,10 +1,21 @@
 // 把Wxml字符串转为树结构
 // 在转成树结构的过程中就可以把所有节点存储起来
 // 标签不会被覆盖 这个核实过了
+import path from 'path';
+import mergeSelectNode from './mergeSelectNode';
+import getTagName from '../parseWxml/getTagName';
+import getTagClass from '../parseWxml/getTagClass';
+import getId from '../parseWxml/getId';
+import getAttr from '../parseWxml/getAttr';
+import cloneWxmlTree from './cloneWxmlTree';
+
+const fsp = require('fs-promise');
+
+const componentsClasses = {};
 
 // 2019-03-21
 // selectNodeCache不再作为全局变量 而作为getWxmlTree的返回值
-export const getWxmlTree = (data , isTemplateWxml = false , mianSelectNodes = { __tag__: {} }, templatePath) => {
+export default (data, isTemplateWxml = false, mianSelectNodes = { __tag__: {} }, templatePath) => {
   let pageJson = null;
   let useingComponents = {};
   let wxmlStr = '';
@@ -15,30 +26,28 @@ export const getWxmlTree = (data , isTemplateWxml = false , mianSelectNodes = { 
     // 拿到 page的 usingComponents
     useingComponents = pageJson.usingComponents ? pageJson.usingComponents : useingComponents;
     wxmlStr = data.pageWxml;
-  }else {
+  } else {
     // 模版则是字符串
     wxmlStr = data;
   }
 
   // 解决 {{  }} 中使用尖括号会影响截取标签的正则表达式问题
-  const hasAngleBracketsReg = /[\<\>]/g;
+  const hasAngleBracketsReg = /[<>]/g;
   // 这段正则再优化一下使用便可以优化性能  /\{\{(.*[\>\<]{1}.*?)\}\}[\"|\']/
-  wxmlStr = wxmlStr.replace(/\{\{.*?\}\}/g, ($1, $2) => {
+  wxmlStr = wxmlStr.replace(/\{\{.*?\}\}/g, ($1) => {
     if (hasAngleBracketsReg.test($1)) {
-      $1 = $1.replace(hasAngleBracketsReg, ' @@@block@@@ ');
-      return $1;
+      const replacAngleBracjetsTemplateStr = $1.replace(hasAngleBracketsReg, ' @@@block@@@ ');
+      return replacAngleBracjetsTemplateStr;
     }
     return $1;
   });
 
-  const templateStartTagReg = /\<template.*\s+name=/;
-  const useTemplateTagReg = /\<template.*\s+is=/;
-  // 是否字符串正则表达式
-  const isStringReg = /[\'|\"](.*?)[\'|\"]/;
+  const templateStartTagReg = /<template.*\s+name=/;
+  const useTemplateTagReg = /<template.*\s+is=/;
 
   // 对已经查找过的节点位置缓存 下次可以直接在这里获取 针对class id
   // 2019-4-8 新增__tag__ 用来存放 tag所有对应标签元素
-  let _selectNodes = { __tag__: {} };
+  let selectNodes = { __tag__: {} };
 
   // template层数 isTemplateWxml为true时会用到
   let templateCount = 0;
@@ -56,12 +65,7 @@ export const getWxmlTree = (data , isTemplateWxml = false , mianSelectNodes = { 
   const findUseTemplates = [];
 
   // 过滤调pageWxml中的注释
-  wxmlStr = wxmlStr.replace(/\<!--([\s\S]*?)-->/g, '');
-
-  // 是否为三元表达式
-  const ternaryExpressionReg = /(.*?)\?(.*)\:(.*)/;
-
-  const trimLeftAndRight = /^\\s+(.*)\\s?$/;
+  wxmlStr = wxmlStr.replace(/<!--([\s\S]*?)-->/g, '');
 
   // Wxml树结构
   let WxmlTree = {
@@ -94,13 +98,13 @@ export const getWxmlTree = (data , isTemplateWxml = false , mianSelectNodes = { 
     };
     head = newWxmlTree.root;
     parentkey = 'root';
-    _selectNodes = { __tag__: {} };
+    selectNodes = { __tag__: {} };
     return newWxmlTree;
   };
 
-  const isSingeTagReg = /\<(.*)\/\>/;
-  const isCloseTagReg = /\<\/(.*)\>/;
-  const isCompleteTagReg = /\<.*\>.*\<.*\>/;
+  const isSingeTagReg = /<(.*)\/>/;
+  const isCloseTagReg = /<\/(.*)>/;
+  const isCompleteTagReg = /<.*>.*<.*>/;
 
   // 是否import标签
   const isImportReg = /import/i;
@@ -112,39 +116,41 @@ export const getWxmlTree = (data , isTemplateWxml = false , mianSelectNodes = { 
     // 注意标签连写情况 如：<view>A</view><view>B</view><view>C</view>
     let match = null;
 
-    while (match = /\<[\s\S]*?\>/.exec(wxmlStr)) {
+    while (match = /<[\s\S]*?>/.exec(wxmlStr)) {
       const $1 = match[0];
       wxmlStr = wxmlStr.replace($1, '');
 
-      const tagName = _getTagName($1);
+      const tagName = getTagName($1);
 
       let componentClass = [];
-      let tagClass = _getTagClass('class', $1);
+      let tagClass = getTagClass('class', $1);
       // 处理组件的 扩展class
-      if (useingComponents[tagName] && componentsClasses[tagName] && componentsClasses[tagName].length > 0) {
+      if (useingComponents[tagName]
+          && componentsClasses[tagName]
+          && componentsClasses[tagName].length > 0) {
         componentsClasses[tagName].forEach((classKey) => {
-          componentClass = componentClass.concat(_getTagClass(classKey, $1, [], true));
+          componentClass = componentClass.concat(getTagClass(classKey, $1, [], true));
         });
         tagClass = tagClass.concat(componentClass);
       }
 
-      const tagId = _getId($1);
+      const tagId = getId($1);
 
       // /\<\s?\/import/i 这段正则用来防止 </improt> 标签也会进入这块处理
-      if (isImportReg.test(tagName) && !/\<\s?\/import/i.test($1)) {
+      if (isImportReg.test(tagName) && !/<\s?\/import/i.test($1)) {
         let importSrc = getAttr($1, 'src');
-        importSrc = /.*\.wxml$/i.test(importSrc) ? importSrc : `${importSrc  }.wxml`;
+        importSrc = /.*\.wxml$/i.test(importSrc) ? importSrc : `${importSrc}.wxml`;
 
-        findTemplates[importSrc] = () => new Promise(async (_resolve, _reject) => {
+        findTemplates[importSrc] = () => new Promise(async (_resolve) => {
           let _templatePath = '';
           // 查找模版规则 首先查找相对路径 如果相对路径没有 则尝试绝对路径 如果都没有则弹出错误 当时不印象继续往下执行
-          _templatePath = path.join(isTemplateWxml 
-                                               ? templatePath.replace(/\/\w+\.wxml$/, '') 
-                                               : path.join(PAGES_PATH, PAGE_DIR_PATH), importSrc);
+          _templatePath = path.join(isTemplateWxml
+            ? templatePath.replace(/\/\w+\.wxml$/, '')
+            : path.join(PAGES_PATH, PAGE_DIR_PATH), importSrc);
 
 
           fsp.readFile(_templatePath, 'utf-8')
-            .catch((err) => {
+            .catch(() => {
               _templatePath = path.join(WX_DIR_PATH, importSrc);
               return fsp.readFile(_templatePath, 'utf-8');
             })
@@ -153,7 +159,7 @@ export const getWxmlTree = (data , isTemplateWxml = false , mianSelectNodes = { 
               console.log('没有找到模版文件 模版地址:', importSrc);
               reject();
             })
-            .then((tmp) => getTemplateWxmlTree(importSrc,tmp,mianSelectNodes,_templatePath))
+            .then(tmp => getTemplateWxmlTree(importSrc, tmp, mianSelectNodes, _templatePath))
             .then((res) => {
               // console.log( 'resolve ===========' )
               _resolve(res);
@@ -202,7 +208,7 @@ export const getWxmlTree = (data , isTemplateWxml = false , mianSelectNodes = { 
         if (useTemplateTagReg.test($1)) {
           findUseTemplates.push({ [getAttr($1, 'is')]: self });
         }
-        _setNodeCache(self[$1], tagClass, tagId, _selectNodes);
+        _setNodeCache(self[$1], tagClass, tagId, selectNodes);
 
         head.childs.push(self);
 
@@ -218,7 +224,7 @@ export const getWxmlTree = (data , isTemplateWxml = false , mianSelectNodes = { 
           // 模板包裹 的闭合template标签找到
           if (templateCount == 0) {
             templateNode[currentTemplateName].templateWxmlTree = WxmlTree.root.childs;
-            templateNode[currentTemplateName].selectNode = _selectNodes;
+            templateNode[currentTemplateName].selectNode = selectNodes;
             WxmlTree = resetWxmlTree();
             continue;
           }
@@ -232,7 +238,7 @@ export const getWxmlTree = (data , isTemplateWxml = false , mianSelectNodes = { 
             // console.log(head)
             parentkey = head.parent.key;
             head = head.parent.obj;
-          } catch(e) {
+          } catch (e) {
             console.log('完毕标签 head 报错');
             console.log(e);
             return;
@@ -260,14 +266,14 @@ export const getWxmlTree = (data , isTemplateWxml = false , mianSelectNodes = { 
         }
 
         if (isCompleteTag) {
-          // console.log( _selectNodes,'selectNodes' )
-          _setNodeCache(self[$1], tagClass, tagId, _selectNodes);
+          // console.log( selectNodes,'selectNodes' )
+          _setNodeCache(self[$1], tagClass, tagId, selectNodes);
         }
 
         try {
           // console.log(head)
           head.childs.push(self);
-        }catch (e) {
+        } catch (e) {
           console.log('闭合标签 head 报错');
           console.log(e);
           return;
@@ -303,13 +309,13 @@ export const getWxmlTree = (data , isTemplateWxml = false , mianSelectNodes = { 
         ++templateCount;
       }
 
-      // console.log( _selectNodes,'selectNodes' )
-      _setNodeCache(self[$1], tagClass, tagId, _selectNodes);
+      // console.log( selectNodes,'selectNodes' )
+      _setNodeCache(self[$1], tagClass, tagId, selectNodes);
 
       try {
         // console.log(head)
         head.childs.push(self);
-      } catch(e) {
+      } catch (e) {
         console.log('启始标签 head 报错');
         console.log(e);
         return;
@@ -359,17 +365,19 @@ export const getWxmlTree = (data , isTemplateWxml = false , mianSelectNodes = { 
         const tmpSelectNode = { __tag__: {} };
         const tmpClone = cloneWxmlTree(templateWxmlTree, templateParent, tmpSelectNode);
         // 进行替换
-        Array.prototype.splice.apply(templateParentTheChilren, [templatehaschildrenNodeIndex, 1, ...tmpClone]);
+        Array.prototype.splice.apply(
+          templateParentTheChilren,
+          [templatehaschildrenNodeIndex, 1, ...tmpClone],
+        );
         // 发现找到的第一次找到时合并 后面就没必要合并了 因为都一样 会造成重复
         mergeSelectNode(mianSelectNodes, tmpSelectNode);
       }
     });
 
     if (!isTemplateWxml) {
-      mergeSelectNode(mianSelectNodes, _selectNodes);
+      mergeSelectNode(mianSelectNodes, selectNodes);
     }
 
     resolve(isTemplateWxml ? templateNode : { WxmlTree, selectNodeCache: mianSelectNodes });
   });
-}
-;
+};

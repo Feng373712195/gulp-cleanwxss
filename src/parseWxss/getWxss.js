@@ -18,7 +18,7 @@ const findWxss = importSrc => new Promise((resolve, reject) => {
 
 // 这个方法用来过滤掉Wxss中的注释
 // 和引入@import
-export const getWxss = (str) => {
+export default (str) => {
   const improts = [];
 
   // 过滤掉wxss中的注释
