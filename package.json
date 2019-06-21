@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "fs-promise": "^2.0.3",
-    "gulp": "^4.0.0"
+    "gulp": "^4.0.0",
+    "through2": "^3.0.1"
   }
 }

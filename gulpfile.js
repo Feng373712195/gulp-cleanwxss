@@ -5,10 +5,11 @@
  */
 const gulp = require('gulp');
 const path = require('path');
-const fsp = require('fs-promise');
+const plugs = require('./src/index');
 
 const WX_DIR_PATH = path.join(__dirname, 'wx/wcjs_wx_miniprogram');
 const PAGES_PATH = path.join(WX_DIR_PATH, '/pages');
+
 
 // 查找不使用的 class
 // 1· gulp 命令行中传入页面文件参数
@@ -202,7 +203,12 @@ const componentsClasses = {
   'c-model': ['model-class', 'model-content-class', 'model-success-btn-class', 'model-cancel-btn-class'],
 };
 
-
 gulp.task('one', async () => {
-
+  console.log(plugs, 'plugs');
+  gulp.src('./wx/wcjs_wx_miniprogram/pages/addtoptics/addtoptics.wxss')
+    .pipe(plugs({
+      cssVariable: {},
+      componentsClasses: {},
+    }))
+    .pipe(gulp.dest('./dest'));
 });

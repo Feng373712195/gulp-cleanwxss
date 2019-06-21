@@ -6,9 +6,10 @@ module.exports = {
         "commonjs": true,
     },
     "parserOptions": { 
-        "sourceType": "module"
+        "sourceType": "module" 
     },
     "rules":{
-        "no-cond-assign":"off"
+        "linebreak-style": [0 ,"error", "windows"], 
+        "no-cond-assign":"off" 
     }
 };
