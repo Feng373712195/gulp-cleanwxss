@@ -14,10 +14,8 @@ const setSelectNodeCache = require('./setSelectNodeCache');
 
 const componentsClasses = {};
 
-async function getTemplateWxmlTree(wxmlStr, wxRootPath, pagePath, selectNodes, templatePath) {
-  const wxmlTree = await getWxmlTree.bind(wxmlStr, wxRootPath, pagePath, true, selectNodes, templatePath);
-  return wxmlTree;
-}
+const getTemplateWxmlTree = async (wxmlStr, wxRootPath, pagePath, selectNodes, templatePath) => await getWxmlTree(wxmlStr, wxRootPath, pagePath, true, selectNodes, templatePath);
+
 
 // 2019-03-21
 // selectNodeCache不再作为全局变量 而作为getWxmlTree的返回值
@@ -174,7 +172,7 @@ function getWxmlTree(data, wxRootPath, pagePath, isTemplateWxml = false, mianSel
       if (isImportReg.test(tagName) && !/<\s?\/import/i.test($1)) {
         let importSrc = getAttr($1, 'src');
         importSrc = /.*\.wxml$/i.test(importSrc) ? importSrc : `${importSrc}.wxml`;
-        findTemplates[importSrc] = findTemplateWxml(importSrc);
+        findTemplates[importSrc] = findTemplateWxml.bind(null, importSrc);
       }
 
       if (isTemplateWxml && isTemplateReg.test(tagName)) {
@@ -333,7 +331,6 @@ function getWxmlTree(data, wxRootPath, pagePath, isTemplateWxml = false, mianSel
 
     // 处理import元素 找到的模板存入到templateCache
     const findTemplateNames = Object.keys(findTemplates);
-    console.log(findTemplateNames, 'findTemplateNames');
     for (let i = 0, len = findTemplateNames.length; i < len; i++) {
       const findTemplateName = findTemplateNames[i];
       templateCache[findTemplateName] = await findTemplates[findTemplateName]();

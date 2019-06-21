@@ -1,4 +1,6 @@
 
+// 是否有同级选择器正则表达式 如： .a.b .a#b
+const peerSelectReg = /(?=\.)|(?=#)/g;
 // 寻找子元素的父级元素
 function findNodeParent(node, select, deep = 9999) {
   --deep;

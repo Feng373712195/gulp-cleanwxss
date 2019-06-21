@@ -1,6 +1,18 @@
 
+const checkHasSelect = require('./checkHasSelect');
+const findNodeParent = require('./findNodeHasTag');
+const checkChildSelectQuery = require('./checkChildSelectQuery');
+const checkAdjacentSelectQuery = require('./checkAdjacentSelectQuery');
+const checkProgenySelectQuery = require('./checkProgenySelectQuery');
+
+
+// 伪元素伪类匹配正则表达式
+const pseudoClassReg = /:link|:visited|:active|:hover|:focus|:before|::before|:after|::after|:first-letter|:first-line|:first-child|:lang\(.*\)|:lang|:first-of-type|:last-of-type|:only-child|:nth-child\(.*\)|:nth-last-child\(.*\)|:nth-of-type\(.*\)|:nth-last-of-type\(.*\)|:last-child|:root|:empty|:target|:enabled|:disabled|:checked|:not\(.*\)|::selection/g;
+// 是否带有特殊选择器
+const hasSelectorReg = /(~|\+|>)/;
+
 // 检查后代选择器是否生效
-function checkSelectQuery(classSelect, findNodes = null, type) {
+function checkSelectQuery(classSelect, selectNodeCache, findNodes = null) {
   // console.log( classSelect,'classSelect' )
   let selectNodes = null;
 
@@ -9,13 +21,13 @@ function checkSelectQuery(classSelect, findNodes = null, type) {
   // 从子节点开始查找 把选择器数组翻转
 
   selectNodes = selectQuery
-    .replace(/\s?([\>\+\~])\s?/g, '$1')
+    .replace(/\s?([>+~])\s?/g, '$1')
     .split(/\s/g)
     .filter(v => v)
     .reduce((prev, curt) => {
       curt = hasSelectorReg.test(curt)
-        ? curt.match(/(\.|\#)?\w+(\~|\+|\>)?/g)
-          .map(select => select.replace(/(.*)(\~|\+|\>)/, '$2$1'))
+        ? curt.match(/(.|#)?\w+(~|+|>)?/g)
+          .map(select => select.replace(/(.*)(~|+|>)/, '$2$1'))
         : [curt];
       prev.push(...curt);
       return prev;
@@ -24,7 +36,7 @@ function checkSelectQuery(classSelect, findNodes = null, type) {
 
   // 选择器只匹配一个元素
   if (selectNodes.length == 1) {
-    return !!_checkHasSelect(selectNodes[0]);
+    return !!checkHasSelect(selectNodes[0], selectNodeCache);
   }
   // 多元素选择器
 
@@ -60,7 +72,7 @@ function checkSelectQuery(classSelect, findNodes = null, type) {
     // 2019-5-2 重写这段逻辑
     if (i2 == 0) {
       let matchNode = null;
-      if (matchNode = _checkHasSelect(selectNodes[i2])) {
+      if (matchNode = checkHasSelect(selectNodes[i2], selectNodeCache)) {
         finds = matchNode;
       } else {
         return false;
@@ -68,7 +80,7 @@ function checkSelectQuery(classSelect, findNodes = null, type) {
     } else {
       const newFinds = [];
       finds.forEach((node) => {
-        newFinds.push(_findNodeParent(node, selectNodes[i2]));
+        newFinds.push(findNodeParent(node, selectNodes[i2]));
       });
 
       finds = newFinds.filter(v => v);

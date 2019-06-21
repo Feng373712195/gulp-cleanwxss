@@ -10,7 +10,7 @@ function findNodeHasTag(node, select, deep = 9999) {
       return true;
     }
     if (deep == 0) return false;
-    if (_findNodeHasTag(node.childs[i][key], select)) return true;
+    if (findNodeHasTag(node.childs[i][key], select)) return true;
   }
   return false;
 }

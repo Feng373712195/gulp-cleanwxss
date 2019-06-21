@@ -4,31 +4,25 @@ const fsp = require('fs-promise');
 
 const getWxss = require('./parseWxss/getWxss');
 const getWxmlTree = require('./handleWxmlTree/getWxmlTree');
+const checkSelectQuery = require('./selectQuery/checkSelectQuery');
 
 const selectMap = {};
-// 伪元素伪类匹配正则表达式
-const pseudoClassReg = /:link|:visited|:active|:hover|:focus|:before|::before|:after|::after|:first-letter|:first-line|:first-child|:lang\(.*\)|:lang|:first-of-type|:last-of-type|:only-child|:nth-child\(.*\)|:nth-last-child\(.*\)|:nth-of-type\(.*\)|:nth-last-of-type\(.*\)|:last-child|:root|:empty|:target|:enabled|:disabled|:checked|:not\(.*\)|::selection/g;
-// 是否有同级选择器正则表达式 如： .a.b .a#b
-const peerSelectReg = /(?=\.)|(?=#)/g;
-// 是否带有特殊选择器
-const hasSelectorReg = /(~|\+|>)/;
 
 // 用来收集css变量 开发时使用
 const _cssVariable = new Set();
-
 
 module.exports = function (...arg) {
   console.log(arg);
 
   const stream = through.obj(async function (file, enc, cb) {
-    console.log('==================================');
-    console.log(file.cwd, 'file.cwd');
-    console.log(file.base, 'file.base');
-    console.log(file.path, 'file.path');
-    console.log(file.relative, 'relative');
-    console.log(file.dirname, 'file.dirname');
-    console.log(file.stem, 'stem');
-    console.log(file.extname, 'extname');
+    // console.log('==================================');
+    // console.log(file.cwd, 'file.cwd');
+    // console.log(file.base, 'file.base');
+    // console.log(file.path, 'file.path');
+    // console.log(file.relative, 'relative');
+    // console.log(file.dirname, 'file.dirname');
+    // console.log(file.stem, 'stem');
+    // console.log(file.extname, 'extname');
 
     console.log(path.join(file.base, `/${file.stem}.json`));
 
@@ -64,9 +58,9 @@ module.exports = function (...arg) {
       // 有逗号分隔的选择器 其中一项有被使用就返回true
       // 注意: 可以优化 在最后制作弹出的HTML 显示哪些被动 哪些没用 可以让使用者删除更多无用代码
       if (separateClassSelect.length > 1) {
-        that.select = separateClassSelect.some(classSelect => checkSelectQuery(classSelect));
+        that.select = separateClassSelect.some(classSelect => checkSelectQuery(classSelect, selectNodeCache));
       } else {
-        that.select = checkSelectQuery(classSelects[i]);
+        that.select = checkSelectQuery(classSelects[i], selectNodeCache);
       }
     }
 
