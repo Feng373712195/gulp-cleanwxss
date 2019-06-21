@@ -1,5 +1,5 @@
 // 取得表情的属性
-export default (tag, attr) => {
+function getAttr(tag, attr) {
   const hasAttr = tag.indexOf(` ${attr}`);
   if (hasAttr) {
     const attrStrStartL = hasAttr + ` ${attr}=`.length;
@@ -12,4 +12,6 @@ export default (tag, attr) => {
     return AttrStr;
   }
   return '';
-};
+}
+
+module.exports = getAttr;

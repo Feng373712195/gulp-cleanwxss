@@ -1,5 +1,5 @@
 // 取得标签内的id
-export default (tag) => {
+function getId(tag) {
   // 判断前面是否有空格 避免匹配到 *-class
   const hasId = /\s+id=/;
   if (hasId.test(tag)) {
@@ -16,4 +16,6 @@ export default (tag) => {
   }
 
   return '';
-};
+}
+
+module.exports = getId;

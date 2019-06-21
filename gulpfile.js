@@ -9,7 +9,7 @@ const plugs = require('./src/index');
 
 const WX_DIR_PATH = path.join(__dirname, 'wx/wcjs_wx_miniprogram');
 const PAGES_PATH = path.join(WX_DIR_PATH, '/pages');
-
+const PAGE_DIR_PATH = '/test';
 
 // 查找不使用的 class
 // 1· gulp 命令行中传入页面文件参数
@@ -154,7 +154,7 @@ const PAGES_PATH = path.join(WX_DIR_PATH, '/pages');
  */
 
 // .wenwen-block .ask-list .ask-item .reward ~ text
-const PAGE_DIR_PATH = '/test';
+// const PAGE_DIR_PATH = '/test';
 // const PAGE_DIR_PATH = '/video'
 // const PAGE_DIR_PATH = '/test'
 // 用来收集css变量 开发时使用

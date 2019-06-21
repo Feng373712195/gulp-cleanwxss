@@ -1,5 +1,5 @@
 // 检查相邻兄弟选择器是否生效
-export default (classSelect, findNodes = null) => {
+function checkAdjacentSelectQuery(classSelect, findNodes = null) {
   const newFinds = [];
   if (findNodes) {
     const secondSelectType = classSelect[0] == '#' ? 'id' : classSelect[0] == '.' ? 'class' : 'tag';
@@ -27,4 +27,6 @@ export default (classSelect, findNodes = null) => {
 
   // console.log( newFinds.length,'checkAdjacent',classSelect,findNodes )
   return newFinds;
-};
+}
+
+module.exports = checkAdjacentSelectQuery;

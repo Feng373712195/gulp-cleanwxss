@@ -1,4 +1,4 @@
-import setSelectNodeCache from './setSelectNodeCache';
+const setSelectNodeCache = require('./setSelectNodeCache');
 
 const isArray = obj => ([].isArray && [].isArray(obj)) || Object.prototype.toString.call(obj) === '[object Array]';
 const isObject = obj => typeof obj === 'object' && Object.prototype.toString.call(obj) === '[object Object]';
@@ -25,7 +25,7 @@ const shallow = (data) => {
 };
 
 // 拷贝wxmlTree
-export default function cloneWxmlTree(nodes, parent = null, selectNode) {
+function cloneWxmlTree(nodes, parent = null, selectNode) {
   const clone = [];
   nodes.forEach((node) => {
     const nodeKey = Object.keys(node)[0];
@@ -45,3 +45,5 @@ export default function cloneWxmlTree(nodes, parent = null, selectNode) {
   });
   return clone;
 }
+
+module.exports = cloneWxmlTree;

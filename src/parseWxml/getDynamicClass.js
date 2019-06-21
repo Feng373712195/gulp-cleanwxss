@@ -2,7 +2,7 @@
 const isStringReg = /['|"](.*?)['|"]/;
 const cssVariable = {};
 
-const getJoinClass = (str, res = []) => {
+function getJoinClass(str, res = []) {
   const getSumValueReg = /\s?(["|']?[a-zA-Z0-9_\- ]+\s?['|"]?)\s?\+{1}\s?(["|']?[a-zA-Z0-9_\- ]+\s?['|"]?)\s?/;
   let sumVal = '';
 
@@ -52,9 +52,9 @@ const getJoinClass = (str, res = []) => {
     delete cssVariable.customCssVariable;
     return res;
   }
-};
+}
 
-export default (str) => {
+function getDynamicClass(str) {
   const res = [];
   const classes = str.split(/\|\||&&/g);
 
@@ -76,4 +76,6 @@ export default (str) => {
   });
 
   return res;
-};
+}
+
+module.exports = getDynamicClass;

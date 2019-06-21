@@ -1,11 +1,11 @@
 
 // 是否为三元表达式
-import getDynamicClass from './getDynamicClass';
+const getDynamicClass = require('./getDynamicClass');
 
 const ternaryExpressionReg = /(.*?)\?(.*):(.*)/;
 
 // 处理三元表达式模版渲染Class
-export default (dynamicClass) => {
+function getTernaryExpressionClass(dynamicClass) {
   let TagClass = [];
 
   let hasExpression = dynamicClass;
@@ -51,4 +51,6 @@ export default (dynamicClass) => {
   });
 
   return TagClass;
-};
+}
+
+module.exports = getTernaryExpressionClass;

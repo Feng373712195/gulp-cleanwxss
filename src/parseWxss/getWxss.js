@@ -1,9 +1,11 @@
+const path = require('path');
+const fsp = require('fs-promise');
 
-const findWxss = importSrc => new Promise((resolve, reject) => {
-  const wxssPath = path.join(path.join(PAGES_PATH, PAGE_DIR_PATH), importSrc);
+const findWxss = (importSrc, wxRootPath, pagePath) => new Promise((resolve, reject) => {
+  let wxssPath = path.join(pagePath, importSrc);
   fsp.readFile(wxssPath, 'utf-8')
-    .catch((err) => {
-      const wxssPath = path.join(WX_DIR_PATH, importSrc);
+    .catch(() => {
+      wxssPath = path.join(wxRootPath, importSrc);
       return fsp.readFile(wxssPath, 'utf-8');
     })
     .then((res) => {
@@ -18,32 +20,31 @@ const findWxss = importSrc => new Promise((resolve, reject) => {
 
 // 这个方法用来过滤掉Wxss中的注释
 // 和引入@import
-export default (str) => {
+const getWxss = (str, wxRootPath, pagePath) => {
   const improts = [];
-
   // 过滤掉wxss中的注释
-  str = str.replace(/\/\*([\s\S]*?)\*\//g, '');
+  const wxssStr = str.replace(/\/\*([\s\S]*?)\*\//g, '')
   // 过滤掉keyframes
-  str = str.replace(/\s?@keyframes.*\{([\s\S]*?)\n\}/g, '');
+    .replace(/\s?@keyframes.*\{([\s\S]*?)\n\}/g, '')
   // 过滤掉font-face
-  str = str.replace(/\s?@font-face.*\{([\s\S]*?)\n\}/g, '');
+    .replace(/\s?@font-face.*\{([\s\S]*?)\n\}/g, '');
 
   // 获取wxss中的import
   // 2019-05-04
   // 如果文件中还有improt呢 需要处理这种情况
-  str.replace(/@import\s?[\'|\"](.*)[\'|\"]\;/g, ($1, $2) => {
+  wxssStr.replace(/@import\s?['|"](.*)['|"];/g, ($1, $2) => {
     // 如果没有后缀 wxss则添加上
     improts.push(/\.wxss$/.test($2) ? $2 : `${$2}.wxss`);
   });
 
-  if (improts.length == 0) return str;
+  if (improts.length === 0) return wxssStr;
 
-  return Promise.all(improts.map(src => findWxss(src)))
+  return Promise.all(improts.map(src => findWxss(src, wxRootPath, pagePath)))
     .then((res) => {
-      let resWxss = str;
+      let resWxss = wxssStr;
       res.forEach(async (wxss) => {
-        wxss = await getWxss(wxss);
-        resWxss = `${wxss} \n ${await resWxss}`;
+        const importWxssStr = await getWxss(wxss);
+        resWxss = `${importWxssStr} \n ${resWxss}`;
       });
       return resWxss;
     })
@@ -51,3 +52,5 @@ export default (str) => {
       console.log(err);
     });
 };
+
+module.exports = getWxss;

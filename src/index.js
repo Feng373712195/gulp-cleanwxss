@@ -2,6 +2,9 @@ const through = require('through2');
 const path = require('path');
 const fsp = require('fs-promise');
 
+const getWxss = require('./parseWxss/getWxss');
+const getWxmlTree = require('./handleWxmlTree/getWxmlTree');
+
 const selectMap = {};
 // 伪元素伪类匹配正则表达式
 const pseudoClassReg = /:link|:visited|:active|:hover|:focus|:before|::before|:after|::after|:first-letter|:first-line|:first-child|:lang\(.*\)|:lang|:first-of-type|:last-of-type|:only-child|:nth-child\(.*\)|:nth-last-child\(.*\)|:nth-of-type\(.*\)|:nth-last-of-type\(.*\)|:last-child|:root|:empty|:target|:enabled|:disabled|:checked|:not\(.*\)|::selection/g;
@@ -29,10 +32,10 @@ module.exports = function (...arg) {
 
     console.log(path.join(file.base, `/${file.stem}.json`));
 
-    let pageWxss = file.contents;
+    let pageWxss = String(file.contents);
     const pageWxml = await fsp.readFile(path.join(file.base, `/${file.stem}.wxml`), 'utf-8');
     const pageJson = await fsp.readFile(path.join(file.base, `/${file.stem}.json`), 'utf-8');
-    pageWxss = await getWxss(pageWxss);
+    pageWxss = await getWxss(pageWxss, file.cwd, file.base);
 
     // 获取Wxss中的选择器
     const classSelects = [];
@@ -42,9 +45,7 @@ module.exports = function (...arg) {
     });
 
     // 获取Wxml树
-    const { WxmlTree, selectNodeCache } = await getWxmlTree({ pageWxml, pageJson });
-
-    console.log(_cssVariable, '_cssVariable');
+    const { WxmlTree, selectNodeCache } = await getWxmlTree({ pageWxml, pageJson }, file.cwd, file.base);
 
     // 从子节点开始查找
     for (let i = 0, len = classSelects.length; i < len; i++) {

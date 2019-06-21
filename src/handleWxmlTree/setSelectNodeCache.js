@@ -1,5 +1,5 @@
 // 存入节点缓存对象
-export default (tag, classes, id, selectNodes) => {
+function setSelectNodeCache(tag, classes, id, selectNodes) {
   // 避免用重复class元素
   if (classes.length) {
     classes.forEach((classname) => {
@@ -17,9 +17,11 @@ export default (tag, classes, id, selectNodes) => {
     selectNodes[`#${id}`].push(tag);
   }
 
-  if (selectNodes.tag[tag.tag]) {
-    selectNodes.tag[tag.tag].push(tag);
+  if (selectNodes.__tag__[tag.tag]) {
+    selectNodes.__tag__[tag.tag].push(tag);
   } else {
-    selectNodes.tag[tag.tag] = [tag];
+    selectNodes.__tag__[tag.tag] = [tag];
   }
-};
+}
+
+module.exports = setSelectNodeCache;

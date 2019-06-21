@@ -1,32 +1,27 @@
 // 把Wxml字符串转为树结构
 // 在转成树结构的过程中就可以把所有节点存储起来
 // 标签不会被覆盖 这个核实过了
-import path from 'path';
-import mergeSelectNode from './mergeSelectNode';
-import getTagName from '../parseWxml/getTagName';
-import getTagClass from '../parseWxml/getTagClass';
-import getId from '../parseWxml/getId';
-import getAttr from '../parseWxml/getAttr';
-import cloneWxmlTree from './cloneWxmlTree';
-import setSelectNodeCache from './setSelectNodeCache';
-
+const path = require('path');
 const fsp = require('fs-promise');
+const mergeSelectNode = require('./mergeSelectNode');
+const getTagName = require('../parseWxml/getTagName');
+const getTagClass = require('../parseWxml/getTagClass');
+const getId = require('../parseWxml/getId');
+const getAttr = require('../parseWxml/getAttr');
+const cloneWxmlTree = require('./cloneWxmlTree');
+const setSelectNodeCache = require('./setSelectNodeCache');
+
 
 const componentsClasses = {};
 
-const WX_DIR_PATH = path.join(__dirname, 'wx/wcjs_wx_miniprogram');
-const PAGES_PATH = path.join(WX_DIR_PATH, '/pages');
-const PAGE_DIR_PATH = '/test';
-
-
-async function getTemplateWxmlTree(temkey, wxmlStr, selectNodes, templatePath) {
-  const wxmlTree = await getWxmlTree(wxmlStr, true, selectNodes, templatePath);
+async function getTemplateWxmlTree(wxmlStr, wxRootPath, pagePath, selectNodes, templatePath) {
+  const wxmlTree = await getWxmlTree.bind(wxmlStr, wxRootPath, pagePath, true, selectNodes, templatePath);
   return wxmlTree;
 }
 
 // 2019-03-21
 // selectNodeCache不再作为全局变量 而作为getWxmlTree的返回值
-export default function getWxmlTree(data, isTemplateWxml = false, mianSelectNodes = { __tag__: {} }, templatePath) {
+function getWxmlTree(data, wxRootPath, pagePath, isTemplateWxml = false, mianSelectNodes = { __tag__: {} }, templatePath) {
   let pageJson = null;
   let useingComponents = {};
   let wxmlStr = '';
@@ -127,17 +122,16 @@ export default function getWxmlTree(data, isTemplateWxml = false, mianSelectNode
     // 注意标签连写情况 如：<view>A</view><view>B</view><view>C</view>
     let match = null;
 
-
     const findTemplateWxml = importSrc => new Promise(async (_resolve) => {
       let _templatePath = '';
       // 查找模版规则 首先查找相对路径 如果相对路径没有 则尝试绝对路径 如果都没有则弹出错误 当时不印象继续往下执行
       _templatePath = path.join(isTemplateWxml
         ? templatePath.replace(/\/\w+\.wxml$/, '')
-        : path.join(PAGES_PATH, PAGE_DIR_PATH), importSrc);
+        : pagePath, importSrc);
 
       fsp.readFile(_templatePath, 'utf-8')
         .catch(() => {
-          _templatePath = path.join(WX_DIR_PATH, importSrc);
+          _templatePath = path.join(wxRootPath, importSrc);
           return fsp.readFile(_templatePath, 'utf-8');
         })
         .catch((err) => {
@@ -145,7 +139,7 @@ export default function getWxmlTree(data, isTemplateWxml = false, mianSelectNode
           console.log('没有找到模版文件 模版地址:', importSrc);
           reject();
         })
-        .then(tmp => getTemplateWxmlTree(importSrc, tmp, mianSelectNodes, _templatePath))
+        .then(tmp => getTemplateWxmlTree(tmp, wxRootPath, pagePath, mianSelectNodes, _templatePath))
         .then((res) => {
           _resolve(res);
         })
@@ -155,7 +149,6 @@ export default function getWxmlTree(data, isTemplateWxml = false, mianSelectNode
           reject();
         });
     });
-
 
     while (match = /<[\s\S]*?>/.exec(wxmlStr)) {
       const $1 = match[0];
@@ -339,8 +332,11 @@ export default function getWxmlTree(data, isTemplateWxml = false, mianSelectNode
     }
 
     // 处理import元素 找到的模板存入到templateCache
-    for (const name in findTemplates) {
-      templateCache[name] = await findTemplates[name]();
+    const findTemplateNames = Object.keys(findTemplates);
+    console.log(findTemplateNames, 'findTemplateNames');
+    for (let i = 0, len = findTemplateNames.length; i < len; i++) {
+      const findTemplateName = findTemplateNames[i];
+      templateCache[findTemplateName] = await findTemplates[findTemplateName]();
     }
 
     // 遍历在wxml中找到 带有is属性的template标签
@@ -387,3 +383,5 @@ export default function getWxmlTree(data, isTemplateWxml = false, mianSelectNode
     resolve(isTemplateWxml ? templateNode : { WxmlTree, selectNodeCache: mianSelectNodes });
   });
 }
+
+module.exports = getWxmlTree;

@@ -1,5 +1,5 @@
 // 检查兄弟选择器是否生效
-export default (classSelects, findNodes = null) => {
+function checkChildSelectQyery(classSelects, findNodes = null) {
   const newFinds = [];
 
   findNodes.nodes.forEach((node) => {
@@ -11,4 +11,6 @@ export default (classSelects, findNodes = null) => {
     return [];
   }
   return finds;
-};
+}
+
+module.exports = checkChildSelectQyery;

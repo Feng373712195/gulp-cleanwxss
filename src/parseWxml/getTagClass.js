@@ -1,13 +1,12 @@
-
-import getTernaryExpressionClass from './getTernaryExpressionClass';
-import getDynamicClass from './getDynamicClass';
+const getDynamicClass = require('./getDynamicClass');
+const getTernaryExpressionClass = require('./getTernaryExpressionClass');
 
 // 是否为三元表达式
 const ternaryExpressionReg = /(.*?)\?(.*):(.*)/;
 
 // 取得标签内的Class
 // 注意还有hover-class 之类的情况
-export default function getTagClass(classKey, tag, arr) {
+function getTagClass(classKey, tag, arr) {
   let TagClass = arr || [];
 
   // 判断前面是否有空格 避免匹配到 *-class
@@ -60,3 +59,5 @@ export default function getTagClass(classKey, tag, arr) {
 
   return TagClass;
 }
+
+module.exports = getTagClass;
