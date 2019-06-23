@@ -24,8 +24,6 @@ gulp.task('clean-wxss', function(){
 
 ## gulp-cleanwxss options
 
-An optional third argument, `options`, can be passed.
-
 #### options
 Type: `Object`
 
@@ -60,7 +58,6 @@ Type: `Object`
 Default: `{}`
 
 
-
 如果你的微信小程序页面中使用的自定义组件配置了外部样式类：
 ```javascript
 Component({
@@ -85,20 +82,6 @@ gulp.task('clean-wxss', function(){
 ```
 
 微信自带组件中的外部样式类无需额外配置
-
-```javascript
-var cleanwxss = require('gulp-cleanwxss');
-
-gulp.task('clean-wxss', function(){
-  gulp.src('wcjs_wx_miniprogram/pages/**/**.wxss')
-    .pipe(cleanwxss({
-        cssVariable:{
-            classname:['box','mask']
-        }
-    }))
-    .pipe(gulp.dest('build/'));
-});
-```
 
 
 [npm-url]: https://npmjs.org/package/gulp-replace
