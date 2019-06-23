@@ -1,17 +1,29 @@
 {
   "name": "gulp-cleanwxss",
   "version": "1.0.0",
-  "description": "",
+  "description": "wxminiprogron for wxss files find nouse classes to clean",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "wuzefeng <373712195@qq.com>",
+  "license": "MIT",
   "dependencies": {
     "fs-promise": "^2.0.3",
     "gulp": "^4.0.0",
     "gulp-util": "^3.0.8",
     "through2": "^3.0.1"
+  },
+  "keywords": [
+    "gulp",
+    "gulpplugin",
+    "uncss",
+    "wxss"
+  ],
+  "bugs": {
+    "url": "https://github.com/lazd/gulp-cleanwxss/issues"
+  },
+  "engines": {
+    "node": ">=5.10.0"
   }
 }

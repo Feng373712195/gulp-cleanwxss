@@ -1,7 +1,7 @@
 const setSelectNodeCache = require('./setSelectNodeCache');
+const isObject = require('../util/isObject');
+const isArray = require('../util/isArray');
 
-const isArray = obj => ([].isArray && [].isArray(obj)) || Object.prototype.toString.call(obj) === '[object Array]';
-const isObject = obj => typeof obj === 'object' && Object.prototype.toString.call(obj) === '[object Object]';
 // 浅拷贝函数
 const shallow = (data) => {
   let o;

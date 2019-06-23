@@ -1,11 +1,10 @@
 const through = require('through2');
-const gutil = require('gulp-util');
+const gulpUtil = require('gulp-util');
 const path = require('path');
 const fsp = require('fs-promise');
 
 const PLUGIN_NAME = 'gulp-clearwxss';
-const { PluginError } = gutil;
-
+const { PluginError } = gulpUtil;
 
 const getWxss = require('./parseWxss/getWxss');
 const getWxmlTree = require('./handleWxmlTree/getWxmlTree');

@@ -8,7 +8,7 @@ const getId = require('../parseWxml/getId');
 const getAttr = require('../parseWxml/getAttr');
 const cloneWxmlTree = require('./cloneWxmlTree');
 const setSelectNodeCache = require('./setSelectNodeCache');
-
+const isObject = require('../util/isObject');
 
 // 微信小程序默认组件扩展class
 const defaultComponentsClasses = {
@@ -23,7 +23,6 @@ const defaultComponentsClasses = {
 
 const getTemplateWxmlTree = async (wxmlStr, options, wxRootPath, pagePath, selectNodes, templatePath) => await getWxmlTree(wxmlStr, options, wxRootPath, pagePath, true, selectNodes, templatePath);
 
-
 // 把Wxml字符串转为树结构
 function getWxmlTree(data, options, wxRootPath, pagePath, isTemplateWxml = false, mianSelectNodes = { __tag__: {} }, templatePath) {
   let pageJson = null;
@@ -34,10 +33,10 @@ function getWxmlTree(data, options, wxRootPath, pagePath, isTemplateWxml = false
   let cssVariable = {};
 
   if (!isTemplateWxml) {
-    if (options.componentsClasses) {
+    if (options.componentsClasses && isObject(options.componentsClasses)) {
       componentsClasses = Object.assign(options.componentsClasses, defaultComponentsClasses);
     }
-    if (options.cssVariable) {
+    if (options.cssVariable && isObject(options.cssVariable)) {
       cssVariable = options.cssVariable;
     }
   }

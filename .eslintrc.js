@@ -20,5 +20,5 @@ module.exports = {
         "no-param-reassign":"off",
         "consistent-return":"off",
         "no-bitwise":"off"
-    }   
+    }
 };
