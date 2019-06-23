@@ -1,35 +1,35 @@
 const through = require('through2');
+const gutil = require('gulp-util');
 const path = require('path');
 const fsp = require('fs-promise');
+
+const PLUGIN_NAME = 'gulp-clearwxss';
+const { PluginError } = gutil;
+
 
 const getWxss = require('./parseWxss/getWxss');
 const getWxmlTree = require('./handleWxmlTree/getWxmlTree');
 const checkSelectQuery = require('./selectQuery/checkSelectQuery');
 
-const selectMap = {};
-
-// 用来收集css变量 开发时使用
-const _cssVariable = new Set();
-
-module.exports = function (...arg) {
-  console.log(arg);
-
+function cleanWxss(options = {}) {
   const stream = through.obj(async function (file, enc, cb) {
-    // console.log('==================================');
-    // console.log(file.cwd, 'file.cwd');
-    // console.log(file.base, 'file.base');
-    // console.log(file.path, 'file.path');
-    // console.log(file.relative, 'relative');
-    // console.log(file.dirname, 'file.dirname');
-    // console.log(file.stem, 'stem');
-    // console.log(file.extname, 'extname');
+    if (file.isNull()) {
+      return cb();
+    }
 
-    console.log(path.join(file.base, `/${file.stem}.json`));
+    if (file.isStream()) {
+      this.emit('error', new PluginError(PLUGIN_NAME, 'Streams are not supported!'));
+      return cb();
+    }
+
+    const selectMap = {};
+    // 微信文件夹根目录 如果没有传的话 默认使用调用gulp的目录
+    const wxminiProgramRootPath = options.wxRootPath ? options.wxRootPath : file.cwd;
 
     let pageWxss = String(file.contents);
-    const pageWxml = await fsp.readFile(path.join(file.base, `/${file.stem}.wxml`), 'utf-8');
-    const pageJson = await fsp.readFile(path.join(file.base, `/${file.stem}.json`), 'utf-8');
-    pageWxss = await getWxss(pageWxss, file.cwd, file.base);
+    const pageWxml = await fsp.readFile(path.join(file.dirname, `/${file.stem}.wxml`), 'utf-8');
+    const pageJson = await fsp.readFile(path.join(file.dirname, `/${file.stem}.json`), 'utf-8');
+    pageWxss = await getWxss(pageWxss, wxminiProgramRootPath, file.dirname);
 
     // 获取Wxss中的选择器
     const classSelects = [];
@@ -39,7 +39,7 @@ module.exports = function (...arg) {
     });
 
     // 获取Wxml树
-    const { WxmlTree, selectNodeCache } = await getWxmlTree({ pageWxml, pageJson }, file.cwd, file.base);
+    const { WxmlTree, selectNodeCache } = await getWxmlTree({ pageWxml, pageJson }, options, wxminiProgramRootPath, file.dirname);
 
     // 从子节点开始查找
     for (let i = 0, len = classSelects.length; i < len; i++) {
@@ -64,14 +64,22 @@ module.exports = function (...arg) {
       }
     }
 
+    let result = pageWxss;
     // 检查没有被选中的元素
-    for (const x in selectMap) {
-      !selectMap[x].select && console.log(x, selectMap[x]);
-    }
+    Object.keys(selectMap).forEach((key) => {
+      if (!selectMap[key].select) {
+        const classSelectStr = key.replace(/(\.|#|~|\[|\]|\^|=|\$|"|'|:|\(|\)|_)/g, '\\$1');
+        const ReplaceRegex = new RegExp(`\\s?${classSelectStr}\\s?\\{([\\s\\S]*?)\n?\\}`, 'g');
+        result = result.replace(ReplaceRegex, '');
+      }
+    });
 
+    file.contents = Buffer.from(result);
     this.push(file);
     cb();
   });
 
   return stream;
-};
+}
+
+module.exports = cleanWxss;

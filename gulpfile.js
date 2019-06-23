@@ -7,9 +7,9 @@ const gulp = require('gulp');
 const path = require('path');
 const plugs = require('./src/index');
 
-const WX_DIR_PATH = path.join(__dirname, 'wx/wcjs_wx_miniprogram');
-const PAGES_PATH = path.join(WX_DIR_PATH, '/pages');
-const PAGE_DIR_PATH = '/test';
+// 属性选择器【class=""】【class*=""】【clas～=""】【clas^=""】...
+// {{ ['class1','class2'][variable] }} {{ obj[key] }} 暂无处理这种class模版
+// 去除无用的动画keyfarm
 
 // 查找不使用的 class
 // 1· gulp 命令行中传入页面文件参数
@@ -197,18 +197,24 @@ const cssVariable = {
 
 };
 // 未来 config 参数
-const componentsClasses = {
-  'c-tab-item': ['tab-item-class', 'tab-item-active-class'],
-  'c-bottom-nav': ['bottomnav-button-class', 'bottomnav-icon-animated', 'bottomnav-icon-text-class', 'bottomnav-icon-class'],
-  'c-model': ['model-class', 'model-content-class', 'model-success-btn-class', 'model-cancel-btn-class'],
-};
+// const componentsClasses = {
+//   'c-tab-item': ['tab-item-class', 'tab-item-active-class'],
+//   'c-bottom-nav': ['bottomnav-button-class', 'bottomnav-icon-animated', 'bottomnav-icon-text-class', 'bottomnav-icon-class'],
+//   'c-model': ['model-class', 'model-content-class', 'model-success-btn-class', 'model-cancel-btn-class'],
+// };
 
 gulp.task('one', async () => {
   console.log(plugs, 'plugs');
-  gulp.src('./wx/wcjs_wx_miniprogram/pages/addtoptics/addtoptics.wxss')
+  gulp.src('./wx/wcjs_wx_miniprogram/pages/**/**.wxss')
     .pipe(plugs({
-      cssVariable: {},
-      componentsClasses: {},
+      wxRootPath: path.join(__dirname, '/wx/wcjs_wx_miniprogram'),
+      cssVariable: {
+        'index+1': [1, 2, 3],
+      },
+      componentsClasses: {
+        'c-bottom-nav': ['bottomnav-button-class', 'bottomnav-icon-animated', 'bottomnav-icon-text-class', 'bottomnav-icon-class'],
+        'c-model': ['model-class', 'model-content-class', 'model-success-btn-class', 'model-cancel-btn-class'],
+      },
     }))
     .pipe(gulp.dest('./dest'));
 });

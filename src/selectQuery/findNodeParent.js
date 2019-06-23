@@ -25,10 +25,10 @@ function findNodeParent(node, select, deep = 9999) {
       return isParent ? node.parent.obj : null;
     }
     return isParent ? node.parent.obj
-      : _findNodeParent(node.parent.obj, select);
+      : findNodeParent(node.parent.obj, select);
   }
-  let isParent = false;
 
+  let isParent = false;
   if (select[0] == '.') {
     isParent = node.parent.obj.class.findIndex(v2 => `.${v2}` == select) != -1;
   } else if (select[1] == '#') {
@@ -41,7 +41,7 @@ function findNodeParent(node, select, deep = 9999) {
     return isParent ? node.parent.obj : null;
   }
   return isParent ? node.parent.obj
-    : _findNodeParent(node.parent.obj, select);
+    : findNodeParent(node.parent.obj, select);
 }
 
 module.exports = findNodeParent;

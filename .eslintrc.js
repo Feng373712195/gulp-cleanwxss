@@ -17,7 +17,8 @@ module.exports = {
         "no-plusplus":"off",
         "no-console":"off",
         "no-continue":"off",
-        "no-param-reassign":"off"
-
-    }
+        "no-param-reassign":"off",
+        "consistent-return":"off",
+        "no-bitwise":"off"
+    }   
 };

@@ -27,11 +27,13 @@ const getWxss = (str, wxRootPath, pagePath) => {
   // 过滤掉keyframes
     .replace(/\s?@keyframes.*\{([\s\S]*?)\n\}/g, '')
   // 过滤掉font-face
-    .replace(/\s?@font-face.*\{([\s\S]*?)\n\}/g, '');
+    .replace(/\s?@font-face.*\{([\s\S]*?)\n\}/g, '')
+  // 过滤掉media
+    .replace(/\s?@media.*\{([\s\S]*?)\n\}/g, '')
+  // 过滤掉supports
+    .replace(/\s?@supports.*\{([\s\S]*?)\n\}/g, '');
 
   // 获取wxss中的import
-  // 2019-05-04
-  // 如果文件中还有improt呢 需要处理这种情况
   wxssStr.replace(/@import\s?['|"](.*)['|"];/g, ($1, $2) => {
     // 如果没有后缀 wxss则添加上
     improts.push(/\.wxss$/.test($2) ? $2 : `${$2}.wxss`);

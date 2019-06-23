@@ -1,6 +1,6 @@
 
 const checkHasSelect = require('./checkHasSelect');
-const findNodeParent = require('./findNodeHasTag');
+const findNodeParent = require('./findNodeParent');
 const checkChildSelectQuery = require('./checkChildSelectQuery');
 const checkAdjacentSelectQuery = require('./checkAdjacentSelectQuery');
 const checkProgenySelectQuery = require('./checkProgenySelectQuery');
@@ -13,7 +13,6 @@ const hasSelectorReg = /(~|\+|>)/;
 
 // 检查后代选择器是否生效
 function checkSelectQuery(classSelect, selectNodeCache, findNodes = null) {
-  // console.log( classSelect,'classSelect' )
   let selectNodes = null;
 
   // 过滤掉伪元素伪类
@@ -26,8 +25,8 @@ function checkSelectQuery(classSelect, selectNodeCache, findNodes = null) {
     .filter(v => v)
     .reduce((prev, curt) => {
       curt = hasSelectorReg.test(curt)
-        ? curt.match(/(.|#)?\w+(~|+|>)?/g)
-          .map(select => select.replace(/(.*)(~|+|>)/, '$2$1'))
+        ? curt.match(/(\.|#)?\w+(~|\+|>)?/g)
+          .map(select => select.replace(/(.*)(~|\+|>)/, '$2$1'))
         : [curt];
       prev.push(...curt);
       return prev;
@@ -58,7 +57,7 @@ function checkSelectQuery(classSelect, selectNodeCache, findNodes = null) {
           nodes: finds,
         },
       ];
-      // console.log( selectQueryParam,'selectQueryParam' )
+
       const checkSelectQueryRes = selectQueryHandles[selectQueryType](...selectQueryParam);
       if (i2 == selectNodes.length - 1) {
         return checkSelectQueryRes.some(v => v);
@@ -82,7 +81,6 @@ function checkSelectQuery(classSelect, selectNodeCache, findNodes = null) {
       finds.forEach((node) => {
         newFinds.push(findNodeParent(node, selectNodes[i2]));
       });
-
       finds = newFinds.filter(v => v);
       if (finds.length == 0) {
         return false;

@@ -1,6 +1,4 @@
-// 把Wxml字符串转为树结构
-// 在转成树结构的过程中就可以把所有节点存储起来
-// 标签不会被覆盖 这个核实过了
+
 const path = require('path');
 const fsp = require('fs-promise');
 const mergeSelectNode = require('./mergeSelectNode');
@@ -12,17 +10,37 @@ const cloneWxmlTree = require('./cloneWxmlTree');
 const setSelectNodeCache = require('./setSelectNodeCache');
 
 
-const componentsClasses = {};
+// 微信小程序默认组件扩展class
+const defaultComponentsClasses = {
+  view: ['hover-class'],
+  button: ['hover-class'],
+  input: ['placeholder-class'],
+  'picker-view': ['indicator-class', 'mask-class'],
+  slider: ['selected-color'],
+  textarea: ['placeholder-class'],
+  navigator: ['hover-class'],
+};
 
-const getTemplateWxmlTree = async (wxmlStr, wxRootPath, pagePath, selectNodes, templatePath) => await getWxmlTree(wxmlStr, wxRootPath, pagePath, true, selectNodes, templatePath);
+const getTemplateWxmlTree = async (wxmlStr, options, wxRootPath, pagePath, selectNodes, templatePath) => await getWxmlTree(wxmlStr, options, wxRootPath, pagePath, true, selectNodes, templatePath);
 
 
-// 2019-03-21
-// selectNodeCache不再作为全局变量 而作为getWxmlTree的返回值
-function getWxmlTree(data, wxRootPath, pagePath, isTemplateWxml = false, mianSelectNodes = { __tag__: {} }, templatePath) {
+// 把Wxml字符串转为树结构
+function getWxmlTree(data, options, wxRootPath, pagePath, isTemplateWxml = false, mianSelectNodes = { __tag__: {} }, templatePath) {
   let pageJson = null;
   let useingComponents = {};
   let wxmlStr = '';
+
+  let componentsClasses = {};
+  let cssVariable = {};
+
+  if (!isTemplateWxml) {
+    if (options.componentsClasses) {
+      componentsClasses = Object.assign(options.componentsClasses, defaultComponentsClasses);
+    }
+    if (options.cssVariable) {
+      cssVariable = options.cssVariable;
+    }
+  }
 
   if (typeof data === 'object') {
     // 如果是页面 data为一个对象
@@ -35,8 +53,13 @@ function getWxmlTree(data, wxRootPath, pagePath, isTemplateWxml = false, mianSel
     wxmlStr = data;
   }
 
-  // 解决 {{  }} 中使用尖括号会影响截取标签的正则表达式问题
+  // 是否有尖括号正则表达式
   const hasAngleBracketsReg = /[<>]/g;
+  // 是否<template name=... 标签正则表达式
+  const templateStartTagReg = /<template.*\s+name=/;
+  // 是否<template is=... 标签正则表达式
+  const useTemplateTagReg = /<template.*\s+is=/;
+  // 解决 {{  }} 中使用尖括号会影响截取标签的正则表达式问题
   // 这段正则再优化一下使用便可以优化性能  /\{\{(.*[\>\<]{1}.*?)\}\}[\"|\']/
   wxmlStr = wxmlStr.replace(/\{\{.*?\}\}/g, ($1) => {
     if (hasAngleBracketsReg.test($1)) {
@@ -46,21 +69,15 @@ function getWxmlTree(data, wxRootPath, pagePath, isTemplateWxml = false, mianSel
     return $1;
   });
 
-  const templateStartTagReg = /<template.*\s+name=/;
-  const useTemplateTagReg = /<template.*\s+is=/;
 
-  // 对已经查找过的节点位置缓存 下次可以直接在这里获取 针对class id
-  // 2019-4-8 新增__tag__ 用来存放 tag所有对应标签元素
+  // 对已经查找过的节点位置缓存 下次可以直接在这里获取 __tag__ 用来存放 tag所有对应标签元素
   let selectNodes = { __tag__: {} };
-
   // template层数 isTemplateWxml为true时会用到
   let templateCount = 0;
-
   // 解析模版wxmlTree时 会存在这个对象
   const templateNode = {};
   // 当前处理模板名称
   let currentTemplateName = '';
-
   // 存放找到的模版
   const findTemplates = {};
   // 模版缓存
@@ -70,7 +87,6 @@ function getWxmlTree(data, wxRootPath, pagePath, isTemplateWxml = false, mianSel
 
   // 过滤调pageWxml中的注释
   wxmlStr = wxmlStr.replace(/<!--([\s\S]*?)-->/g, '');
-
   // Wxml树结构
   let WxmlTree = {
     root: {
@@ -83,8 +99,9 @@ function getWxmlTree(data, wxRootPath, pagePath, isTemplateWxml = false, mianSel
       },
     },
   };
-
+  // wxmlTree 的当前指向
   let head = WxmlTree.root;
+  // 当前指向父节点键值
   let parentkey = 'root';
 
   // 重置Wxml树
@@ -137,7 +154,7 @@ function getWxmlTree(data, wxRootPath, pagePath, isTemplateWxml = false, mianSel
           console.log('没有找到模版文件 模版地址:', importSrc);
           reject();
         })
-        .then(tmp => getTemplateWxmlTree(tmp, wxRootPath, pagePath, mianSelectNodes, _templatePath))
+        .then(tmp => getTemplateWxmlTree(tmp, options, wxRootPath, pagePath, mianSelectNodes, _templatePath))
         .then((res) => {
           _resolve(res);
         })
@@ -155,13 +172,13 @@ function getWxmlTree(data, wxRootPath, pagePath, isTemplateWxml = false, mianSel
       const tagName = getTagName($1);
 
       let componentClass = [];
-      let tagClass = getTagClass('class', $1);
+      let tagClass = getTagClass('class', $1, cssVariable);
       // 处理组件的 扩展class
       if (useingComponents[tagName]
           && componentsClasses[tagName]
           && componentsClasses[tagName].length > 0) {
         componentsClasses[tagName].forEach((classKey) => {
-          componentClass = componentClass.concat(getTagClass(classKey, $1, [], true));
+          componentClass = componentClass.concat(getTagClass(classKey, $1, cssVariable));
         });
         tagClass = tagClass.concat(componentClass);
       }
@@ -190,8 +207,6 @@ function getWxmlTree(data, wxRootPath, pagePath, isTemplateWxml = false, mianSel
 
       // 是否单标签
       if (isSingeTagReg.test($1)) {
-        // console.log('是单标签')
-
         const self = {
           [$1]: {
             childs: [],
@@ -220,8 +235,6 @@ function getWxmlTree(data, wxRootPath, pagePath, isTemplateWxml = false, mianSel
 
       // 是否闭合标签
       if (isCloseTagReg.test($1)) {
-        // console.log('是闭合标签')
-
         if (isTemplateWxml && isTemplateReg.test(tagName)) {
           --templateCount;
           // 模板包裹 的闭合template标签找到
@@ -238,11 +251,9 @@ function getWxmlTree(data, wxRootPath, pagePath, isTemplateWxml = false, mianSel
         // 需找到闭合标签 把指针指向上一层
         if (!isCompleteTag) {
           try {
-            // console.log(head)
             parentkey = head.parent.key;
             head = head.parent.obj;
           } catch (e) {
-            console.log('完毕标签 head 报错');
             console.log(e);
             return;
           }
@@ -269,23 +280,18 @@ function getWxmlTree(data, wxRootPath, pagePath, isTemplateWxml = false, mianSel
         }
 
         if (isCompleteTag) {
-          // console.log( selectNodes,'selectNodes' )
           setSelectNodeCache(self[$1], tagClass, tagId, selectNodes);
         }
 
         try {
-          // console.log(head)
           head.childs.push(self);
         } catch (e) {
-          console.log('闭合标签 head 报错');
           console.log(e);
           return;
         }
 
         continue;
       }
-
-      // console.log('是起始标签')
 
       // 不是闭合标签 也不是 单标签 就是启始标签
       const self = {
@@ -312,14 +318,11 @@ function getWxmlTree(data, wxRootPath, pagePath, isTemplateWxml = false, mianSel
         ++templateCount;
       }
 
-      // console.log( selectNodes,'selectNodes' )
       setSelectNodeCache(self[$1], tagClass, tagId, selectNodes);
 
       try {
-        // console.log(head)
         head.childs.push(self);
       } catch (e) {
-        console.log('启始标签 head 报错');
         console.log(e);
         return;
       }

@@ -3,10 +3,12 @@ const getTernaryExpressionClass = require('./getTernaryExpressionClass');
 
 // 是否为三元表达式
 const ternaryExpressionReg = /(.*?)\?(.*):(.*)/;
+// 是否字符串正则表达式
+const isStringReg = /['|"](.*?)['|"]/;
 
 // 取得标签内的Class
 // 注意还有hover-class 之类的情况
-function getTagClass(classKey, tag, arr) {
+function getTagClass(classKey, tag, cssVariable, arr) {
   let TagClass = arr || [];
 
   // 判断前面是否有空格 避免匹配到 *-class
@@ -29,18 +31,17 @@ function getTagClass(classKey, tag, arr) {
     let dynamicClass = '';
 
     while (dynamicClass = dynamicClassReg.exec(TagClassStr)) {
-      // console.log( dynamicClass,'dynamicClass' )
       if (ternaryExpressionReg.test(dynamicClass[2])) {
-        let res = getTernaryExpressionClass(dynamicClass[2]);
+        let res = getTernaryExpressionClass(dynamicClass[2], cssVariable);
         res = res.map(className => `${dynamicClass[1] ? dynamicClass[1] : ''}${className}${dynamicClass[3] ? dynamicClass[3] : ''}`);
         TagClass = TagClass.concat(res);
       } else if (dynamicClass[2] != '') {
         dynamicClass[2] = dynamicClass[2].trimLeft().trimRight();
-        let res = getDynamicClass(dynamicClass[2]);
+        let res = getDynamicClass(dynamicClass[2], cssVariable);
         res = res.map(className => `${dynamicClass[1] ? dynamicClass[1] : ''}${className}${dynamicClass[3] ? dynamicClass[3] : ''}`);
         TagClass = TagClass.concat(res);
         if (!isStringReg.test(dynamicClass[2])) {
-          _cssVariable.add(dynamicClass[2]);
+          // _cssVariable.add(dynamicClass[2]);
         }
       }
       TagClassStr = TagClassStr.replace(dynamicClass[0], '');
@@ -53,7 +54,7 @@ function getTagClass(classKey, tag, arr) {
     // 一些写法不规范的开发者 会写多个class 这里先不管
     tag = tag.replace(new RegExp(`(${classKey}\\=[\\'|\\"].*?[\\'|\\"])`), '');
     if (hasClass.test(tag)) {
-      return getTagClass('class', tag, TagClass);
+      return getTagClass(classKey, tag, cssVariable, TagClass);
     }
   }
 

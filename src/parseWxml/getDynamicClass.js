@@ -1,8 +1,7 @@
 // 是否字符串正则表达式
 const isStringReg = /['|"](.*?)['|"]/;
-const cssVariable = {};
 
-function getJoinClass(str, res = []) {
+function getJoinClass(str, cssVariable, res = []) {
   const getSumValueReg = /\s?(["|']?[a-zA-Z0-9_\- ]+\s?['|"]?)\s?\+{1}\s?(["|']?[a-zA-Z0-9_\- ]+\s?['|"]?)\s?/;
   let sumVal = '';
 
@@ -44,7 +43,7 @@ function getJoinClass(str, res = []) {
 
     if (~str.indexOf('+')) {
       // 自定义的 css变量
-      return getJoinClass(str, res);
+      return getJoinClass(str, cssVariable, res);
     }
     if (cssVariable.customCssVariable) {
       res = res.concat(cssVariable.customCssVariable);
@@ -54,14 +53,14 @@ function getJoinClass(str, res = []) {
   }
 }
 
-function getDynamicClass(str) {
+function getDynamicClass(str, cssVariable) {
   const res = [];
   const classes = str.split(/\|\||&&/g);
 
   classes.forEach((classStr) => {
     if (classStr !== '') {
       if (isStringReg.test(classStr)) {
-        let _classes = getJoinClass(classStr);
+        let _classes = getJoinClass(classStr, cssVariable);
         // 解决字符串class 导致存入‘/‘classname/’’这样的class名
         if (_classes) {
           _classes = _classes.map(item => item.replace(isStringReg, '$1'));
