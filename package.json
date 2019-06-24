@@ -16,6 +16,14 @@
     "jest": "^24.8.0",
     "through2": "^3.0.1"
   },
+  "devDependencies": {
+    "@babel/preset-env": "^7.4.5",
+    "@babel/preset-es2015": "^7.0.0-beta.53",
+    "babel-jest": "^24.8.0",
+    "babel-plugin-transform-es2015-modules-commonjs": "^6.26.2",
+    "babel-preset-es2015": "^6.24.1",
+    "vinyl": "^2.2.0"
+  },
   "keywords": [
     "gulp",
     "gulpplugin",
@@ -27,12 +35,5 @@
   },
   "engines": {
     "node": ">=5.10.0"
-  },
-  "devDependencies": {
-    "@babel/preset-env": "^7.4.5",
-    "@babel/preset-es2015": "^7.0.0-beta.53",
-    "babel-jest": "^24.8.0",
-    "babel-plugin-transform-es2015-modules-commonjs": "^6.26.2",
-    "babel-preset-es2015": "^6.24.1"
   }
 }

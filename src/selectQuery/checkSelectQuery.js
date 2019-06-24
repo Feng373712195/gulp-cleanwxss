@@ -25,7 +25,7 @@ function checkSelectQuery(classSelect, selectNodeCache, findNodes = null) {
     .filter(v => v)
     .reduce((prev, curt) => {
       curt = hasSelectorReg.test(curt)
-        ? curt.match(/(\.|#)?\w+(~|\+|>)?/g)
+        ? curt.match(/(\.|#)?[\w-_]+(~|\+|>)?/g)
           .map(select => select.replace(/(.*)(~|\+|>)/, '$2$1'))
         : [curt];
       prev.push(...curt);
@@ -33,6 +33,7 @@ function checkSelectQuery(classSelect, selectNodeCache, findNodes = null) {
     }, [])
     .reverse();
 
+  console.log(selectNodes, 'selectNodes');
   // 选择器只匹配一个元素
   if (selectNodes.length == 1) {
     return !!checkHasSelect(selectNodes[0], selectNodeCache);
@@ -43,6 +44,8 @@ function checkSelectQuery(classSelect, selectNodeCache, findNodes = null) {
   let finds = findNodes ? findNodes.nodes : [];
   // 把选择器转化成数组 如 .search-block .search-list .tag 转为 [.tag,.search-list,.search-block]
   for (let i2 = 0, len = selectNodes.length; i2 < len; i2++) {
+    console.log(i2, 'i2');
+
     if (hasSelectorReg.test(selectNodes[i2])) {
       const selectQueryHandles = {
         '>': checkChildSelectQuery,
@@ -82,6 +85,7 @@ function checkSelectQuery(classSelect, selectNodeCache, findNodes = null) {
         newFinds.push(findNodeParent(node, selectNodes[i2]));
       });
       finds = newFinds.filter(v => v);
+      console.log(finds, 'finds');
       if (finds.length == 0) {
         return false;
       }

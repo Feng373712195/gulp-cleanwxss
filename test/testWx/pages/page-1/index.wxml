@@ -1,0 +1,21 @@
+<!-- 绝对路径寻找模板 -->
+<import src="/tmp/tmp-1/index"></import>
+<!-- 相对路径寻找模板 -->
+<import src="../../tmp/tmp-2/index"></import>
+
+<view class="a1" id="a1" >
+    <view class="a2" id="a2" >
+        <view class="a3" id="a3" ></view>
+        <view class="a3" ></view>
+        <image  />
+    </view>
+</view>
+
+<view class="b1">
+    <template is="tmp1" ></template>
+</view>
+
+<view class="c1">
+    <template is="tmp1" ></template>
+</view>
+

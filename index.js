@@ -1,14 +1,15 @@
 const through = require('through2');
 const gulpUtil = require('gulp-util');
+const fs = require('fs');
 const path = require('path');
 const fsp = require('fs-promise');
 
-const PLUGIN_NAME = 'gulp-clearwxss';
+const PLUGIN_NAME = 'gulp-cleanwxss';
 const { PluginError } = gulpUtil;
 
-const getWxss = require('./parseWxss/getWxss');
-const getWxmlTree = require('./handleWxmlTree/getWxmlTree');
-const checkSelectQuery = require('./selectQuery/checkSelectQuery');
+const getWxss = require('./src/parseWxss/getWxss');
+const getWxmlTree = require('./src/handleWxmlTree/getWxmlTree');
+const checkSelectQuery = require('./src/selectQuery/checkSelectQuery');
 
 function cleanWxss(options = {}) {
   const stream = through.obj(async function (file, enc, cb) {
@@ -26,8 +27,12 @@ function cleanWxss(options = {}) {
     const wxminiProgramRootPath = options.wxRootPath ? options.wxRootPath : file.cwd;
 
     let pageWxss = String(file.contents);
-    const pageWxml = await fsp.readFile(path.join(file.dirname, `/${file.stem}.wxml`), 'utf-8');
-    const pageJson = await fsp.readFile(path.join(file.dirname, `/${file.stem}.json`), 'utf-8');
+
+    const pageWxmlPath = path.join(file.dirname, `/${file.stem}.wxml`);
+    const pageJsonPath = path.join(file.dirname, `/${file.stem}.json`);
+
+    const pageWxml = fs.existsSync(pageWxmlPath) ? await fsp.readFile(pageWxmlPath, 'utf-8') : '';
+    const pageJson = fs.existsSync(pageJsonPath) ? await fsp.readFile(pageJsonPath, 'utf-8') : JSON.stringify({});
     pageWxss = await getWxss(pageWxss, wxminiProgramRootPath, file.dirname);
 
     // 获取Wxss中的选择器
@@ -63,13 +68,22 @@ function cleanWxss(options = {}) {
       }
     }
 
+    console.log(selectMap, 'selectMap');
+
     let result = pageWxss;
     // 检查没有被选中的元素
-    Object.keys(selectMap).forEach((key) => {
+    Object.keys(selectMap).forEach((key, index) => {
       if (!selectMap[key].select) {
-        const classSelectStr = key.replace(/(\.|#|~|\[|\]|\^|=|\$|"|'|:|\(|\)|_)/g, '\\$1');
-        const ReplaceRegex = new RegExp(`\\s?${classSelectStr}\\s?\\{([\\s\\S]*?)\n?\\}`, 'g');
-        result = result.replace(ReplaceRegex, '');
+        const classSelectStr = key.replace(/(\.|#|~|>|\+|\[|\]|\^|=|\$|"|'|:|\(|\)|_|-)/g, '\\$1');
+        let ReplaceRegexp = new RegExp(`\n\\s?${classSelectStr}\\s?\\{([\\s\\S]*?)\n?\\}`, 'g');
+        // 是否为第一个选择器
+        if (index === 0) {
+          const firstClassSelectRegexp = new RegExp(`^\\s?${classSelectStr}\\s?\\{([\\s\\S]*?)\n?\\}`, 'g');
+          if (firstClassSelectRegexp.test(result)) {
+            ReplaceRegexp = firstClassSelectRegexp;
+          }
+        }
+        result = result.replace(ReplaceRegexp, '');
       }
     });
 
