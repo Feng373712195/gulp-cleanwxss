@@ -3,7 +3,6 @@
 const peerSelectReg = /(?=\.)|(?=#)/g;
 // 寻找子元素的父级元素
 function findNodeParent(node, select, deep = 9999) {
-  console.log('findNodeParent');
   --deep;
   // 已经到达root节点 寻找不到节点
   if (node.parent.key == 'root') return null;
@@ -33,7 +32,6 @@ function findNodeParent(node, select, deep = 9999) {
   if (select[0] == '.') {
     isParent = node.parent.obj.class.findIndex(v2 => `.${v2}` == select) != -1;
   } else if (select[0] == '#') {
-    console.log(select.slice(0), 'select.slice(0)');
     isParent = node.parent.obj.id == select.slice(1);
   } else {
     isParent = node.parent.obj.tag ? node.parent.obj.tag == select : false;

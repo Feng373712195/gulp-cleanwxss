@@ -1,1 +1,68 @@
+/* test single 选择器 */
+.a1{}
+.n-a1{}
+
+/* test id选择器 */
+#a1{}
+#n-a1{}
 #a1 .a2 #a3{}
+#a1 .a2 #n-a3{}
+
+/* test 标签选择器选择器 */
+image{}
+n-image{}
+#a1 .a2 image{}
+#a1 .a2 n-image{}
+
+/* 自定义标签 */
+customTag{}
+
+/* test a b 选择器 */
+.a1 .a3{}
+.a1 .n-a3{}
+
+/* test a>b 选择器 */
+.a1>.a2{}
+.a1>.n-a2{}
+
+/* test a+b 选择器 */
+.a3+.a3{}
+.a3+.n-a3{}
+
+/* test 多个选择器 */
+.a1 .a3,.a1>.a2,.a3+.a3{}
+
+/* test 同级选择器 */
+.d1.d2 .d3.d4>.d5.d6{}
+
+/* test 混用选择器 */
+.a1 .a2>.a3+.a3{}
+.a1 .a2>.a3+.n-a3{}
+
+/* test 修改模板样式 */
+.b1 .tmp1-a1{}
+.c1 .tmp1-a1{}
+
+/* test 修改模板样式  a b 选择器 */
+.b1 .tmp1-a1 .tmp1-a3{}
+.b1 .tmp1-a1 .n-tmp1-a3{}
+.c1 .tmp1-a1 .tmp1-a3{}
+.b1 .tmp1-a1 .n-tmp1-a3{}
+
+/* test 修改模板样式  a>b 选择器 */
+.b1 .tmp1-a1>.tmp1-a2{}
+.b1 .tmp1-a1>.n-tmp1-a2{}
+.c1 .tmp1-a1>.tmp1-a2{}
+.b1 .tmp1-a1>.n-tmp1-a2{}
+
+/* test 修改模板样式  a+b 选择器 */
+.b1 .tmp1-a3+.tmp1-a3{}
+.b1 .tmp1-a3+.n-tmp1-a3{}
+.c1 .tmp1-a3+.tmp1-a3{}
+.c1 .tmp1-a3+.n-tmp1-a3{}
+
+/* test 修改模板样式 混用选择器 */
+.b1 .tmp1-a1 .tmp1-a2>.tmp1-a3+.tmp1-a3{}
+.b1 .tmp1-a1 .tmp1-a2>.tmp1-a3+.n-tmp1-a3{}
+.c1 .tmp1-a1 .tmp1-a2>.tmp1-a3+.tmp1-a3{}
+.c1 .tmp1-a1 .tmp1-a2>.tmp1-a3+.n-tmp1-a3{}

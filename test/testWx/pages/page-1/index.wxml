@@ -11,11 +11,23 @@
     </view>
 </view>
 
+<!-- 自定义标签 -->
+<customTag></customTag>
+
+<!-- 模板样式 -->
 <view class="b1">
     <template is="tmp1" ></template>
 </view>
-
 <view class="c1">
     <template is="tmp1" ></template>
 </view>
 
+<view class="d1 d2" >
+    <view class="d3 d4">
+        <view class="d5 d6"></view>
+    </view>
+</view>
+
+<view class="d{{ cssvariable1 }}" ></view>
+<view class="{{ true ? cssvariable2 : '' }}" ></view>
+<view class="{{ true ? cssvariable2 : '' }}" ></view>

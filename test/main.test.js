@@ -29,6 +29,22 @@ test('cleanWxss', (done) => {
     // test single 选择器
     expect(checkSelectQuery('.a1')).toBeTruthy();
     expect(checkSelectQuery('.n-a1')).toBeFalsy();
+
+    // test id选择器
+    expect(checkSelectQuery('#a1')).toBeTruthy();
+    expect(checkSelectQuery('#n-a1')).toBeFalsy();
+    expect(checkSelectQuery('#a1 .a2 #a3')).toBeTruthy();
+    expect(checkSelectQuery('#a1 .a2 #n-a3')).toBeFalsy();
+
+    // test 标签选择器选择器
+    expect(checkSelectQuery('image')).toBeTruthy();
+    expect(checkSelectQuery('n-image')).toBeFalsy();
+    expect(checkSelectQuery('#a1 .a2 image')).toBeTruthy();
+    expect(checkSelectQuery('#a1 .a2 n-image')).toBeFalsy();
+
+    // 自定义标签
+    expect(checkSelectQuery('customTag')).toBeTruthy();
+
     // test a b 选择器
     expect(checkSelectQuery('.a1 .a3')).toBeTruthy();
     expect(checkSelectQuery('.a1 .n-a3')).toBeFalsy();
@@ -38,6 +54,13 @@ test('cleanWxss', (done) => {
     // test a+b 选择器
     expect(checkSelectQuery('.a3+.a3')).toBeTruthy();
     expect(checkSelectQuery('.a3+.n-a3')).toBeFalsy();
+
+    // test 多个选择器
+    expect(checkSelectQuery('.a1 .a3,.a1>.a2,.a3+.a3')).toBeTruthy();
+
+    // test 同级选择器
+    expect(checkSelectQuery('.d1.d2 .d3.d4>.d5.d6')).toBeTruthy();
+
     // test 混用选择器
     expect(checkSelectQuery('.a1 .a2>.a3+.a3')).toBeTruthy();
     expect(checkSelectQuery('.a1 .a2>.a3+.n-a3')).toBeFalsy();
