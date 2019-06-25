@@ -57,6 +57,8 @@ test('cleanWxss', (done) => {
 
     // test 多个选择器
     expect(checkSelectQuery('.a1 .a3,.a1>.a2,.a3+.a3')).toBeTruthy();
+    expect(checkSelectQuery('.a1 #a3,.a1>#a2,.a3+#a3')).toBeTruthy();
+    expect(checkSelectQuery('#a1 #a3,#a1>#a2,#a3+#a3')).toBeTruthy();
 
     // test 同级选择器
     expect(checkSelectQuery('.d1.d2 .d3.d4>.d5.d6')).toBeTruthy();
