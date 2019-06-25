@@ -35,7 +35,7 @@ function checkSelectQuery(classSelect, selectNodeCache, findNodes = null) {
 
   // 选择器只匹配一个元素
   if (selectNodes.length == 1) {
-    return !!checkHasSelect(selectNodes[0], selectNodeCache).length;
+    return !!checkHasSelect(selectNodes[0], selectNodeCache);
   }
   // 多元素选择器
 

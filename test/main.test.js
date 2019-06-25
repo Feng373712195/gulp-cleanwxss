@@ -11,7 +11,7 @@ const wxssFile1 = new File({
 test('cleanWxss', (done) => {
   const stream = cleanWxss({
     wxRootPath: path.join(__dirname, '/testWx'),
-    cssvariable: {
+    cssVariable: {
       cssvariable1: ['v-d1'],
       cssvariable2: ['v-'],
       cssvariable3: ['1'],

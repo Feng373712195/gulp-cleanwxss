@@ -38,7 +38,7 @@
 
 <!-- 字符串与变量 拼接 -->
 <view class="test-warp2" >
-    <view class="{{ cssvariable2 }}e{{ cssvariable3 }}" >
+    <view class="{{ cssvariable2 }}e" >
          <view class="test-box2" ></view>
     </view>
     <view class="e1" ></view>
