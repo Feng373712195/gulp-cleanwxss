@@ -69,6 +69,7 @@ function cleanWxss(options = {}) {
     }
 
     let result = pageWxss;
+    console.log(selectMap, 'selectMap');
     // 检查没有被选中的元素
     Object.keys(selectMap).forEach((key, index) => {
       if (!selectMap[key].select) {

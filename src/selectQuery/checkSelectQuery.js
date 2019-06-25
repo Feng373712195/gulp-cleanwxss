@@ -28,7 +28,6 @@ function checkSelectQuery(classSelect, selectNodeCache, findNodes = null) {
         ? curt.match(/(\.|#)?[\w-_.]+(~|\+|>)?/g)
           .map(select => select.replace(/(.*)(~|\+|>)/, '$2$1'))
         : [curt];
-      console.log(curt, 'curt');
       prev.push(...curt);
       return prev;
     }, [])
@@ -36,7 +35,7 @@ function checkSelectQuery(classSelect, selectNodeCache, findNodes = null) {
 
   // 选择器只匹配一个元素
   if (selectNodes.length == 1) {
-    return !!checkHasSelect(selectNodes[0], selectNodeCache);
+    return !!checkHasSelect(selectNodes[0], selectNodeCache).length;
   }
   // 多元素选择器
 

@@ -28,6 +28,38 @@
     </view>
 </view>
 
-<view class="d{{ cssvariable1 }}" ></view>
-<view class="{{ true ? cssvariable2 : '' }}" ></view>
-<view class="{{ true ? cssvariable2 : '' }}" ></view>
+<!-- 动态渲染class -->
+<view class="test-warp1" >
+    <view class="d1 {{ cssvariable1 }}" >
+        <view class="test-box1" ></view>
+    </view>
+    <view class="d1" ></view>
+</view>
+
+<!-- 字符串与变量 拼接 -->
+<view class="test-warp2" >
+    <view class="{{ cssvariable2 }}e{{ cssvariable3 }}" >
+         <view class="test-box2" ></view>
+    </view>
+    <view class="e1" ></view>
+</view>
+
+<!-- 三元表达式 -->
+<view class="test-warp3" >
+    <view class="{{ true ? cssvariable4 : '' }}" >
+         <view class="test-box3" ></view>
+    </view>
+    <view class="f1" ></view>
+</view>
+
+<!-- 嵌套三元表达式 -->
+<!-- <view class="{{ true ? cssvariable3 : 'f1' ? true ? cssvariable3 : cssvariable4 : cssvariable5 }}" ></view> -->
+<!-- || 和 && -->
+<!-- <view class="{{ A || B || C }}" ></view>
+<view class="{{ A || B || C }}" ></view>
+<view class="{{ A1 ? A || B || 'C' : A && B && 'C' }}" ></view> -->
+<!-- 对象或者数组 -->
+<!-- <view class="{{ ['a1','a2','a3'][1] }}" >hello test</view>
+<view class="{{ ['a1','a2','a3'] }}" >hello test</view>
+<view class="{{ classes[1] }}" >hello test</view>
+<view class="{{ obj['k1'] }}" >hello test</view> -->

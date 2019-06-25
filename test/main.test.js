@@ -11,6 +11,12 @@ const wxssFile1 = new File({
 test('cleanWxss', (done) => {
   const stream = cleanWxss({
     wxRootPath: path.join(__dirname, '/testWx'),
+    cssvariable: {
+      cssvariable1: ['v-d1'],
+      cssvariable2: ['v-'],
+      cssvariable3: ['1'],
+      cssvariable4: ['v-f1'],
+    },
   });
   stream.write(wxssFile1);
   stream.once('data', (file) => {
