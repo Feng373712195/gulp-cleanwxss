@@ -3,8 +3,10 @@ const getTernaryExpressionClass = require('./getTernaryExpressionClass');
 
 // 是否为三元表达式
 const ternaryExpressionReg = /(.*?)\?(.*):(.*)/;
+
+const isDynamicReg = /{{.*}}/g;
 // 是否字符串正则表达式
-const isStringReg = /['|"](.*?)['|"]/;
+// const isStringReg = /['|"](.*?)['|"]/;
 
 // 取得标签内的Class
 // 注意还有hover-class 之类的情况
@@ -25,6 +27,13 @@ function getTagClass(classKey, tag, cssVariable, arr) {
     // 取得整段class
     let TagClassStr = tag.substring(startIndex, startIndex + endIndex + classKey.length + 3);
 
+    const classContentReg = new RegExp(`${classKey}\\=\\${startMark}(.*)\\${startMark}`);
+    let classContent = classContentReg.exec(TagClassStr)[1];
+    classContent = classContent.replace(isDynamicReg, $1 => $1.replace(/\s/g, ''));
+    console.log(classContent, 'classContent');
+    const classContentSlice = classContent.split(' ');
+    console.log(classContentSlice);
+
     // 获取动态选人的class
     const dynamicClassReg = /([-_\w]+)?\{\{(.*?)\}\}([-_\w]+)?/;
 
@@ -40,9 +49,9 @@ function getTagClass(classKey, tag, cssVariable, arr) {
         let res = getDynamicClass(dynamicClass[2], cssVariable);
         res = res.map(className => `${dynamicClass[1] ? dynamicClass[1] : ''}${className}${dynamicClass[3] ? dynamicClass[3] : ''}`);
         TagClass = TagClass.concat(res);
-        if (!isStringReg.test(dynamicClass[2])) {
-          // _cssVariable.add(dynamicClass[2]);
-        }
+        // if (!isStringReg.test(dynamicClass[2])) {
+        // _cssVariable.add(dynamicClass[2]);
+        // }
       }
       TagClassStr = TagClassStr.replace(dynamicClass[0], '');
     }

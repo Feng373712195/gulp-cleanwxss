@@ -53,13 +53,13 @@
 </view>
 
 <!-- 嵌套三元表达式 -->
-<!-- <view class="{{ true ? cssvariable3 : 'f1' ? true ? cssvariable3 : cssvariable4 : cssvariable5 }}" ></view> -->
+<view class="{{ true ? cssvariable3 : 'f1' ? true ? cssvariable3 : cssvariable4 : cssvariable5 }}" ></view>
 <!-- || 和 && -->
-<!-- <view class="{{ A || B || C }}" ></view>
 <view class="{{ A || B || C }}" ></view>
-<view class="{{ A1 ? A || B || 'C' : A && B && 'C' }}" ></view> -->
+<view class="{{ A || B || C }}" ></view>
+<view class="{{ A1 ? A || B || 'C' : A && B && 'C' }}" ></view>
 <!-- 对象或者数组 -->
-<!-- <view class="{{ ['a1','a2','a3'][1] }}" >hello test</view>
+<view class="{{ ['a1','a2','a3'][1] }}" >hello test</view>
 <view class="{{ ['a1','a2','a3'] }}" >hello test</view>
 <view class="{{ classes[1] }}" >hello test</view>
-<view class="{{ obj['k1'] }}" >hello test</view> -->
+<view class="{{ obj['k1'] }}" >hello test</view>
