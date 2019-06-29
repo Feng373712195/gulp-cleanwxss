@@ -36,20 +36,26 @@ function getTagClass(classKey, tag, cssVariable, arr) {
     const classContentReg = new RegExp(`${classKey}\\=\\${startMark}(.*)\\${startMark}`);
     let classContent = classContentReg.exec(TagClassStr)[1];
     classContent = classContent.replace(isDynamicReg, $1 => $1.replace(/\s/g, ''));
+
     const classContentSlice = classContent.split(' ');
+
     classContentSlice.forEach((slice) => {
       if (isDynamicReg.test(slice)) {
         if (joinLeftClassReg.test(slice) || joinRightClassReg.test(slice)) {
           slice = slice.replace(/(\{\{|\}\})/g, $1 => ($1[0] === '{' ? ` ${$1}` : `${$1} `));
           slice = slice.split(' ')
-            .map(item => (isDynamicReg.test(item) ? item.replace(/(\{\{|\}\})/g, '').replace(isStringReg, '$1') : `"${item}"`))
+            .map(item => (isDynamicReg.test(item) ? item.replace(/(\{\{|\}\})/g, '').replace(isStringReg, '$1') : item ? `"${item}"` : ''))
+            .filter(v => v)
             .join(' + ');
           const res = getDynamicClass(slice, cssVariable);
+
           TagClass = TagClass.concat(res);
         } else if (ternaryExpressionReg.test(slice)) {
+          slice = slice.replace(/(\{\{|\}\})/g, '');
           const res = getTernaryExpressionClass(slice, cssVariable);
           TagClass = TagClass.concat(res);
         } else {
+          slice = slice.replace(/(\{\{|\}\})/g, '');
           const res = getDynamicClass(slice, cssVariable);
           TagClass = TagClass.concat(res);
         }
@@ -58,7 +64,7 @@ function getTagClass(classKey, tag, cssVariable, arr) {
       }
     });
 
-    console.log(TagClass, 'TagClass');
+    // console.log(TagClass, 'TagClass');
 
 
     // OLD
