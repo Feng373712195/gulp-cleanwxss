@@ -1,15 +1,13 @@
+const peerSelectReg = /(?=\.)|(?=#)/g;
+
 // 检查element1~element2选择器是否生效
 function checkProgenySelectQuery(classSelect, findNodes = null) {
   const newFinds = [];
   if (findNodes) {
-    let progenySelectType;
-    if (classSelect[0] === '#') {
-      progenySelectType = 'id';
-    } else if (classSelect[0] === '.') {
-      progenySelectType = 'class';
-    } else {
-      progenySelectType = 'tag';
-    }
+    const peerSelect = classSelect
+      .split(peerSelectReg)
+      .map(item => (item !== 'tag' ? item.slice(1) : item));
+
     findNodes.nodes.forEach((node) => {
       // 获取父级内的所有同级元素
       const brothers = Object.values(node.parent.obj.childs).map(n => Object.values(n)[0]);
@@ -22,10 +20,13 @@ function checkProgenySelectQuery(classSelect, findNodes = null) {
       // 寻找 相领选择器 对应元素
       if (otherBrotherNode.length > 0) {
         otherBrotherNode.reverse().forEach((node) => {
-          const progenyNodeSelect = progenySelectType !== 'tag' ? classSelect.slice(1) : classSelect;
-          if (progenySelectType === 'id' && node.id === progenyNodeSelect) newFinds.push(node);
-          else if (progenySelectType === 'class' && ~node.class.indexOf(progenyNodeSelect)) newFinds.push(node);
-          else if (progenySelectType === 'tag' && node.tag === progenySelectType) newFinds.push(node);
+          const isProgenyNode = peerSelect.every((select) => {
+            if (node.id === select) return true;
+            if (~node.class.indexOf(select)) return true;
+            if (node.tag === select) return true;
+            return false;
+          });
+          if (isProgenyNode) newFinds.push(node);
         });
       }
     });

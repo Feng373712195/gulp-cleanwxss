@@ -43,6 +43,8 @@ function checkSelectQuery(classSelect, selectNodeCache, findNodes = null) {
   let finds = findNodes ? findNodes.nodes : [];
   // 把选择器转化成数组 如 .search-block .search-list .tag 转为 [.tag,.search-list,.search-block]
   for (let i2 = 0, len = selectNodes.length; i2 < len; i2++) {
+    if (i2 === 0) finds = checkHasSelect(selectNodes[0], selectNodeCache);
+
     if (hasSelectorReg.test(selectNodes[i2])) {
       const selectQueryHandles = {
         '>': checkChildSelectQuery,
@@ -63,7 +65,7 @@ function checkSelectQuery(classSelect, selectNodeCache, findNodes = null) {
       if (i2 == selectNodes.length - 1) {
         return checkSelectQueryRes.some(v => v);
       }
-      if (checkSelectQueryRes) {
+      if (checkSelectQueryRes.length) {
         finds = checkSelectQueryRes;
         continue;
       } else return false;
