@@ -21,31 +21,43 @@ const defaultComponentsClasses = {
   navigator: ['hover-class'],
 };
 
+// 默认useingComponents
+const defaultUseingComponents = {
+  view: '',
+  button: '',
+  input: '',
+  'picker-view': '',
+  slider: '',
+  textarea: '',
+  navigator: '',
+};
+
+
 const getTemplateWxmlTree = async (wxmlStr, options, wxRootPath, pagePath, selectNodes, templatePath) => await getWxmlTree(wxmlStr, options, wxRootPath, pagePath, true, selectNodes, templatePath);
 
 // 把Wxml字符串转为树结构
 function getWxmlTree(data, options, wxRootPath, pagePath, isTemplateWxml = false, mianSelectNodes = { __tag__: {} }, templatePath) {
   let pageJson = null;
-  let useingComponents = {};
+  let useingComponents = { ...defaultUseingComponents };
   let wxmlStr = '';
 
-  let componentsClasses = {};
+  let componentsClasses = { ...defaultComponentsClasses };
   let cssVariable = {};
 
-  if (!isTemplateWxml) {
-    if (options.componentsClasses && isObject(options.componentsClasses)) {
-      componentsClasses = Object.assign(options.componentsClasses, defaultComponentsClasses);
-    }
-    if (options.cssVariable && isObject(options.cssVariable)) {
-      cssVariable = options.cssVariable;
-    }
+  // if (!isTemplateWxml) {
+  if (options.componentsClasses && isObject(options.componentsClasses)) {
+    componentsClasses = Object.assign(options.componentsClasses, componentsClasses);
   }
+  if (options.cssVariable && isObject(options.cssVariable)) {
+    cssVariable = options.cssVariable;
+  }
+  // }
 
   if (typeof data === 'object') {
     // 如果是页面 data为一个对象
     pageJson = JSON.parse(data.pageJson);
     // 拿到 page的 usingComponents
-    useingComponents = pageJson.usingComponents ? pageJson.usingComponents : useingComponents;
+    useingComponents = pageJson.usingComponents ? Object.assign(pageJson.usingComponents, useingComponents) : useingComponents;
     wxmlStr = data.pageWxml;
   } else {
     // 模版则是字符串

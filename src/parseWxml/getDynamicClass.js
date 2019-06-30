@@ -11,9 +11,11 @@ function getJoinClass(str, cssVariable, res = []) {
     const sumClass = [];
 
     let [sumExpression, sumLVal, sumRVal] = sumVal;
+
     sumLVal = sumLVal.trimLeft().trimRight();
     sumRVal = sumRVal.trimLeft().trimRight();
     str = str.replace(sumExpression, 'customCssVariable');
+
 
     if (isStringReg.test(sumLVal)) {
       const classes = sumLVal.replace(isStringReg, '$1').split(' ');
@@ -56,9 +58,11 @@ function getJoinClass(str, cssVariable, res = []) {
 function getDynamicClass(str, cssVariable) {
   const res = [];
   const classes = str.split(/\|\||&&/g);
-
   classes.forEach((classStr) => {
     if (classStr !== '') {
+      if (cssVariable[classStr]) {
+        return res.push(...cssVariable[classStr]);
+      }
       if (isStringReg.test(classStr)) {
         let _classes = getJoinClass(classStr, cssVariable);
         // 解决字符串class 导致存入‘/‘classname/’’这样的class名
@@ -68,8 +72,6 @@ function getDynamicClass(str, cssVariable) {
           _classes = ~classStr.indexOf(' ') ? classStr.replace(isStringReg, '$1').split(' ') : [classStr.replace(isStringReg, '$1')];
         }
         return res.push(..._classes.filter(v => v));
-      } if (cssVariable[classStr]) {
-        return res.push(...cssVariable[classStr]);
       }
     }
   });

@@ -36,15 +36,19 @@ function getTagClass(classKey, tag, cssVariable, arr) {
     const classContentReg = new RegExp(`${classKey}\\=\\${startMark}(.*)\\${startMark}`);
     let classContent = classContentReg.exec(TagClassStr)[1];
     classContent = classContent.replace(isDynamicReg, $1 => $1.replace(/\s/g, ''));
-
     const classContentSlice = classContent.split(' ');
-
     classContentSlice.forEach((slice) => {
       if (isDynamicReg.test(slice)) {
         if (joinLeftClassReg.test(slice) || joinRightClassReg.test(slice)) {
           slice = slice.replace(/(\{\{|\}\})/g, $1 => ($1[0] === '{' ? ` ${$1}` : `${$1} `));
           slice = slice.split(' ')
-            .map(item => (isDynamicReg.test(item) ? item.replace(/(\{\{|\}\})/g, '').replace(isStringReg, '$1') : item ? `"${item}"` : ''))
+            .map((item) => {
+              if (isDynamicReg.test(item)) {
+                // .replace(isStringReg, '$1');
+                return item.replace(/(\{\{|\}\})/g, '');
+              }
+              return item ? `"${item}"` : '';
+            })
             .filter(v => v)
             .join(' + ');
           const res = getDynamicClass(slice, cssVariable);

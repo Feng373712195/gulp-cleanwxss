@@ -38,28 +38,66 @@
 
 <!-- 字符串与变量 拼接 -->
 <view class="test-warp2" >
-    <view class="{{ cssvariable2 }}e" >
+    <view class="{{ cssvariable2 }}e{{ cssvariable3 }}" >
          <view class="test-box2" ></view>
     </view>
     <view class="e1" ></view>
 </view>
 
+<view class="test-warp2" >
+    <view class="e-{{ cssvariable4 }}" >
+         <view class="test-box2" ></view>
+    </view>
+    <view class="e1" ></view>
+</view>
+
+<view class="test-warp2" >
+    <view class="{{ cssvariable5 }}-e" >
+         <view class="test-box2" ></view>
+    </view>
+    <view class="e1" ></view>
+</view>
+
+<view class="test-warp2" >
+    <view class="{{ ‘header-’ + cssvariable5 + ‘cool-’ }}e" >
+         <view class="test-box2" ></view>
+    </view>
+    <view class="e1" ></view>
+</view>
+
+<view class="{{ 'header-' + cssvariable5 + 'cool-' }}e" ></view>
+
 <!-- 三元表达式 -->
 <view class="test-warp3" >
-    <view class="{{ true ? cssvariable4 : '' }}" >
+    <view class="{{ true ? cssvariable6 : '' }}" >
          <view class="test-box3" ></view>
     </view>
     <view class="f1" ></view>
 </view>
 
 <!-- 嵌套三元表达式 -->
-<view class="{{ true ? cssvariable3 : 'f1' ? true ? cssvariable3 : cssvariable4 : cssvariable5 }}" ></view>
+<view class="{{ true ? cssvariable7 : 'f1' ? true ? cssvariable8 : cssvariable10 : cssvariable9 }}" ></view>
+
 <!-- || 和 && -->
-<view class="{{ A || B || C }}" ></view>
-<view class="{{ A || B || C }}" ></view>
-<view class="{{ A1 ? A || B || 'C' : A && B && 'C' }}" ></view>
+<view class="{{ cssvariable11 || cssvariable12 || cssvariable13 }}" ></view>
+<view class="{{ cssvariable14 && cssvariable15 && cssvariable16 }}" ></view>
+<view class="{{ true ? cssvariable17 || cssvariable18 || 'g9' : cssvariable19 && cssvariable20 && 'g12' }}" ></view>
+
 <!-- 对象或者数组 -->
-<view class="{{ ['a1','a2','a3'][1] }}" >hello test</view>
-<view class="{{ ['a1','a2','a3'] }}" >hello test</view>
+<view class="{{ ['h1','h2','h3'][1] }}" >hello test</view>
+<view class="{{ ['h4','h5','h6'] }}" >hello test</view>
 <view class="{{ classes[1] }}" >hello test</view>
 <view class="{{ obj['k1'] }}" >hello test</view>
+
+<!-- 组件扩展class -->
+<button hover-class="button-hover" > 
+<view hover-class="view-hover"></view>
+<input placeholder-class="input-placeholder" />
+<picker-view indicator-class="picker-indicator" mask-class="picker-mask" ></picker-view>
+<slider selected-color="slider-selected"></slider>
+<textarea placeholder-class="textarea-placeholder"></textarea>
+<navigator hover-class="navigator-hover"></navigator>
+
+<component1 custom-class=“component1-class” ></component1 >
+<component2 custom-class=“component2-class” ></component2 >
+<component3 custom-class=“component3-class” ></component3 >

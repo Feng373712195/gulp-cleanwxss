@@ -76,9 +76,55 @@ customTag{}
 .test-warp1 .d1.v-d1>.test-box1{}
 .test-warp1 .d1.v-d1+.d1{}
 
+/* test 动态拼接class */
 .v-e1{}
+.e-test{}
+.test-e{}
+.header-testcool-e{}
 
+
+/* test 三元表达式 */
 .v-f1{}
 .test-warp3 .v-f1 .test-box3{}
 .test-warp3 .v-f1>.test-box3{}
 .test-warp3 .v-f1+.f1{}
+
+/* test 嵌套三元表达式 */
+.f1,.f2,.f3,.f4,.f5{}
+
+/* test || 符号*/
+.g1{}
+.g2{}
+.g3{}
+
+/* test && 符号*/
+.g4{}
+.g5{}
+.g6{}
+
+/* test 三元表达式中 || 与 && 符号 */
+.g7{}
+.g8{}
+.g9{}
+.g10{}
+.g11{}
+.g12{}
+
+/* 对象或者数组 */
+.h1{}
+.h2{}
+.h3{}
+.h4{}
+.h5{}
+.h6{}
+.h7{}
+.h8{}
+
+.button-hover{}
+.view-hover{}
+.input-placeholder{}
+.picker-indicator{}
+.picker-mask{}
+.slider-selected{}
+.textarea-placeholder{}
+.navigator-hover{}
