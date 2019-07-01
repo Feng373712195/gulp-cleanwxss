@@ -18,14 +18,13 @@ const isStringReg = /['|"](.*?)['|"]/;
 // 注意还有hover-class 之类的情况
 function getTagClass(classKey, tag, cssVariable, arr) {
   let TagClass = arr || [];
-
+  const regExpClassKey = classKey.replace('-', '\\-');
   // 判断前面是否有空格 避免匹配到 *-class
-  const hasClass = new RegExp(`\\s+${classKey}\\=`);
-
+  const hasClass = new RegExp(`\\s+${regExpClassKey}\\=`);
   // 判断标签是否拥有class
   if (hasClass.test(tag)) {
     // 获取class属性在标签的开始位置
-    const startIndex = tag.search(new RegExp(`${classKey}\\=[\\'|\\"]`));
+    const startIndex = tag.search(new RegExp(`${regExpClassKey}\\=[\\'|\\"]`));
     // 判断开始是双引号还是单引号
     const startMark = tag.substr(startIndex + classKey.length + 1, 1);
     // 获得结束位置
@@ -33,7 +32,7 @@ function getTagClass(classKey, tag, cssVariable, arr) {
     // 取得整段class
     const TagClassStr = tag.substring(startIndex, startIndex + endIndex + classKey.length + 3);
 
-    const classContentReg = new RegExp(`${classKey}\\=\\${startMark}(.*)\\${startMark}`);
+    const classContentReg = new RegExp(`${regExpClassKey}\\=\\${startMark}(.*)\\${startMark}`);
     let classContent = classContentReg.exec(TagClassStr)[1];
     classContent = classContent.replace(isDynamicReg, $1 => $1.replace(/\s/g, ''));
     const classContentSlice = classContent.split(' ');

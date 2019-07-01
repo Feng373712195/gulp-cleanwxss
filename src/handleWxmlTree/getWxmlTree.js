@@ -23,13 +23,13 @@ const defaultComponentsClasses = {
 
 // 默认useingComponents
 const defaultUseingComponents = {
-  view: '',
-  button: '',
-  input: '',
-  'picker-view': '',
-  slider: '',
-  textarea: '',
-  navigator: '',
+  view: '/',
+  button: '/',
+  input: '/',
+  'picker-view': '/',
+  slider: '/',
+  textarea: '/',
+  navigator: '/',
 };
 
 
@@ -184,6 +184,7 @@ function getWxmlTree(data, options, wxRootPath, pagePath, isTemplateWxml = false
 
       let componentClass = [];
       let tagClass = getTagClass('class', $1, cssVariable);
+
       // 处理组件的 扩展class
       if (useingComponents[tagName]
           && componentsClasses[tagName]

@@ -7,7 +7,15 @@ const gulp = require('gulp');
 const path = require('path');
 const plugs = require('./src/index');
 
-// 属性选择器【class=""】【class*=""】【clas～=""】【clas^=""】...
+// 属性选择器
+// 【class】选择带有 target 属性所有元素。
+// 【class=value】选择 target="_blank" 的所有元素。
+// 【class～=value】选择 title 属性包含单词 "flower" 的所有元素。
+// 【class|=value】选择 lang 属性值以 "en" 开头的所有元素。
+// 【class^=value】选择其 src 属性值以 "https" 开头的每个 <a> 元素。
+// 【class$=value】选择其 src 属性以 ".pdf" 结尾的所有 <a> 元素。
+// 【class*=value】选择其 src 属性中包含 "abc" 子串的每个 <a> 元素。
+
 // {{ ['class1','class2'][variable] }} {{ obj[key] }} 暂无处理这种class模版
 // 去除无用的动画keyfarm
 
