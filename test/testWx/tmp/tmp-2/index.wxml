@@ -1,0 +1,8 @@
+<template name="tmp2" >
+    <view class="tmp2-a1">
+        <view class="tmp2-a2" >
+            <view class="tmp2-a3" ></view>
+            <view class="tmp2-a3" ></view>
+        </view>
+    </view>
+</template>

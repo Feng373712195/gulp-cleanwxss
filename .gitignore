@@ -1,3 +1,5 @@
 /node_modules
 /wx
 /.gitgnore
+/dest
+/old.js
