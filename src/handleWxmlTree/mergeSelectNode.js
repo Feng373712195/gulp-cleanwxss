@@ -4,7 +4,7 @@ function mergeSelectNode(nodes1, nodes2) {
   const resNodes = nodes1;
   const node2Keys = Object.keys(nodes2);
   node2Keys.forEach((key) => {
-    if (key !== '__tag__') {
+    if (key !== '__tag__' || key !== 'nodes') {
       if (nodes1[key]) {
         resNodes[key] = nodes1[key].concat(nodes2[key]);
       } else {
@@ -20,6 +20,9 @@ function mergeSelectNode(nodes1, nodes2) {
       resNodes.__tag__[key] = nodes2.__tag__[key];
     }
   });
+
+  resNodes.nodes.push(...nodes2.nodes);
+
   return resNodes;
 }
 

@@ -19,22 +19,28 @@ function checkSelectQuery(classSelect, selectNodeCache, findNodes = null) {
   const selectQuery = classSelect.replace(pseudoClassReg, '');
   // 从子节点开始查找 把选择器数组翻转
 
+  // console.log(selectQuery);
+
   selectNodes = selectQuery
     .replace(/\s?([>+~])\s?/g, '$1')
     .split(/\s/g)
     .filter(v => v)
     .reduce((prev, curt) => {
-      curt = hasSelectorReg.test(curt)
-        ? curt.match(/(\.|#)?[\w-_.]+(~|\+|>)?/g)
-          .map(select => select.replace(/(.*)(~|\+|>)/, '$2$1'))
-        : [curt];
+      if (hasSelectorReg.test(curt)) {
+        curt = curt.match(/\[.*?\](~|\+|>)?|(\.|#)?[\w-_.]+(~|\+|>)?/g)
+          .map(select => select.replace(/(.*)(~|\+|>)$/, '$2$1'));
+      } else {
+        curt = [curt];
+      }
       prev.push(...curt);
       return prev;
     }, [])
     .reverse();
 
+  // console.log(selectNodes);
+
   // 选择器只匹配一个元素
-  if (selectNodes.length == 1) {
+  if (selectNodes.length === 1) {
     return !!checkHasSelect(selectNodes[0], selectNodeCache);
   }
   // 多元素选择器

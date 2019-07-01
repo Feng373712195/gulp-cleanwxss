@@ -98,6 +98,14 @@
 <textarea placeholder-class="textarea-placeholder"></textarea>
 <navigator hover-class="navigator-hover"></navigator>
 
-<component1 custom-class=“component1-class” ></component1 >
-<component2 custom-class=“component2-class” ></component2 >
-<component3 custom-class=“component3-class” ></component3 >
+<!-- 自定义组件扩展class -->
+<component1 custom-class="component1-class" ></component1 >
+<component2 custom-class="component2-class" ></component2 >
+<component3 custom-class="component3-class" ></component3 >
+
+<!-- 测试注释 -->
+<view class="i1"></view>
+
+<view class="i2"></view>
+<view class="i3"></view>
+<view class="i4"></view>

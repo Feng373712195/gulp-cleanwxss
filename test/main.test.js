@@ -44,6 +44,11 @@ test('cleanWxss', (done) => {
       'classes[1]': ['h7'],
       "obj['k1']": ['h8'],
     },
+    /* 自定义组件扩展class */
+    componentsClasses: {
+      component1: ['custom-class'],
+      component2: ['custom-class'],
+    },
   });
   stream.write(wxssFile1);
   stream.once('data', (file) => {
@@ -177,6 +182,28 @@ test('cleanWxss', (done) => {
     expect(checkSelectQuery('.h6')).toBeTruthy();
     expect(checkSelectQuery('.h7')).toBeTruthy();
     expect(checkSelectQuery('.h8')).toBeTruthy();
+
+    /* 默认组建扩展class */
+    expect(checkSelectQuery('.button-hover')).toBeTruthy();
+    expect(checkSelectQuery('.view-hover')).toBeTruthy();
+    expect(checkSelectQuery('.input-placeholder')).toBeTruthy();
+    expect(checkSelectQuery('.picker-indicator')).toBeTruthy();
+    expect(checkSelectQuery('.picker-mask')).toBeTruthy();
+    expect(checkSelectQuery('.slider-selected')).toBeTruthy();
+    expect(checkSelectQuery('.textarea-placeholder')).toBeTruthy();
+    expect(checkSelectQuery('.navigator-hover')).toBeTruthy();
+    /* 组件扩展class */
+    expect(checkSelectQuery('.component1-class')).toBeTruthy();
+    expect(checkSelectQuery('.component2-class')).toBeTruthy();
+    expect(checkSelectQuery('.component3-class')).toBeFalsy();
+
+    /* 测试注释 */
+    expect(checkSelectQuery('.i1')).toBeFalsy();
+    expect(checkSelectQuery('.i2')).toBeFalsy();
+    expect(checkSelectQuery('.i3')).toBeFalsy();
+    expect(checkSelectQuery('.i4')).toBeFalsy();
+
+
     done();
   });
 });

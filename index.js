@@ -38,7 +38,7 @@ function cleanWxss(options = {}) {
     // 获取Wxss中的选择器
     const classSelects = [];
     // 获取clss id 标签选择器
-    pageWxss.replace(/([.|#|\w+].*)\{/g, ($1, $2) => {
+    pageWxss.replace(/([.|#|\w+|[].*)\{/g, ($1, $2) => {
       classSelects.push($2);
     });
 
@@ -73,7 +73,7 @@ function cleanWxss(options = {}) {
     // 检查没有被选中的元素
     Object.keys(selectMap).forEach((key, index) => {
       if (!selectMap[key].select) {
-        const classSelectStr = key.replace(/(\.|#|~|>|\+|\[|\]|\^|=|\$|"|'|:|\(|\)|_|-)/g, '\\$1');
+        const classSelectStr = key.replace(/(\||~|\*|\.|#|~|>|\+|\[|\]|\^|=|\$|"|'|:|\(|\)|_|-)/g, '\\$1');
         let ReplaceRegexp = new RegExp(`\n\\s?${classSelectStr}\\s?\\{([\\s\\S]*?)\n?\\}`, 'g');
         // 是否为第一个选择器
         if (index === 0) {

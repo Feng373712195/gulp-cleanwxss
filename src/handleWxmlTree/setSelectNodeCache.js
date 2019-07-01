@@ -22,6 +22,12 @@ function setSelectNodeCache(tag, classes, id, selectNodes) {
   } else {
     selectNodes.__tag__[tag.tag] = [tag];
   }
+
+  if (selectNodes.nodes) {
+    selectNodes.nodes.push(tag);
+  } else {
+    selectNodes.nodes = [tag];
+  }
 }
 
 module.exports = setSelectNodeCache;

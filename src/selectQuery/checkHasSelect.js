@@ -1,9 +1,19 @@
+const findNodeHasAttr = require('./findNodeHasAttr');
+
 // 是否有同级选择器正则表达式 如： .a.b .a#b
-const peerSelectReg = /(?=\.)|(?=#)/g;
+const peerSelectReg = /(?=\.)|(?=#)|(?=\[)/g;
 // 检查同级元素
 function checkHasSelect(select, selectNodeCache) {
   const peerSelect = select.split(peerSelectReg);
-  const firstSelect = !/^\.|^#/.test(peerSelect[0]) ? selectNodeCache.__tag__[peerSelect[0]] : selectNodeCache[peerSelect[0]];
+
+  let firstSelect = null;
+  if (/^\.|^#/.test(peerSelect[0])) {
+    firstSelect = selectNodeCache[peerSelect[0]];
+  } else if (/^\[/.test(peerSelect[0])) {
+    firstSelect = findNodeHasAttr(peerSelect[0], selectNodeCache.nodes);
+  } else {
+    firstSelect = selectNodeCache.__tag__[peerSelect[0]];
+  }
   // peerSelect 大于 1 则为拥有同级选择器 如：.a.b
   if (peerSelect.length > 1) {
     // 判断同级的第一个选择器在页面中有没有元素使用

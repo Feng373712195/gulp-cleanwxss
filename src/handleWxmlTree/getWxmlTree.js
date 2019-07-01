@@ -4,6 +4,7 @@ const fsp = require('fs-promise');
 const mergeSelectNode = require('./mergeSelectNode');
 const getTagName = require('../parseWxml/getTagName');
 const getTagClass = require('../parseWxml/getTagClass');
+const getClassStr = require('../parseWxml/getClass');
 const getId = require('../parseWxml/getId');
 const getAttr = require('../parseWxml/getAttr');
 const cloneWxmlTree = require('./cloneWxmlTree');
@@ -36,7 +37,7 @@ const defaultUseingComponents = {
 const getTemplateWxmlTree = async (wxmlStr, options, wxRootPath, pagePath, selectNodes, templatePath) => await getWxmlTree(wxmlStr, options, wxRootPath, pagePath, true, selectNodes, templatePath);
 
 // 把Wxml字符串转为树结构
-function getWxmlTree(data, options, wxRootPath, pagePath, isTemplateWxml = false, mianSelectNodes = { __tag__: {} }, templatePath) {
+function getWxmlTree(data, options, wxRootPath, pagePath, isTemplateWxml = false, mianSelectNodes = { __tag__: {}, nodes: [] }, templatePath) {
   let pageJson = null;
   let useingComponents = { ...defaultUseingComponents };
   let wxmlStr = '';
@@ -82,7 +83,7 @@ function getWxmlTree(data, options, wxRootPath, pagePath, isTemplateWxml = false
 
 
   // 对已经查找过的节点位置缓存 下次可以直接在这里获取 __tag__ 用来存放 tag所有对应标签元素
-  let selectNodes = { __tag__: {} };
+  let selectNodes = { __tag__: {}, nodes: [] };
   // template层数 isTemplateWxml为true时会用到
   let templateCount = 0;
   // 解析模版wxmlTree时 会存在这个对象
@@ -130,7 +131,7 @@ function getWxmlTree(data, options, wxRootPath, pagePath, isTemplateWxml = false
     };
     head = newWxmlTree.root;
     parentkey = 'root';
-    selectNodes = { __tag__: {} };
+    selectNodes = { __tag__: {}, nodes: [] };
     return newWxmlTree;
   };
 
@@ -184,6 +185,7 @@ function getWxmlTree(data, options, wxRootPath, pagePath, isTemplateWxml = false
 
       let componentClass = [];
       let tagClass = getTagClass('class', $1, cssVariable);
+      const classStr = getClassStr($1, 'class');
 
       // 处理组件的 扩展class
       if (useingComponents[tagName]
@@ -223,6 +225,7 @@ function getWxmlTree(data, options, wxRootPath, pagePath, isTemplateWxml = false
           [$1]: {
             childs: [],
             class: tagClass,
+            classStr,
             id: tagId,
             tag: tagName,
             statrTag: true,
@@ -275,6 +278,7 @@ function getWxmlTree(data, options, wxRootPath, pagePath, isTemplateWxml = false
           [$1]: {
             childs: [],
             class: tagClass,
+            classStr,
             id: tagId,
             tag: tagName,
             statrTag: !!isCompleteTag,
@@ -310,6 +314,7 @@ function getWxmlTree(data, options, wxRootPath, pagePath, isTemplateWxml = false
         [$1]: {
           childs: [],
           class: tagClass,
+          classStr,
           id: tagId,
           tag: tagName,
           statrTag: true,
@@ -376,7 +381,7 @@ function getWxmlTree(data, options, wxRootPath, pagePath, isTemplateWxml = false
 
         // 替换模板的父节点
         // 注意：这里要做浅拷贝
-        const tmpSelectNode = { __tag__: {} };
+        const tmpSelectNode = { __tag__: {}, nodes: [] };
         const tmpClone = cloneWxmlTree(templateWxmlTree, templateParent, tmpSelectNode);
         // 进行替换
         Array.prototype.splice.apply(
