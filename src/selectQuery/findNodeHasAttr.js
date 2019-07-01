@@ -1,36 +1,47 @@
-const getClassAttr = str => /\class.\=(.*)/.exec(str)[1];
+const getClassAttr = (str) => {
+  console.log(str, 'str');
+  let match = null;
+  if (match = /class.?=(.*)/.exec(str)) {
+    return match[1];
+  }
+  return match;
+};
 
 function findNodeHasAttr(select, nodes) {
-  console.log('========= findNodeHasAttr ========', select);
-  console.log('nodes', nodes.length);
   const res = [];
-  const attrContent = /\[(.*)\]/.exec(select)[1];
+  const attrSelect = /\[(.*)\]/.exec(select)[1];
   // 暂时只支持class属性选择器
-  if (/^class/.test(select)) {
-    if (select === '[class]') return nodes;
-    if (/class=/.test(select)) {
-      console.log('1111');
-      getClassAttr(select);
+  if (/^class/.test(attrSelect)) {
+    if (select === '[class]') {
+      res.push(...nodes.filter(node => node.classStr !== ''));
+      return res;
     }
-    if (/class~/.test(select)) {
-      console.log('2222');
-      getClassAttr(select);
+    const attrContent = getClassAttr(attrSelect);
+    if (/class=/.test(attrSelect)) {
+      res.push(...nodes.filter(node => node.classStr === attrContent));
+      console.log(attrContent);
     }
-    if (/class\|/.test(select)) {
-      console.log('3333');
-      getClassAttr(select);
+    if (/class~/.test(attrSelect)) {
+      res.push(...nodes.filter(node => node.class.indexOf(attrSelect) !== -1));
+      console.log(attrContent);
     }
-    if (/class\^/.test(select)) {
-      console.log('4444');
-      getClassAttr(select);
+    if (/class\|/.test(attrSelect)) {
+      res.push(...nodes.filter(node => node.classStr === attrSelect || node.classStr.indexOf(`${attrSelect}-`) === 0));
+      console.log(attrContent);
     }
-    if (/class\$/.test(select)) {
-      console.log('5555');
-      getClassAttr(select);
+    if (/class\^/.test(attrSelect)) {
+      const regExp = new RegExp(`^${attrSelect.replace(/(-_)/g, '\\$1')}`);
+      res.push(...nodes.filter(node => regExp.test(node.classStr)));
+      console.log(attrContent);
     }
-    if (/class\*/.test(select)) {
-      console.log('6666');
-      getClassAttr(select);
+    if (/class\$/.test(attrSelect)) {
+      const regExp = new RegExp(`${attrSelect.replace(/(-_)/g, '\\$1')}$`);
+      res.push(...nodes.filter(node => regExp.test(node.classStr)));
+      console.log(attrContent);
+    }
+    if (/class\*/.test(attrSelect)) {
+      res.push(...nodes.filter(node => node.classStr.indexOf(attrSelect) !== -1));
+      console.log(attrContent);
     }
   }
 
