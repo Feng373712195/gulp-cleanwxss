@@ -20,13 +20,12 @@ function checkSelectQuery(classSelect, selectNodeCache, findNodes = null) {
   // 从子节点开始查找 把选择器数组翻转
 
   // console.log(selectQuery);
-
   selectNodes = selectQuery
     .replace(/\s?([>+~])\s?/g, '$1')
     .split(/\s/g)
     .filter(v => v)
     .reduce((prev, curt) => {
-      if (hasSelectorReg.test(curt)) {
+      if (hasSelectorReg.test(curt.replace(/(~)=/, '@'))) {
         curt = curt.match(/\[.*?\](~|\+|>)?|(\.|#)?[\w-_.]+(~|\+|>)?/g)
           .map(select => select.replace(/(.*)(~|\+|>)$/, '$2$1'));
       } else {
@@ -37,13 +36,14 @@ function checkSelectQuery(classSelect, selectNodeCache, findNodes = null) {
     }, [])
     .reverse();
 
-  // console.log(selectNodes);
+  console.log(selectNodes);
 
   // 选择器只匹配一个元素
   if (selectNodes.length === 1) {
     return !!checkHasSelect(selectNodes[0], selectNodeCache);
   }
   // 多元素选择器
+
 
   // 存放已查找到的元素
   let finds = findNodes ? findNodes.nodes : [];

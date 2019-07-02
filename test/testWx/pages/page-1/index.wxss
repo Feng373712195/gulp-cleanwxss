@@ -143,26 +143,59 @@ n-image{}
 .i4{} */
 
 /* 属性选择器 */
-[class]{}
-[class^=value]{}
-[class~=value]{}
-[class|=value]{}
-[class^=value]{}                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
-[class$=value]{}
-[class*=value]{}
+/* [class]{} */
 
 
-[class=value].j1[class=value]{}
-[class~=value]#j1[class=value]{}
-[class~=value]view[class=value]{}
+/* ^= */
+/* [class^=k1]{}
+[class^=k2]{}
+[class^=k3]{}
+[class^=k4]{}
+[class^=k5]{}
+[class^=k6]{} */
 
-[class=value][class=value].j1{}
-[class~=value][class=value]#j1{}
-[class~=value][class=value]view{}
+/* ~= */
+/* [class~=k7]{}
+[class~=k8]{}
+[class~=k9]{}
+[class~=k10]{} */
 
-.j1[class=value][class=value]{}
-#j1[class=value][class=value]{}
-view[class=value][class=value]{}
+/* != */
+/* [class|=k11]{}
+[class|=k12]{}
+[class|=k13]{}
+[class|=k14]{} */
+
+/* $= */
+/* [class$=k15]{}
+[class$=k16]{}
+[class$=k17]{}
+[class$=k18]{} */
+
+/* *= */
+/* [class*=k19]{}
+[class*=k20]{}
+[class*=k21]{}
+[class*=k22]{} */
+
+/* = */
+/* [class=k23]{}
+[class=k24]{}
+[class=k25]{}
+[class=k26]{} */
+
+/* 同级选择器 包含属性选择器 */
+[class^=j1].j2[class$=j3]{}
+[class^=j1]#j2[class$=j3]{}
+[class^=j1]view[class$=j3]{}
+
+[class^=j4][class~=j5].j6{}
+[class^=j4][class~=j5]#j6{}
+[class^=j4][class~=j5]view{}
+
+.j7[class~="j8"][class$="j9"]{}
+#j7[class~="j8"][class$="j9"]{}
+view[class~="j8"][class$="j9"]{}
 
 /* .j1 [class^="j2"][class="j3"] .j4{}
 .j1 [class^="j2"] [class^="j3"] .j4{}
@@ -204,3 +237,8 @@ view[class=value][class=value]{}
 .j1 [class~="j2"]~.j3  .j4{}
 .j1 [class~="j2"]~#j3 .j4{}
 .j1 [class~="j2"]~view .j4{} */
+
+
+/* console.log(node.classStr, 'node.classStr');
+console.log(regExp, 'regExp');
+console.log(regExp.test(node.classStr)); */
