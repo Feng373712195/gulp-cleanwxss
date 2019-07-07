@@ -2,6 +2,8 @@ const findNodeParent = require('./findNodeParent');
 
 // 检查兄弟选择器是否生效
 function checkChildSelectQyery(classSelects, findNodes = null) {
+  console.log(findNodes, 'checkChildSelectQuery');
+
   const newFinds = [];
 
   findNodes.nodes.forEach((node) => {

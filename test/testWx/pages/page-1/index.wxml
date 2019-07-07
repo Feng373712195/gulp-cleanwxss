@@ -1,2 +1,126 @@
-<view id="j6" class="j4 j6"></view>
+<!-- 绝对路径寻找模板 -->
+<import src="/tmp/tmp-1/index"></import>
+<!-- 相对路径寻找模板 -->
+<import src="../../tmp/tmp-2/index"></import>
+
+<view class="a1" id="a1" >
+    <view class="a2" id="a2" >
+        <view class="a3" id="a3" ></view>
+        <view class="a3" ></view>
+        <image  />
+    </view>
+</view>
+
+<!-- 自定义标签 -->
+<customTag></customTag>
+
+<!-- 模板样式 -->
+<view class="b1">
+    <template is="tmp1" ></template>
+</view>
+<view class="c1">
+    <template is="tmp1" ></template>
+</view>
+
+<view class="d1 d2" >
+    <view class="d3 d4">
+        <view class="d5 d6"></view>
+    </view>
+</view>
+
+<!-- 动态渲染class -->
+<view class="test-warp1" >
+    <view class="d1 {{ cssvariable1 }}" >
+        <view class="test-box1" ></view>
+    </view>
+    <view class="d1" ></view>
+</view>
+
+<!-- 字符串与变量 拼接 -->
+<view class="test-warp2" >
+    <view class="{{ cssvariable2 }}e{{ cssvariable3 }}" >
+         <view class="test-box2" ></view>
+    </view>
+    <view class="e1" ></view>
+</view>
+
+<view class="test-warp2" >
+    <view class="e-{{ cssvariable4 }}" >
+         <view class="test-box2" ></view>
+    </view>
+    <view class="e1" ></view>
+</view>
+
+<view class="test-warp2" >
+    <view class="{{ cssvariable5 }}-e" >
+         <view class="test-box2" ></view>
+    </view>
+    <view class="e1" ></view>
+</view>
+
+<view class="test-warp2" >
+    <view class="{{ ‘header-’ + cssvariable5 + ‘cool-’ }}e" >
+         <view class="test-box2" ></view>
+    </view>
+    <view class="e1" ></view>
+</view>
+
+<view class="{{ 'header-' + cssvariable5 + 'cool-' }}e" ></view>
+
+<!-- 三元表达式 -->
+<view class="test-warp3" >
+    <view class="{{ true ? cssvariable6 : '' }}" >
+         <view class="test-box3" ></view>
+    </view>
+    <view class="f1" ></view>
+</view>
+
+<!-- 嵌套三元表达式 -->
+<view class="{{ true ? cssvariable7 : 'f1' ? true ? cssvariable8 : cssvariable10 : cssvariable9 }}" ></view>
+
+<!-- || 和 && -->
+<view class="{{ cssvariable11 || cssvariable12 || cssvariable13 }}" ></view>
+<view class="{{ cssvariable14 && cssvariable15 && cssvariable16 }}" ></view>
+<view class="{{ true ? cssvariable17 || cssvariable18 || 'g9' : cssvariable19 && cssvariable20 && 'g12' }}" ></view>
+
+<!-- 对象或者数组 -->
+<view class="{{ ['h1','h2','h3'][1] }}" >hello test</view>
+<view class="{{ ['h4','h5','h6'] }}" >hello test</view>
+<view class="{{ classes[1] }}" >hello test</view>
+<view class="{{ obj['k1'] }}" >hello test</view>
+
+<!-- 组件扩展class -->
+<button hover-class="button-hover" > 
+<view hover-class="view-hover"></view>
+<input placeholder-class="input-placeholder" />
+<picker-view indicator-class="picker-indicator" mask-class="picker-mask" ></picker-view>
+<slider selected-color="slider-selected"></slider>
+<textarea placeholder-class="textarea-placeholder"></textarea>
+<navigator hover-class="navigator-hover"></navigator>
+
+<!-- 自定义组件扩展class -->
+<component1 custom-class="component1-class" ></component1 >
+<component2 custom-class="component2-class" ></component2 >
+<component3 custom-class="component3-class" ></component3 >
+
+<!-- 测试注释 -->
+<!-- <view class="i1"></view> -->
+
+<!-- <view class="i2"></view>
+<view class="i3"></view>
+<view class="i4"></view> -->
+
+<!-- -->
+<!-- <view id="j2" class="j1 j2 j3"></view>
+<view id="j6" class="j4 j5 j6"></view>
+<view id="j7" class="j8 j7 j9"></view> -->
+
+<!-- -->
+<view class="k1">
+    <view>
+        <view class="k2 k3 kk">
+            <view class="k4"></view>
+        </view>
+    </view>
+</view>
 

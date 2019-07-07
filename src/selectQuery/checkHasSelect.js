@@ -22,7 +22,7 @@ function checkHasSelect(select, selectNodeCache) {
       const otherPeerSelects = peerSelect.slice(1, peerSelect.length);
       // 匹配到的元素 推入这个数组
       let matchNodes = firstSelect.concat();
-      matchNodes = matchNodes.filter(node => otherPeerSelects.some((select) => {
+      matchNodes = matchNodes.filter(node => otherPeerSelects.every((select) => {
         // 如果是class
         if (select[0] === '.') {
           return node.class.indexOf(select.slice(1)) !== -1;
@@ -38,7 +38,6 @@ function checkHasSelect(select, selectNodeCache) {
         //    return _findNodeHasTag(node,select)
         return node.tag === select;
       }));
-      console.log(matchNodes.length, matchNodes);
       return matchNodes.length ? matchNodes : null;
     }
     return null;

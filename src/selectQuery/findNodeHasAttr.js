@@ -1,3 +1,6 @@
+// 是否字符串正则表达式
+const isStringReg = /['|"](.*?)['|"]/;
+
 const getClassAttr = (str) => {
   let match = null;
   if (match = /class.?=(.*)/.exec(str)) {
@@ -9,23 +12,20 @@ const getClassAttr = (str) => {
 function findNodeHasAttr(select, nodes) {
   const res = [];
   const attrSelect = /\[(.*)\]/.exec(select)[1];
-  // console.log(attrContent);
   // 暂时只支持class属性选择器
   if (/^class/.test(attrSelect)) {
     if (select === '[class]') {
       res.push(...nodes.filter(node => node.classStr !== ''));
       return res;
     }
-    const attrContent = getClassAttr(attrSelect);
+    let attrContent = getClassAttr(attrSelect);
+    attrContent = attrContent.replace(isStringReg, '$1');
+
     if (/class=/.test(attrSelect)) {
       res.push(...nodes.filter(node => node.classStr === attrContent));
     }
-    if (/class\~/.test(attrSelect)) {
-      console.log('1111');
-      res.push(...nodes.filter((node) => {
-        console.log(node.class, 'node.class', attrContent, 'attrContent', node.class.indexOf(attrContent));
-        node.class.indexOf(attrContent) !== -1;
-      }));
+    if (/class~/.test(attrSelect)) {
+      res.push(...nodes.filter(node => node.class.indexOf(attrContent) !== -1));
     }
     if (/class\|/.test(attrSelect)) {
       res.push(...nodes.filter(node => node.classStr === attrContent || node.classStr.indexOf(`${attrContent}-`) === 0));

@@ -9,7 +9,7 @@ const checkProgenySelectQuery = require('./checkProgenySelectQuery');
 // 伪元素伪类匹配正则表达式
 const pseudoClassReg = /:link|:visited|:active|:hover|:focus|:before|::before|:after|::after|:first-letter|:first-line|:first-child|:lang\(.*\)|:lang|:first-of-type|:last-of-type|:only-child|:nth-child\(.*\)|:nth-last-child\(.*\)|:nth-of-type\(.*\)|:nth-last-of-type\(.*\)|:last-child|:root|:empty|:target|:enabled|:disabled|:checked|:not\(.*\)|::selection/g;
 // 是否带有特殊选择器
-const hasSelectorReg = /(~|\+|>)/;
+const hasSelectorReg = /^(~|\+|>)/;
 
 // 检查后代选择器是否生效
 function checkSelectQuery(classSelect, selectNodeCache, findNodes = null) {
@@ -25,7 +25,7 @@ function checkSelectQuery(classSelect, selectNodeCache, findNodes = null) {
     .split(/\s/g)
     .filter(v => v)
     .reduce((prev, curt) => {
-      if (hasSelectorReg.test(curt.replace(/(~)=/, '@'))) {
+      if (hasSelectorReg.test(curt.replace(/(~)=/g, '@'))) {
         curt = curt.match(/\[.*?\](~|\+|>)?|(\.|#)?[\w-_.]+(~|\+|>)?/g)
           .map(select => select.replace(/(.*)(~|\+|>)$/, '$2$1'));
       } else {
@@ -49,6 +49,8 @@ function checkSelectQuery(classSelect, selectNodeCache, findNodes = null) {
   let finds = findNodes ? findNodes.nodes : [];
   // 把选择器转化成数组 如 .search-block .search-list .tag 转为 [.tag,.search-list,.search-block]
   for (let i2 = 0, len = selectNodes.length; i2 < len; i2++) {
+    console.log(i2, 'i2');
+
     if (i2 === 0) finds = checkHasSelect(selectNodes[0], selectNodeCache);
 
     if (hasSelectorReg.test(selectNodes[i2])) {

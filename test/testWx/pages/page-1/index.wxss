@@ -185,7 +185,7 @@ n-image{}
 [class=k26]{} */
 
 /* 同级选择器 包含属性选择器 */
-[class^=j1].j2[class$=j3]{}
+/* [class^=j1].j2[class$=j3]{}
 [class^=j1]#j2[class$=j3]{}
 [class^=j1]view[class$=j3]{}
 
@@ -194,11 +194,11 @@ n-image{}
 [class^=j4][class~=j5]view{}
 
 .j7[class~="j8"][class$="j9"]{}
-#j7[class~="j8"][class$="j9"]{}
-view[class~="j8"][class$="j9"]{}
+#j7[class~="j8"][class~="j9"]{}
+view[class~="j8"][class$="j9"]{} */
 
-/* .j1 [class^="j2"][class="j3"] .j4{}
-.j1 [class^="j2"] [class^="j3"] .j4{}
+.k1 [class^="k2"][class~="k3"] .k4{}
+/* .j1 [class^="j2"] [class^="j3"] .j4{}
 .j1 [class^="j2"]+[class^="j3"] .j4{}
 .j1 [class^="j2"]>[class^="j3"] .j4{}
 .j1 [class^="j2"]~[class^="j3"] .j4{} */
@@ -237,8 +237,3 @@ view[class~="j8"][class$="j9"]{}
 .j1 [class~="j2"]~.j3  .j4{}
 .j1 [class~="j2"]~#j3 .j4{}
 .j1 [class~="j2"]~view .j4{} */
-
-
-/* console.log(node.classStr, 'node.classStr');
-console.log(regExp, 'regExp');
-console.log(regExp.test(node.classStr)); */
