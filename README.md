@@ -27,6 +27,15 @@ gulp.task('clean-wxss', function(){
 #### options
 Type: `Object`
 
+##### options.log
+Type: `String`  
+Default: `false`
+
+如果设置true 在执行gulp任务时会打印一些信息提供给开发者：
+PageUseTmplate: 页面中使用到的模板名字
+CssVariables: 页面中使用到的CSS变量
+Delete:插件删除掉的样式选择器
+
 ##### options.wxRootPath
 Type: `String`  
 Default: `‘’`

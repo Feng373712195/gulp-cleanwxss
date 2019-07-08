@@ -57,7 +57,7 @@ function cleanWxss(options = {}) {
     // 获取Wxml树
     const { WxmlTree, selectNodeCache } = await getWxmlTree({ pageWxml, pageJson }, options, wxminiProgramRootPath, file.dirname);
 
-    log && console.log(`CssVariables:${[...cssVariables]}`);
+    log && console.log(`CssVariables:${cssVariables.show()}`);
 
     // 从子节点开始查找
     for (let i = 0, len = classSelects.length; i < len; i++) {
@@ -86,7 +86,7 @@ function cleanWxss(options = {}) {
     // 检查没有被选中的元素
     Object.keys(selectMap).forEach((key, index) => {
       if (!selectMap[key].select) {
-        // log && console.log(`delete ${key}`);
+        log && console.log(`Delete:${key}`);
         const classSelectStr = key.replace(/(\||~|\*|\.|#|~|>|\+|\[|\]|\^|=|\$|"|'|:|\(|\)|_|-)/g, '\\$1');
         let ReplaceRegexp = new RegExp(`\n\\s?${classSelectStr}\\s?\\{([\\s\\S]*?)\n?\\}`, 'g');
         // 是否为第一个选择器

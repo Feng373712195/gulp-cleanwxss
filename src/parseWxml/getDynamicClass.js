@@ -24,7 +24,10 @@ function getJoinClass(str, cssVariable, res = []) {
       if (classes.length) { res = res.concat(classes); }
       sumL.push(lastClass);
     } else if (cssVariable[sumLVal]) {
+      cssVariables.add(sumRVal);
       sumL = sumL.concat(cssVariable[sumLVal]);
+    } else {
+      cssVariables.add(sumLVal);
     }
 
     if (isStringReg.test(sumRVal)) {
@@ -33,7 +36,10 @@ function getJoinClass(str, cssVariable, res = []) {
       if (classes.length) { res = res.concat(classes); }
       sumR.push(lastClass);
     } else if (cssVariable[sumRVal]) {
+      cssVariables.add(sumRVal);
       sumR = sumR.concat(cssVariable[sumRVal]);
+    } else {
+      cssVariables.add(sumRVal);
     }
 
 
@@ -61,6 +67,7 @@ function getDynamicClass(str, cssVariable) {
   classes.forEach((classStr) => {
     if (classStr !== '') {
       if (cssVariable[classStr]) {
+        cssVariables.add(classStr);
         return res.push(...cssVariable[classStr]);
       }
       if (isStringReg.test(classStr)) {
@@ -73,6 +80,7 @@ function getDynamicClass(str, cssVariable) {
         }
         return res.push(..._classes.filter(v => v));
       }
+      cssVariables.add(classStr);
     }
   });
 
