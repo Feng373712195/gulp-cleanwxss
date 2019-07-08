@@ -110,12 +110,32 @@
 <view class="i3"></view>
 <view class="i4"></view> -->
 
-<!-- -->
-<!-- <view id="j2" class="j1 j2 j3"></view>
-<view id="j6" class="j4 j5 j6"></view>
-<view id="j7" class="j8 j7 j9"></view> -->
+<!-- 单属性选择器测试 -->
 
-<!-- -->
+<!-- class=^ -->
+<view class="q1 qq qq22"></view>
+<!-- class~= -->
+<view class="qq q2 qq3"></view>
+<view class="qq3qqq"></view>
+<!-- class=|= -->
+<view class="q4"></view>
+<view class="q5-"></view>
+<view class="q6qqq"></view>
+<!-- class$= -->
+<view class="qq qql qq7"></view>
+<!-- class*= -->
+<view class="q8qqqaqq"></view>
+<view class="q9"></view>
+<!-- class= -->
+<view class="q10"></view>
+
+
+<!-- 同级选择器 包含属性选择器 -->
+<view id="j2" class="j1 j2 j3"></view>
+<view id="j6" class="j4 j5 j6"></view>
+<view id="j7" class="j8 j7 j9"></view>
+
+<!-- 复制的属性选择器测试 -->
 <view class="k1">
     <view>
         <view class="k2 k3 kk">
@@ -124,3 +144,78 @@
     </view>
 </view>
 
+<view class="k5">
+    <view class="k6" >
+        <view class="k7">
+            <view ><view class="k8"></view> </view> 
+        </view>
+    </view>
+</view>
+
+<view class="k9">
+    <view class="k10"></view>
+    <view class="k10">
+        <view ><view class="k11"></view></view>
+    </view>
+</view>
+
+<view class="k12">
+    <view class="k13">
+        <view class="kk k14 kk">
+            <view ><view class="k15"></view></view>
+        </view>
+    </view>
+</view>
+
+<view class="k16">
+    <view class="kk"></view>
+    <view class="k17"></view>
+    <view class="kk"></view>
+    <view class="kk"></view>
+    <view class="kk"></view>
+    <view class="k18">
+        <view ><view class="k19"></view></view>
+    </view>
+</view>
+
+<!-- new start test attr-selector1 -->
+<view class="l1" >
+    <view id="l3" class="l3 l2" >
+        <view class="l4" ></view>
+    </view>
+</view>
+<!-- new start test attr-selector2 -->
+<view class="m1" >
+    <view id="m2" class="mi mm2 m2" >
+        <view id="m3" class="m3 mi mm3" >
+            <view >
+                <view class="m4"></view>
+            </view>
+        </view>
+    </view>
+</view>
+<!-- new start test attr-selector3 -->
+<view class="n1">
+    <view id="n2" class="n2 nn nn2"></view>
+    <view id="n3" class="n3 nick nn3">
+        <view class="n4"></view>
+    </view>
+</view>
+<!-- new start test attr-selector4 -->
+<view class="o1">
+    <view id="o2" class="ooo wow o2">
+        <view id="o3" class="o3 ooo3 oo">
+            <view ><view class="o4"></view></view>
+        </view>
+    </view>
+</view>
+<!-- new start test attr-selector5 -->
+<view class="p1">
+    <view id="p2" class="ppp pop p2"></view>
+    <view class="pppp"></view>
+    <view class="pppp"></view>
+    <view class="pppp"></view>
+    <view id="p3" class="p3 ppp3 pp">
+        <view ><view class="p4"></view></view>
+    </view>
+</view>

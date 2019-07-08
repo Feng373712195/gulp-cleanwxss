@@ -9,7 +9,7 @@ const checkProgenySelectQuery = require('./checkProgenySelectQuery');
 // 伪元素伪类匹配正则表达式
 const pseudoClassReg = /:link|:visited|:active|:hover|:focus|:before|::before|:after|::after|:first-letter|:first-line|:first-child|:lang\(.*\)|:lang|:first-of-type|:last-of-type|:only-child|:nth-child\(.*\)|:nth-last-child\(.*\)|:nth-of-type\(.*\)|:nth-last-of-type\(.*\)|:last-child|:root|:empty|:target|:enabled|:disabled|:checked|:not\(.*\)|::selection/g;
 // 是否带有特殊选择器
-const hasSelectorReg = /^(~|\+|>)/;
+const hasSelectorReg = /(~|\+|>)/;
 
 // 检查后代选择器是否生效
 function checkSelectQuery(classSelect, selectNodeCache, findNodes = null) {
@@ -36,7 +36,7 @@ function checkSelectQuery(classSelect, selectNodeCache, findNodes = null) {
     }, [])
     .reverse();
 
-  console.log(selectNodes);
+  // console.log(selectNodes);
 
   // 选择器只匹配一个元素
   if (selectNodes.length === 1) {
@@ -49,11 +49,9 @@ function checkSelectQuery(classSelect, selectNodeCache, findNodes = null) {
   let finds = findNodes ? findNodes.nodes : [];
   // 把选择器转化成数组 如 .search-block .search-list .tag 转为 [.tag,.search-list,.search-block]
   for (let i2 = 0, len = selectNodes.length; i2 < len; i2++) {
-    console.log(i2, 'i2');
-
     if (i2 === 0) finds = checkHasSelect(selectNodes[0], selectNodeCache);
 
-    if (hasSelectorReg.test(selectNodes[i2])) {
+    if (hasSelectorReg.test(selectNodes[i2].replace(/(~)=/g, '@'))) {
       const selectQueryHandles = {
         '>': checkChildSelectQuery,
         '+': checkAdjacentSelectQuery,
@@ -88,9 +86,9 @@ function checkSelectQuery(classSelect, selectNodeCache, findNodes = null) {
         return false;
       }
     } else {
-      const newFinds = [];
+      let newFinds = [];
       finds.forEach((node) => {
-        newFinds.push(findNodeParent(node, selectNodes[i2]));
+        newFinds = newFinds.concat(findNodeParent(node, selectNodes[i2]));
       });
       finds = newFinds.filter(v => v);
       if (finds.length == 0) {

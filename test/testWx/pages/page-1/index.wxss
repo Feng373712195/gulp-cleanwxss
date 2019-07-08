@@ -1,139 +1,139 @@
 /* test single 选择器 */
-/* .a1{}
-.n-a1{} */
+.a1{}
+.n-a1{}
 
 /* test id选择器 */
-/* #a1{}
+#a1{}
 #n-a1{}
 #a1 .a2 #a3{}
-#a1 .a2 #n-a3{} */
+#a1 .a2 #n-a3{}
 
 /* test 标签选择器选择器 */
-/* image{}
+image{}
 n-image{}
 #a1 .a2 image{}
-#a1 .a2 n-image{} */
+#a1 .a2 n-image{}
 
 /* 自定义标签 */
-/* customTag{} */
+customTag{}
 
 /* test a b 选择器 */
-/* .a1 .a3{}
-.a1 .n-a3{} */
+.a1 .a3{}
+.a1 .n-a3{}
 
 /* test a>b 选择器 */
-/* .a1>.a2{}
-.a1>.n-a2{} */
+.a1>.a2{}
+.a1>.n-a2{}
 
 /* test a+b 选择器 */
-/* .a3+.a3{}
-.a3+.n-a3{} */
+.a3+.a3{}
+.a3+.n-a3{}
 
 /* test 多个选择器 */
-/* .a1 .a3,.a1>.a2,.a3+.a3{} */
-/* .a1 #a3,.a1>#a2,.a3+#a3{}
-#a1 #a3,#a1>#a2,#a3+#a3{} */
+.a1 .a3,.a1>.a2,.a3+.a3{}
+.a1 #a3,.a1>#a2,.a3+#a3{}
+#a1 #a3,#a1>#a2,#a3+#a3{}
 
 /* test 同级选择器 */
-/* .d1.d2 .d3.d4>.d5.d6{} */
+.d1.d2 .d3.d4>.d5.d6{}
 
 /* test 混用选择器 */
-/* .a1 .a2>.a3+.a3{} */
-/* .a1 .a2>.a3+.n-a3{} */
+.a1 .a2>.a3+.a3{}
+.a1 .a2>.a3+.n-a3{}
 
 /* test 修改模板样式 */
-/* .b1 .tmp1-a1{}
-.c1 .tmp1-a1{} */
+.b1 .tmp1-a1{}
+.c1 .tmp1-a1{}
 
 /* test 修改模板样式  a b 选择器 */
-/* .b1 .tmp1-a1 .tmp1-a3{}
+.b1 .tmp1-a1 .tmp1-a3{}
 .b1 .tmp1-a1 .n-tmp1-a3{}
 .c1 .tmp1-a1 .tmp1-a3{}
-.b1 .tmp1-a1 .n-tmp1-a3{} */
+.b1 .tmp1-a1 .n-tmp1-a3{}
 
 /* test 修改模板样式  a>b 选择器 */
-/* .b1 .tmp1-a1>.tmp1-a2{}
+.b1 .tmp1-a1>.tmp1-a2{}
 .b1 .tmp1-a1>.n-tmp1-a2{}
 .c1 .tmp1-a1>.tmp1-a2{}
-.b1 .tmp1-a1>.n-tmp1-a2{} */
+.b1 .tmp1-a1>.n-tmp1-a2{}
 
 /* test 修改模板样式  a+b 选择器 */
-/* .b1 .tmp1-a3+.tmp1-a3{}
+.b1 .tmp1-a3+.tmp1-a3{}
 .b1 .tmp1-a3+.n-tmp1-a3{}
 .c1 .tmp1-a3+.tmp1-a3{}
-.c1 .tmp1-a3+.n-tmp1-a3{} */
+.c1 .tmp1-a3+.n-tmp1-a3{}
 
 /* test 修改模板样式 混用选择器 */
-/* .b1 .tmp1-a1 .tmp1-a2>.tmp1-a3+.tmp1-a3{}
+.b1 .tmp1-a1 .tmp1-a2>.tmp1-a3+.tmp1-a3{}
 .b1 .tmp1-a1 .tmp1-a2>.tmp1-a3+.n-tmp1-a3{}
 .c1 .tmp1-a1 .tmp1-a2>.tmp1-a3+.tmp1-a3{}
-.c1 .tmp1-a1 .tmp1-a2>.tmp1-a3+.n-tmp1-a3{} */
+.c1 .tmp1-a1 .tmp1-a2>.tmp1-a3+.n-tmp1-a3{}
 
 /* test 动态渲染class */
-/* .v-d1{}
+.v-d1{}
 .d1.v-d1{}
 .test-warp1 .d1.v-d1 .test-box1{}
 .test-warp1 .d1.v-d1>.test-box1{}
-.test-warp1 .d1.v-d1+.d1{} */
+.test-warp1 .d1.v-d1+.d1{}
 
 /* test 动态拼接class */
-/* .v-e1{}
+.v-e1{}
 .e-test{}
 .test-e{}
-.header-testcool-e{} */
+.header-testcool-e{}
 
 
 /* test 三元表达式 */
-/* .v-f1{}
+.v-f1{}
 .test-warp3 .v-f1 .test-box3{}
 .test-warp3 .v-f1>.test-box3{}
-.test-warp3 .v-f1+.f1{} */
+.test-warp3 .v-f1+.f1{}
 
 /* test 嵌套三元表达式 */
-/* .f1,.f2,.f3,.f4,.f5{} */
+.f1,.f2,.f3,.f4,.f5{}
 
 /* test || 符号*/
-/* .g1{}
+.g1{}
 .g2{}
-.g3{} */
+.g3{}
 
 /* test && 符号*/
-/* .g4{}
+.g4{}
 .g5{}
-.g6{} */
+.g6{}
 
 /* test 三元表达式中 || 与 && 符号 */
-/* .g7{}
+.g7{}
 .g8{}
 .g9{}
 .g10{}
 .g11{}
-.g12{} */
+.g12{}
 
 /* 对象或者数组 */
-/* .h1{}
+.h1{}
 .h2{}
 .h3{}
 .h4{}
 .h5{}
 .h6{}
 .h7{}
-.h8{} */
+.h8{}
 
 /* 默认组建扩展class */
-/* .button-hover{}
+.button-hover{}
 .view-hover{}
 .input-placeholder{}
 .picker-indicator{}
 .picker-mask{}
 .slider-selected{}
 .textarea-placeholder{}
-.navigator-hover{} */
+.navigator-hover{}
 
 /* 自定义组建扩展class */
-/* .component1-class{}
+.component1-class{}
 .component2-class{}
-.component3-class{} */
+.component3-class{}
 
 /* 测试注释代码 */
 /* .i1{} */
@@ -142,50 +142,34 @@ n-image{}
 .i3{}
 .i4{} */
 
-/* 属性选择器 */
-/* [class]{} */
-
+/* 单属性选择器 */
+[class]{}
 
 /* ^= */
-/* [class^=k1]{}
-[class^=k2]{}
-[class^=k3]{}
-[class^=k4]{}
-[class^=k5]{}
-[class^=k6]{} */
+[class^=q1]{}
 
 /* ~= */
-/* [class~=k7]{}
-[class~=k8]{}
-[class~=k9]{}
-[class~=k10]{} */
+[class~=q2]{}
+[class~=q3]{}
 
 /* != */
-/* [class|=k11]{}
-[class|=k12]{}
-[class|=k13]{}
-[class|=k14]{} */
+[class|=q4]{}
+[class|=q5]{}
+[class|=q6]{}
 
 /* $= */
-/* [class$=k15]{}
-[class$=k16]{}
-[class$=k17]{}
-[class$=k18]{} */
+[class$=q7]{}
 
 /* *= */
-/* [class*=k19]{}
-[class*=k20]{}
-[class*=k21]{}
-[class*=k22]{} */
+[class*=q8]{}
+[class*=q9]{}
 
 /* = */
-/* [class=k23]{}
-[class=k24]{}
-[class=k25]{}
-[class=k26]{} */
+[class=q10]{}
+
 
 /* 同级选择器 包含属性选择器 */
-/* [class^=j1].j2[class$=j3]{}
+[class^=j1].j2[class$=j3]{}
 [class^=j1]#j2[class$=j3]{}
 [class^=j1]view[class$=j3]{}
 
@@ -195,45 +179,119 @@ n-image{}
 
 .j7[class~="j8"][class$="j9"]{}
 #j7[class~="j8"][class~="j9"]{}
-view[class~="j8"][class$="j9"]{} */
+view[class~="j8"][class$="j9"]{}
 
 .k1 [class^="k2"][class~="k3"] .k4{}
-/* .j1 [class^="j2"] [class^="j3"] .j4{}
-.j1 [class^="j2"]+[class^="j3"] .j4{}
-.j1 [class^="j2"]>[class^="j3"] .j4{}
-.j1 [class^="j2"]~[class^="j3"] .j4{} */
+.k1 [class^="k2"][class~="j3"] .k4{}
 
-/* .j1 .j2[class="j3"] .j4{}
-.j1 #j2[class="j3"] .j4{}
-.j1 view[class="j3"] .j4{}
-.j1 [class="j2"].j3 .j4{}
-.j1 [class="j2"]#j3 .j4{}
-.j1 [class="j2"]view .j4{} */
+.k5 [class^="k6"] [class^="k7"] .k8{}
+.k5 [class^="k6"] [class^="j7"] .k8{}
 
-/* .j1 .j2 [class^="j3"] .j4{}
-.j1 #j2 [class^="j3"] .j4{}
-.j1 view [class^="j3"] .j4{}
-.j1 [class^="j2"] .j3  .j4{}
-.j1 [class^="j2"] #j3 .j4{}
-.j1 [class^="j2"] view .j4{} */
+.k9 [class^="k10"]+[class^="k10"] .k11{}
+.k9 [class^="k10"]+[class^="k11"] .k11{}
 
-/* .j1 .j2+[class^="j3"] .j4{}
-.j1 #j2+[class^="j3"] .j4{}
-.j1 view+[class^="j3"] .j4{}
-.j1 [class^="j2"]+.j3  .j4{}
-.j1 [class^="j2"]+#j3 .j4{}
-.j1 [class^="j2"]+view .j4{} */
+.k12 [class~="k13"]>[class*="k14"] .k15{}
+.k12 [class~="k13"]>[class*="j14"] .k15{}
 
-/* .j1 .j2>[class^="j3"] .j4{}
-.j1 #j2>[class^="j3"] .j4{}
-.j1 view>[class^="j3"] .j4{}
-.j1 [class^="j2"]>.j3  .j4{}
-.j1 [class^="j2"]>#j3 .j4{}
-.j1 [class^="j2"]>view .j4{} */
+.k16 [class^="k17"]~[class^="k18"] .k19{}
+.k16 [class^="k17"]~[class^="j18"] .k19{}
 
-/* .j1 .j2~[class~="j3"] .j4{}
-.j1 #j2~[class~="j3"] .j4{}
-.j1 view~[class~="j3"] .j4{}
-.j1 [class~="j2"]~.j3  .j4{}
-.j1 [class~="j2"]~#j3 .j4{}
-.j1 [class~="j2"]~view .j4{} */
+/* new start test attr-selector1 */
+
+.l1 .l2[class~="l3"] .l4{}
+.l1 .l6[class~="l3"] .l4{}
+
+.l1 #l3[class*="l3"] .l4{}
+.l1 #l6[class*="l3"] .l4{}
+
+.l1 view[class^="l3"] .l4{}
+.l1 image[class^="l3"] .l4{}
+
+.l1 [class~=l2].l3 .l4{}
+.l1 [class~=l6].l3 .l4{}
+
+.l1 [class*=l2]#l3 .l4{}
+.l1 [class*=l6]#l3 .l4{}
+
+.l1 [class$=l2]view .l4{}
+.l1 [class$=l6]view .l4{}
+
+/* new start test attr-selector2 */
+
+.m1 .m2 [class~="m3"] .m4{}
+.m1 .m6 [class~="m3"] .i4{}
+
+.m1 #m2 [class^="m3"] .m4{}
+.m1 #m6 [class^="m3"] .m4{}
+
+.m1 view [class*="m3"] .m4{}
+.m1 text [class*="m3"] .m4{}
+
+.m1 [class*="m2"] .m3  .m4{}
+.m1 [class*="m2"] .m6  .m4{}
+
+.m1 [class~="m2"] #m3 .m4{}
+.m1 [class~="m2"] #m6 .m4{}
+
+.m1 [class$="m2"] view .m4{}
+.m1 [class$="m2"] text .m4{}
+
+/* new start test attr-selector3 */
+
+.n1 .n2+[class~="n3"] .n4{}
+.n1 .n6+[class^="n3"] .n4{}
+
+.n1 #n2+[class^="n3"] .n4{}
+.n1 #n6+[class^="n3"] .n4{}
+
+.n1 view+[class*="n3"] .n4{}
+.n1 text+[class*="n3"] .n4{}
+
+.n1 [class*="n2"]+.n3  .n4{}
+.n1 [class*="n2"]+.n6  .n4{}
+
+.n1 [class~="n2"]+#n3 .n4{}
+.n1 [class~="n2"]+#n6 .n4{}
+
+.n1 [class$="n2"]+view .n4{}
+.n1 [class$="n2"]+text .n4{}
+
+/* new start test attr-selector4 */
+
+.o1 .o2>[class~="o3"] .o4{}
+.o1 .o6>[class~="o3"] .o4{}
+
+.o1 #o2>[class^="o3"] .o4{}
+.o1 #o6>[class^="o3"] .o4{}
+
+.o1 view>[class*="o3"] .o4{}
+.o1 text>[class*="o3"] .o4{}
+
+.o1 [class*="o2"]>.o3  .o4{}
+.o1 [class*="o2"]>.o6  .o4{}
+
+.o1 [class~="o2"]>#o3 .o4{}
+.o1 [class~="o2"]>#o6 .o4{}
+
+.o1 [class$="o2"]>view .o4{}
+.o1 [class$="o2"]>text .o4{}
+
+/* new start test attr-selector5 */
+
+.p1 .p2~[class^="p3"] .p4{}
+.p1 .p6~[class^="p3"] .p4{}
+
+.p1 #p2~[class~="p3"] .p4{}
+.p1 #p6~[class~="p3"] .p4{}
+
+.p1 view~[class*="p3"] .p4{}
+.p1 text~[class*="p3"] .p4{}
+
+.p1 [class$="p2"]~.p3  .p4{}
+.p1 [class$="p2"]~.p6  .p4{}
+
+.p1 [class~="p2"]~#p3 .p4{}
+.p1 [class~="p2"]~#p6 .p4{}
+
+.p1 [class*="p2"]~view .p4{}
+.p1 [class*="p2"]~text .p4{}

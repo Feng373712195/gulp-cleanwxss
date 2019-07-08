@@ -1,12 +1,13 @@
-const peerSelectReg = /(?=\.)|(?=#)/g;
+
+const findNodeHasAttr = require('./findNodeHasAttr');
+
+const peerSelectReg = /(?=\.)|(?=#)|(?=\[)|(?<=\])/g;
 
 // 检查相邻兄弟选择器是否生效
 function checkAdjacentSelectQuery(classSelect, findNodes = null) {
   const newFinds = [];
   if (findNodes) {
-    const peerSelect = classSelect
-      .split(peerSelectReg)
-      .map(item => (item !== 'tag' ? item.slice(1) : item));
+    const peerSelect = classSelect.split(peerSelectReg);
 
     findNodes.nodes.forEach((node) => {
       // 获取父级内的所有同级元素
@@ -21,8 +22,9 @@ function checkAdjacentSelectQuery(classSelect, findNodes = null) {
       if (otherBrotherNode.length > 0) {
         const brotherNode = otherBrotherNode.reverse().find(node => (node.statrTag && node.endTag) || node.statrTag);
         const isBrotherNode = peerSelect.every((select) => {
-          if (brotherNode.id === select) return true;
-          if (~brotherNode.class.indexOf(select)) return true;
+          if (select[0] === '#' && brotherNode.id === select.slice(1)) return true;
+          if (select[0] === '.' && ~brotherNode.class.indexOf(select.slice(1))) return true;
+          if (select[0] === '[' && findNodeHasAttr(select, [brotherNode])) { return true; }
           if (brotherNode.tag === select) return true;
           return false;
         });
