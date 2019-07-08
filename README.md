@@ -28,7 +28,7 @@ gulp.task('clean-wxss', function(){
 Type: `Object`
 
 ##### options.log
-Type: `String`  
+Type: `Boolean`  
 Default: `false`
 
 如果设置true 在执行gulp任务时会打印一些信息提供给开发者：
