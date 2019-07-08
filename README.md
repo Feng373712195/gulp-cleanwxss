@@ -1,4 +1,4 @@
-# gulp-replace [![NPM version][npm-image]][npm-url]
+# gulp-cleanwxss [![NPM version][npm-image]][npm-url]
 > 清除微信小程序wxss文件中不使用的class
 
 ## Usage
