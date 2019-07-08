@@ -45,7 +45,7 @@ const getWxss = (str, wxRootPath, pagePath) => {
     .then((res) => {
       let resWxss = wxssStr;
       res.forEach(async (wxss) => {
-        const importWxssStr = await getWxss(wxss);
+        const importWxssStr = await getWxss(wxss, wxRootPath, pagePath);
         resWxss = `${importWxssStr} \n ${resWxss}`;
       });
       return resWxss;

@@ -153,9 +153,8 @@ function getWxmlTree(data, options, wxRootPath, pagePath, isTemplateWxml = false
       let _templatePath = '';
       // 查找模版规则 首先查找相对路径 如果相对路径没有 则尝试绝对路径 如果都没有则弹出错误 当时不印象继续往下执行
       _templatePath = path.join(isTemplateWxml
-        ? templatePath.replace(/\/\w+\.wxml$/, '')
+        ? templatePath.replace(/\\\w+\.wxml$/, '')
         : pagePath, importSrc);
-
       fsp.readFile(_templatePath, 'utf-8')
         .catch(() => {
           _templatePath = path.join(wxRootPath, importSrc);
@@ -354,6 +353,10 @@ function getWxmlTree(data, options, wxRootPath, pagePath, isTemplateWxml = false
     for (let i = 0, len = findTemplateNames.length; i < len; i++) {
       const findTemplateName = findTemplateNames[i];
       templateCache[findTemplateName] = await findTemplates[findTemplateName]();
+    }
+
+    if (!isTemplateWxml) {
+      options.log && console.log(`PageUseTmplate:${[...new Set(...findUseTemplates.map(tpl => Object.keys(tpl)))]}`);
     }
 
     // 遍历在wxml中找到 带有is属性的template标签

@@ -10,8 +10,16 @@ const { PluginError } = gulpUtil;
 const getWxss = require('./src/parseWxss/getWxss');
 const getWxmlTree = require('./src/handleWxmlTree/getWxmlTree');
 const checkSelectQuery = require('./src/selectQuery/checkSelectQuery');
+const cssVariables = require('./src/parseWxml/cssVariables');
 
 function cleanWxss(options = {}) {
+  // 是否打印一些内容给使用者查看
+  let log = false;
+
+  if (options.log) {
+    log = true;
+  }
+
   const stream = through.obj(async function (file, enc, cb) {
     if (file.isNull()) {
       return cb();
@@ -31,6 +39,8 @@ function cleanWxss(options = {}) {
     const pageWxmlPath = path.join(file.dirname, `/${file.stem}.wxml`);
     const pageJsonPath = path.join(file.dirname, `/${file.stem}.json`);
 
+    log && console.log(`========== ${path.join(file.dirname, `/${file.stem}.wxss`)} ==========`);
+
     const pageWxml = fs.existsSync(pageWxmlPath) ? await fsp.readFile(pageWxmlPath, 'utf-8') : '';
     const pageJson = fs.existsSync(pageJsonPath) ? await fsp.readFile(pageJsonPath, 'utf-8') : JSON.stringify({});
     pageWxss = await getWxss(pageWxss, wxminiProgramRootPath, file.dirname);
@@ -42,8 +52,12 @@ function cleanWxss(options = {}) {
       classSelects.push($2);
     });
 
+    cssVariables.clear();
+
     // 获取Wxml树
     const { WxmlTree, selectNodeCache } = await getWxmlTree({ pageWxml, pageJson }, options, wxminiProgramRootPath, file.dirname);
+
+    log && console.log(`CssVariables:${[...cssVariables]}`);
 
     // 从子节点开始查找
     for (let i = 0, len = classSelects.length; i < len; i++) {
@@ -69,10 +83,10 @@ function cleanWxss(options = {}) {
     }
 
     let result = pageWxss;
-    console.log(selectMap, 'selectMap');
     // 检查没有被选中的元素
     Object.keys(selectMap).forEach((key, index) => {
       if (!selectMap[key].select) {
+        // log && console.log(`delete ${key}`);
         const classSelectStr = key.replace(/(\||~|\*|\.|#|~|>|\+|\[|\]|\^|=|\$|"|'|:|\(|\)|_|-)/g, '\\$1');
         let ReplaceRegexp = new RegExp(`\n\\s?${classSelectStr}\\s?\\{([\\s\\S]*?)\n?\\}`, 'g');
         // 是否为第一个选择器

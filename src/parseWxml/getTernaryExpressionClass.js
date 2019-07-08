@@ -1,4 +1,5 @@
 
+const cssVariables = require('./cssVariables');
 const getDynamicClass = require('./getDynamicClass');
 
 // 是否为三元表达式
@@ -37,12 +38,12 @@ function getTernaryExpressionClass(dynamicClass, cssVariable) {
     res = getDynamicClass(leftValue, cssVariable);
     TagClass = TagClass.concat(res);
     if (!isStringReg.test(leftValue)) {
-      // _cssVariable.add(leftValue);
+      cssVariables.add(leftValue);
     }
     res = getDynamicClass(rightValue, cssVariable);
     TagClass = TagClass.concat(res);
     if (!isStringReg.test(rightValue)) {
-      // _cssVariable.add(rightValue);
+      cssVariables.add(rightValue);
     }
 
     if (index != expressions.length) {

@@ -1,3 +1,4 @@
+const cssVariables = require('./cssVariables');
 // 是否字符串正则表达式
 const isStringReg = /['|"](.*?)['|"]/;
 
@@ -23,7 +24,6 @@ function getJoinClass(str, cssVariable, res = []) {
       if (classes.length) { res = res.concat(classes); }
       sumL.push(lastClass);
     } else if (cssVariable[sumLVal]) {
-    //   _cssVariable.add(sumLVal);
       sumL = sumL.concat(cssVariable[sumLVal]);
     }
 
@@ -33,9 +33,9 @@ function getJoinClass(str, cssVariable, res = []) {
       if (classes.length) { res = res.concat(classes); }
       sumR.push(lastClass);
     } else if (cssVariable[sumRVal]) {
-    //   _cssVariable.add(sumRVal);
       sumR = sumR.concat(cssVariable[sumRVal]);
     }
+
 
     sumL.forEach((L) => {
       sumR.forEach((R) => { sumClass.push(`${L}${R}`); });

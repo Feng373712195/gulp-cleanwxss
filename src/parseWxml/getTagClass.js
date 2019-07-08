@@ -1,4 +1,5 @@
 const getDynamicClass = require('./getDynamicClass');
+const cssVariables = require('./cssVariables');
 const getTernaryExpressionClass = require('./getTernaryExpressionClass');
 
 // 是否为三元表达式
@@ -60,6 +61,7 @@ function getTagClass(classKey, tag, cssVariable, arr) {
         } else {
           slice = slice.replace(/(\{\{|\}\})/g, '');
           const res = getDynamicClass(slice, cssVariable);
+          cssVariables.add(slice);
           TagClass = TagClass.concat(res);
         }
       } else if (slice) {

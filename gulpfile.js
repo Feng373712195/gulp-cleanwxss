@@ -5,7 +5,7 @@
  */
 const gulp = require('gulp');
 const path = require('path');
-const plugs = require('./src/index');
+const plugs = require('./');
 
 // 属性选择器
 // 【class】选择带有 target 属性所有元素。
@@ -215,6 +215,7 @@ gulp.task('one', async () => {
   console.log(plugs, 'plugs');
   gulp.src('./wx/wcjs_wx_miniprogram/pages/**/**.wxss')
     .pipe(plugs({
+      log: true,
       wxRootPath: path.join(__dirname, '/wx/wcjs_wx_miniprogram'),
       cssVariable: {
         'index+1': [1, 2, 3],
