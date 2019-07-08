@@ -2,14 +2,17 @@ const path = require('path');
 const fsp = require('fs-promise');
 
 const findWxss = (importSrc, wxRootPath, pagePath) => new Promise((resolve, reject) => {
-  let wxssPath = path.join(pagePath, importSrc);
+  let wxssPath = path.join(pagePath.replace(/\\[\w_-]+\.wxss$/, ''), importSrc);
   fsp.readFile(wxssPath, 'utf-8')
+    .then((res) => {
+      resolve({ wxss: res, path: wxssPath });
+    })
     .catch(() => {
       wxssPath = path.join(wxRootPath, importSrc);
       return fsp.readFile(wxssPath, 'utf-8');
     })
     .then((res) => {
-      resolve(res);
+      resolve({ wxss: res, path: wxssPath });
     })
     .catch((err) => {
       console.log(err, 'err');
@@ -38,20 +41,19 @@ const getWxss = (str, wxRootPath, pagePath) => {
     // 如果没有后缀 wxss则添加上
     improts.push(/\.wxss$/.test($2) ? $2 : `${$2}.wxss`);
   });
-
   if (improts.length === 0) return wxssStr;
 
   return Promise.all(improts.map(src => findWxss(src, wxRootPath, pagePath)))
     .then((res) => {
       let resWxss = wxssStr;
-      res.forEach(async (wxss) => {
-        const importWxssStr = await getWxss(wxss, wxRootPath, pagePath);
+      res.forEach(async (item) => {
+        const importWxssStr = await getWxss(item.wxss, wxRootPath, item.path);
         resWxss = `${importWxssStr} \n ${resWxss}`;
       });
       return resWxss;
     })
     .catch((err) => {
-      console.log(err);
+      console.log(err, 'here');
     });
 };
 

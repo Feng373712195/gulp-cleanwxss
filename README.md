@@ -83,7 +83,7 @@ Component({
 var cleanwxss = require('gulp-cleanwxss');
 
 gulp.task('clean-wxss', function(){
-  gulp.src('wcjs_wx_miniprogram/pages/**/**.wxss')
+  gulp.src('wx_miniprogram/pages/**/**.wxss')
     .pipe(cleanwxss({
         componentsClasses:{
             'my-class':['classname1','classname2']
