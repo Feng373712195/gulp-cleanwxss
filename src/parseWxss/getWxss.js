@@ -2,7 +2,7 @@ const path = require('path');
 const fsp = require('fs-promise');
 
 const findWxss = (importSrc, wxRootPath, pagePath) => new Promise((resolve, reject) => {
-  let wxssPath = path.join(pagePath.replace(/\\[\w_-]+\.wxss$/, ''), importSrc);
+  let wxssPath = path.join(pagePath.replace(/[\\/][\w_-]+\.wxss$/, ''), importSrc);
   fsp.readFile(wxssPath, 'utf-8')
     .then((res) => {
       resolve({ wxss: res, path: wxssPath });

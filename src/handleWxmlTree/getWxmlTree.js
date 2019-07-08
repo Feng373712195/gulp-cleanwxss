@@ -153,7 +153,7 @@ function getWxmlTree(data, options, wxRootPath, pagePath, isTemplateWxml = false
       let _templatePath = '';
       // 查找模版规则 首先查找相对路径 如果相对路径没有 则尝试绝对路径 如果都没有则弹出错误 当时不印象继续往下执行
       _templatePath = path.join(isTemplateWxml
-        ? templatePath.replace(/\\[\w_-]+\.wxml$/, '')
+        ? templatePath.replace(/[\\/][\w_-]+\.wxml$/, '')
         : pagePath, importSrc);
       fsp.readFile(_templatePath, 'utf-8')
         .catch(() => {
