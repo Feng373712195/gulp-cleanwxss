@@ -356,7 +356,7 @@ function getWxmlTree(data, options, wxRootPath, pagePath, isTemplateWxml = false
     }
 
     if (!isTemplateWxml) {
-      options.log && console.log(`PageUseTmplate:${[...new Set(...findUseTemplates.map(tpl => Object.keys(tpl)))]}`);
+      options.log && console.log(`PageUseTmplate:${[...new Set(findUseTemplates.map(tpl => Object.keys(tpl)))]}`);
     }
 
     // 遍历在wxml中找到 带有is属性的template标签
