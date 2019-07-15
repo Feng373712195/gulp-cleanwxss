@@ -15,10 +15,13 @@ npm install --save-dev gulp-cleanwxss
 ```javascript
 var cleanwxss = require('gulp-cleanwxss');
 
-gulp.task('clean-wxss', function(){
+gulp.task('clean-wxss', function(done){
   gulp.src('wcjs_wx_miniprogram/pages/**/**.wxss')
     .pipe(cleanwxss())
     .pipe(gulp.dest('build/'));
+    
+    // cleanwxss为异步处理 需要触发done来通知gulp任务已经结束
+    done();
 });
 ```
 
@@ -96,5 +99,5 @@ gulp.task('clean-wxss', function(){
 微信自带组件中的外部样式类无需额外配置
 
 
-[npm-url]: https://npmjs.org/package/gulp-replace
-[npm-image]: https://badge.fury.io/js/gulp-replace.svg
+[npm-url]: https://npmjs.org/package/gulp-cleanwxss
+[npm-image]: https://badge.fury.io/js/gulp-cleanwxss.svg
