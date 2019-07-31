@@ -27,7 +27,7 @@ gulp.task('clean-wxss', function(done){
 
 ## gulp-cleanwxss options
 
-#### options
+### options
 Type: `Object`
 
 ##### options.log
