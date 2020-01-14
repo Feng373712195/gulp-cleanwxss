@@ -51,7 +51,7 @@ function cleanWxss(options = {}) {
     pageWxss.replace(/([.|#|\w+|[].*)\{/g, ($1, $2) => {
       classSelects.push($2);
     });
-
+    // 清除此数据结构中的内容 防止又使用到处理上一次的css变量
     cssVariables.clear();
 
     // 获取Wxml树

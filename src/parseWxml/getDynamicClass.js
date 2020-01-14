@@ -3,6 +3,7 @@ const cssVariables = require('./cssVariables');
 const isStringReg = /['|"](.*?)['|"]/;
 
 function getJoinClass(str, cssVariable, res = []) {
+  // 获取拼接class {{ classA }} +'className' 或者 'className' + {{ classA }}
   const getSumValueReg = /\s?(["|']?[a-zA-Z0-9_\- ]+\s?['|"]?)\s?\+{1}\s?(["|']?[a-zA-Z0-9_\- ]+\s?['|"]?)\s?/;
   let sumVal = '';
 

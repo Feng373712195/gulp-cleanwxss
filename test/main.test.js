@@ -52,7 +52,7 @@ test('cleanWxss', (done) => {
   });
   stream.write(wxssFile1);
   stream.once('data', (file) => {
-    console.log(String(file.contents), 'file');
+    // console.log(String(file.contents), 'file');
 
     // 获取清除完class的wxss
     const cleanedFile = String(file.contents);

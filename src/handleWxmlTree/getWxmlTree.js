@@ -33,7 +33,6 @@ const defaultUseingComponents = {
   navigator: '/',
 };
 
-
 const getTemplateWxmlTree = async (wxmlStr, options, wxRootPath, pagePath, selectNodes, templatePath) => await getWxmlTree(wxmlStr, options, wxRootPath, pagePath, true, selectNodes, templatePath);
 
 // 把Wxml字符串转为树结构

@@ -26,6 +26,7 @@ function checkSelectQuery(classSelect, selectNodeCache, findNodes = null) {
     .filter(v => v)
     .reduce((prev, curt) => {
       if (hasSelectorReg.test(curt.replace(/(~)=/g, '@'))) {
+        // 此处把选择器如 a>b?[class='']+c 变成 +c >b[class=''] a 为了方便处理
         curt = curt.match(/\[.*?\](~|\+|>)?|(\.|#)?[\w-_.]+(~|\+|>)?/g)
           .map(select => select.replace(/(.*)(~|\+|>)$/, '$2$1'));
       } else {
@@ -49,7 +50,7 @@ function checkSelectQuery(classSelect, selectNodeCache, findNodes = null) {
   let finds = findNodes ? findNodes.nodes : [];
   // 把选择器转化成数组 如 .search-block .search-list .tag 转为 [.tag,.search-list,.search-block]
   for (let i2 = 0, len = selectNodes.length; i2 < len; i2++) {
-    if (i2 === 0) finds = checkHasSelect(selectNodes[0], selectNodeCache);
+    if (i2 == 0) finds = checkHasSelect(selectNodes[0], selectNodeCache);
 
     if (hasSelectorReg.test(selectNodes[i2].replace(/(~)=/g, '@'))) {
       const selectQueryHandles = {

@@ -24,9 +24,9 @@ function getTernaryExpressionClass(dynamicClass, cssVariable) {
     return ret;
   };
   while (hasExpression = getExpression(hasExpression, expressions)) {}
-
   expressions.reverse().forEach((expression, index) => {
     const expressionValue = expression.replace(/(.*\?)/, '').split(':');
+
     if (expressionValue.length > 2) {
       expression = expression.replace(new RegExp(`s?\\:s?${expressionValue[2]}`), '');
     }
