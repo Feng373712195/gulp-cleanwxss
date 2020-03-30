@@ -98,7 +98,7 @@ gulp.task('clean-wxss', function(){
 
 微信自带组件中的外部样式类无需额外配置
 
-### 介绍文章
+## 介绍文章
 
 [掘金 —— gulp-cleanwxss 一款轻松清除微信小程序页面中弃用样式的gulp插件](https://juejin.im/post/5d2350e36fb9a07eb051e677)
 
